@@ -21,10 +21,12 @@
 ### Task 1: Fixed Mobile Menu Overlay
 
 **Files:**
+
 - Modify: `src/pages/index.vue`
 - Test: `/tmp/donkebi-navigation-regression.mjs` (ephemeral browser check; do not commit)
 
 **Interfaces:**
+
 - Consumes: `navigationItems` entries containing either `href: string` or `to: string`.
 - Produces: `closeMobileMenu({ restoreFocus?: boolean })`, a fixed `#mobile-navigation` layer, and restored body overflow on close/unmount.
 
@@ -38,7 +40,8 @@ document.querySelector('.menu-button').click()
 await new Promise(resolve => requestAnimationFrame(resolve))
 const afterTop = document.querySelector('.hero').getBoundingClientRect().top
 
-if (beforeTop !== afterTop) throw new Error('mobile menu moved homepage content')
+if (beforeTop !== afterTop)
+  throw new Error('mobile menu moved homepage content')
 if (document.body.style.overflow !== 'hidden') {
   throw new Error('mobile menu did not lock background scrolling')
 }
@@ -111,12 +114,14 @@ git commit -m "fix: overlay mobile navigation"
 ### Task 2: Backtest Route Contract
 
 **Files:**
+
 - Modify: `src/content/home.js`
 - Modify: `src/pages/index.vue`
 - Create: `src/pages/backtest.vue`
 - Test: `/tmp/donkebi-navigation-regression.mjs` (extend the Task 1 check)
 
 **Interfaces:**
+
 - Consumes: Vue Router's generated `/backtest` route from `src/pages/backtest.vue`.
 - Produces: `{ label: 'BACKTEST', to: '/backtest' }` in `navigationItems` and a replaceable Backtest page contract.
 
@@ -125,13 +130,16 @@ git commit -m "fix: overlay mobile navigation"
 Add assertions that a Backtest router link exists in both navigation contexts and resolves after activation:
 
 ```js
-const desktopLink = document.querySelector('.site-header__nav a[href*="backtest"]')
+const desktopLink = document.querySelector(
+  '.site-header__nav a[href*="backtest"]'
+)
 const mobileLink = document.querySelector('.mobile-nav a[href*="backtest"]')
 if (!desktopLink || !mobileLink) throw new Error('Backtest links are missing')
 
 mobileLink.click()
 await new Promise(resolve => setTimeout(resolve, 250))
-if (location.hash !== '#/backtest') throw new Error('Backtest route did not resolve')
+if (location.hash !== '#/backtest')
+  throw new Error('Backtest route did not resolve')
 if (!document.querySelector('.backtest-placeholder')) {
   throw new Error('Backtest placeholder did not render')
 }
@@ -162,7 +170,9 @@ Create `src/pages/backtest.vue` with this semantic structure:
       <p class="dk-eyebrow">Backtest · In Preparation</p>
       <h1 class="dk-serif">전략을 검증하는<br />새로운 공간.</h1>
       <p>백테스트 페이지를 준비하고 있습니다.</p>
-      <router-link to="/">홈으로 돌아가기 <span aria-hidden="true">→</span></router-link>
+      <router-link to="/"
+        >홈으로 돌아가기 <span aria-hidden="true">→</span></router-link
+      >
     </div>
   </main>
 </template>

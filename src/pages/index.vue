@@ -7,14 +7,14 @@
         </router-link>
 
         <nav class="site-header__nav" aria-label="주요 메뉴">
-          <button
-            v-for="item in navigationItems"
-            :key="item.href"
-            type="button"
-            @click="scrollTo(item.href)"
-          >
-            {{ item.label }}
-          </button>
+          <template v-for="item in navigationItems" :key="item.href ?? item.to">
+            <router-link v-if="item.to" :to="item.to">
+              {{ item.label }}
+            </router-link>
+            <button v-else type="button" @click="scrollTo(item.href)">
+              {{ item.label }}
+            </button>
+          </template>
         </nav>
 
         <div class="site-header__actions">
@@ -40,15 +40,20 @@
           class="mobile-nav dk-container"
           aria-label="모바일 메뉴"
         >
-          <button
-            v-for="item in navigationItems"
-            :key="item.href"
-            type="button"
-            @click="scrollTo(item.href)"
-          >
-            <span>{{ item.label }}</span>
-            <span aria-hidden="true">↗</span>
-          </button>
+          <template v-for="item in navigationItems" :key="item.href ?? item.to">
+            <router-link
+              v-if="item.to"
+              :to="item.to"
+              @click="closeMobileMenu()"
+            >
+              <span>{{ item.label }}</span>
+              <span aria-hidden="true">↗</span>
+            </router-link>
+            <button v-else type="button" @click="scrollTo(item.href)">
+              <span>{{ item.label }}</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+          </template>
         </nav>
       </transition>
     </q-header>
@@ -135,7 +140,8 @@ function scrollTo(selector) {
     gap: clamp(24px, 3vw, 48px);
     justify-content: center;
 
-    button {
+    button,
+    a {
       padding: 8px 0;
       border: 0;
       background: transparent;
@@ -220,7 +226,8 @@ function scrollTo(selector) {
     border-top: 1px solid var(--dk-line);
     background: var(--dk-paper);
 
-    button {
+    button,
+    a {
       display: flex;
       justify-content: space-between;
       padding: 16px 0;
