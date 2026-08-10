@@ -1,8 +1,17 @@
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('@fontsource/pretendard/files/pretendard-latin-400-normal.woff2')
+    format('woff2');
+}
+
 :root {
   --dk-paper: #f4f1ea;
   --dk-surface: #fbfaf7;
   --dk-ink: #171717;
-  --dk-muted: #74736f;
+  --dk-muted: #6b6964;
   --dk-line: rgba(23, 23, 23, 0.18);
   --dk-line-strong: rgba(23, 23, 23, 0.58);
   --dk-positive: #a64b40;
@@ -59,7 +68,7 @@ a {
 }
 
 :focus-visible {
-  outline: 1px solid var(--dk-ink);
+  outline: 2px solid currentColor;
   outline-offset: 5px;
 }
 

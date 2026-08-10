@@ -20,7 +20,7 @@
 <style scoped lang="scss">
 .not-found {
   display: grid;
-  min-height: calc(100vh - 82px);
+  min-height: 100dvh;
   place-items: center;
   background: var(--dk-ink);
   color: var(--dk-paper);
@@ -78,8 +78,6 @@
 
 @media (max-width: 767px) {
   .not-found {
-    min-height: calc(100vh - 68px);
-
     &__inner {
       display: block;
     }

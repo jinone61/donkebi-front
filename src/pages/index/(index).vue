@@ -74,7 +74,7 @@
 
           <DkTrendChart
             v-model="activePeriod"
-            :points="marketSeries"
+            :points="activeMarketSeries"
             :periods="chartPeriods"
           />
         </div>
@@ -103,38 +103,18 @@
       <div class="site-footer__inner dk-container">
         <div class="site-footer__intro">
           <p class="dk-eyebrow">Weekly Perspective</p>
-          <h2 class="dk-serif">생각할 시간을<br />보내드립니다.</h2>
-          <form class="site-footer__form" @submit.prevent="subscribed = true">
-            <label class="dk-visually-hidden" for="newsletter-email"
-              >이메일 주소</label
-            >
-            <input
-              id="newsletter-email"
-              type="email"
-              inputmode="email"
-              autocomplete="email"
-              placeholder="Email address"
-              required
-            />
-            <button type="submit"
-              >Subscribe <span aria-hidden="true">→</span></button
-            >
-          </form>
-          <p v-if="subscribed" class="site-footer__status" role="status">
-            등록되었습니다. 다음 관점에서 만나요.
+          <h2 class="dk-serif">생각할 시간을<br />준비하고 있습니다.</h2>
+          <p class="site-footer__notice">
+            Weekly Perspective는 준비 중입니다. 지금은 공개된 리서치를 먼저
+            살펴보세요.
           </p>
+          <DkTextLink label="리서치 둘러보기" to="#research" />
         </div>
 
         <div class="site-footer__nav">
           <section v-for="group in footerGroups" :key="group.title">
             <h3>{{ group.title }}</h3>
-            <a
-              v-for="item in group.items"
-              :key="item"
-              href="#top"
-              @click.prevent
-              >{{ item }}</a
-            >
+            <span v-for="item in group.items" :key="item">{{ item }}</span>
           </section>
         </div>
 
@@ -148,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import DkEditorialImage from '@/components/DkEditorialImage.vue'
 import DkMarketMetric from '@/components/DkMarketMetric.vue'
 import DkResearchItem from '@/components/DkResearchItem.vue'
@@ -159,14 +139,16 @@ import {
   chartPeriods,
   featuredResearch,
   footerGroups,
-  marketSeries,
+  marketSeriesByPeriod,
   marketSnapshot,
   researchItems
 } from '@/content/home.js'
 import architectureImage from '@/assets/editorial/architecture.webp'
 
 const activePeriod = ref('1D')
-const subscribed = ref(false)
+const activeMarketSeries = computed(
+  () => marketSeriesByPeriod[activePeriod.value] ?? marketSeriesByPeriod['1D']
+)
 </script>
 
 <style scoped lang="scss">
@@ -326,44 +308,12 @@ const subscribed = ref(false)
     }
   }
 
-  &__form {
-    display: flex;
+  &__notice {
     max-width: 520px;
-    margin-top: 48px;
-    border-bottom: 1px solid rgba(244, 241, 234, 0.48);
-
-    input,
-    button {
-      border: 0;
-      background: transparent;
-      color: var(--dk-paper);
-    }
-
-    input {
-      min-width: 0;
-      flex: 1;
-      padding: 15px 0;
-      outline: 0;
-
-      &::placeholder {
-        color: rgba(244, 241, 234, 0.42);
-      }
-    }
-
-    button {
-      padding: 15px 0 15px 18px;
-      cursor: pointer;
-      font-size: 0.66rem;
-      font-weight: 600;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
-    }
-  }
-
-  &__status {
-    margin: 12px 0 0;
-    color: rgba(244, 241, 234, 0.62);
-    font-size: 0.72rem;
+    margin: 42px 0 22px;
+    color: rgba(244, 241, 234, 0.72);
+    font-size: 0.78rem;
+    line-height: 1.8;
   }
 
   &__nav {
@@ -387,9 +337,9 @@ const subscribed = ref(false)
       text-transform: uppercase;
     }
 
-    a {
+    span {
       width: max-content;
-      color: rgba(244, 241, 234, 0.56);
+      color: rgba(244, 241, 234, 0.72);
       font-size: 0.7rem;
     }
   }
@@ -401,7 +351,7 @@ const subscribed = ref(false)
     margin-top: 92px;
     padding-top: 25px;
     border-top: 1px solid rgba(244, 241, 234, 0.18);
-    color: rgba(244, 241, 234, 0.45);
+    color: rgba(244, 241, 234, 0.7);
     font-size: 0.57rem;
     letter-spacing: 0.09em;
     text-transform: uppercase;

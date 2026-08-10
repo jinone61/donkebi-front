@@ -10,17 +10,17 @@
     </div>
     <div class="research-item__action">
       <time :datetime="date.replaceAll('.', '-')">{{ date }}</time>
-      <a :href="to" :aria-label="`${title} 읽기`" @click="handleClick">
+      <span class="research-item__mark" aria-hidden="true">
         <svg aria-hidden="true" viewBox="0 0 24 24">
           <path d="M5 12h13M14 7l5 5-5 5" />
         </svg>
-      </a>
+      </span>
     </div>
   </article>
 </template>
 
 <script setup>
-const props = defineProps({
+defineProps({
   index: {
     type: String,
     required: true
@@ -40,22 +40,8 @@ const props = defineProps({
   date: {
     type: String,
     required: true
-  },
-  to: {
-    type: String,
-    default: '#'
   }
 })
-
-function handleClick(event) {
-  if (!props.to.startsWith('#')) return
-
-  const target = document.querySelector(props.to)
-  if (!target) return
-
-  event.preventDefault()
-  target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-}
 </script>
 
 <style scoped lang="scss">
@@ -115,20 +101,12 @@ function handleClick(event) {
       font-size: 0.67rem;
     }
 
-    a {
+    .research-item__mark {
       display: grid;
       width: 34px;
       height: 34px;
       place-items: center;
       border: 1px solid var(--dk-line);
-      transition:
-        background var(--dk-fast),
-        color var(--dk-fast);
-
-      &:hover {
-        background: var(--dk-ink);
-        color: var(--dk-paper);
-      }
     }
 
     svg {

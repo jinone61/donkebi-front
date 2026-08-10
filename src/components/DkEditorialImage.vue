@@ -1,7 +1,7 @@
 <template>
   <figure class="editorial-image">
     <div class="editorial-image__frame">
-      <img :src="src" :alt="alt" />
+      <img :src="src" :alt="alt" loading="lazy" decoding="async" />
     </div>
     <figcaption v-if="caption">{{ caption }}</figcaption>
   </figure>

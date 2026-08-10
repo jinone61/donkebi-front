@@ -36,8 +36,17 @@ const props = defineProps({
   }
 })
 
-const displayValue = computed(() => props.value ?? '—')
-const displayDelta = computed(() => props.delta ?? '변동 정보 없음')
+function normalizeDisplay(value, fallback) {
+  if (value == null) return fallback
+  if (typeof value === 'string' && value.trim() === '') return fallback
+  if (typeof value === 'number' && !Number.isFinite(value)) return fallback
+  return value
+}
+
+const displayValue = computed(() => normalizeDisplay(props.value, '—'))
+const displayDelta = computed(() =>
+  normalizeDisplay(props.delta, '변동 정보 없음')
+)
 </script>
 
 <style scoped lang="scss">

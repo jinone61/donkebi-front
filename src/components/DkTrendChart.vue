@@ -63,7 +63,12 @@ const props = defineProps({
 defineEmits(['update:modelValue'])
 
 const validPoints = computed(() =>
-  props.points.filter(point => point && Number.isFinite(Number(point.value)))
+  props.points.filter(point => {
+    if (!point || point.value == null) return false
+    if (typeof point.value === 'string' && point.value.trim() === '')
+      return false
+    return Number.isFinite(Number(point.value))
+  })
 )
 
 const plottedPoints = computed(() => {

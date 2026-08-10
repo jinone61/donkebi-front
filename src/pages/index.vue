@@ -18,18 +18,13 @@
         </nav>
 
         <div class="site-header__actions">
-          <button type="button" class="icon-button" aria-label="검색">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <circle cx="10.5" cy="10.5" r="5.5" />
-              <path d="m15 15 4.5 4.5" />
-            </svg>
-          </button>
           <button
+            ref="menuButton"
             type="button"
             class="icon-button menu-button"
             :aria-expanded="mobileMenuOpen"
             aria-controls="mobile-navigation"
-            aria-label="메뉴 열기"
+            :aria-label="mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'"
             @click="mobileMenuOpen = !mobileMenuOpen"
           >
             <span></span>
@@ -65,10 +60,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { navigationItems } from '@/content/home.js'
 
 const mobileMenuOpen = ref(false)
+const menuButton = ref(null)
+
+function handleKeydown(event) {
+  if (event.key !== 'Escape' || !mobileMenuOpen.value) return
+
+  mobileMenuOpen.value = false
+  menuButton.value?.focus()
+}
+
+onMounted(() => document.addEventListener('keydown', handleKeydown))
+onBeforeUnmount(() => document.removeEventListener('keydown', handleKeydown))
 
 function scrollTo(selector) {
   mobileMenuOpen.value = false
@@ -87,9 +93,8 @@ function scrollTo(selector) {
 
 .site-header {
   border-bottom: 1px solid var(--dk-line);
-  background: rgba(244, 241, 234, 0.94);
+  background: var(--dk-paper);
   color: var(--dk-ink);
-  backdrop-filter: blur(12px);
 
   &__inner {
     display: grid;
