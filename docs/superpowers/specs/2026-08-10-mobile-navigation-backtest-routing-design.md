@@ -6,9 +6,11 @@ Improve the existing editorial homepage without revisiting its visual system. Th
 
 ## Mobile Menu
 
-On screens below 768px, the menu opens as a fixed, opaque paper-colored layer directly beneath the 68px header. It fills the remaining viewport height, scrolls internally when necessary, and stays above homepage content. Opening it must not change the homepage position or dimensions.
+On screens below 768px, the menu opens directly beneath the 68px header. The opaque paper-colored panel is only as tall as its navigation content and slides down over the homepage without changing document flow. A transparent fixed backdrop covers the rest of the viewport so the page remains visible behind it.
 
-While open, background scrolling is locked. The menu button exposes the correct expanded state and open/close label. Escape closes the layer and restores focus to the menu button. Choosing any item closes the layer before scrolling or navigating.
+While open, the backdrop blocks page interaction and background scrolling. Tapping the transparent area closes only the menu. Covered page content is removed from keyboard navigation, while Escape closes the layer and restores focus to the menu button. Choosing any item closes the layer before scrolling or navigating.
+
+Locking scroll must not change the page width. Reserve the browser scrollbar gutter so the homepage and fixed header keep identical horizontal geometry before, during, and after menu use. Close and clean up the menu automatically when the viewport enters the desktop breakpoint.
 
 Desktop navigation remains unchanged.
 
@@ -27,4 +29,4 @@ Add `src/pages/backtest.vue` as a temporary standalone page discovered by the ex
 
 ## Verification
 
-Browser checks will confirm that opening the menu does not move homepage content, background scrolling is locked, Escape restores focus, and mobile navigation has no horizontal overflow. Route checks will confirm that BACKTEST resolves to `/backtest`, the placeholder renders, and its home link returns to `/`. Existing lint and production build commands must remain green.
+Browser checks will confirm that the panel height follows its content, the transparent backdrop reaches the bottom of the viewport, and opening the menu does not change homepage width or position. They will also verify background scroll and focus locking, backdrop dismissal, Escape focus restoration, desktop-breakpoint cleanup, and the absence of horizontal overflow. Route checks will confirm that BACKTEST resolves to `/backtest`, the placeholder renders, and its home link returns to `/`. Existing lint and production build commands must remain green.
