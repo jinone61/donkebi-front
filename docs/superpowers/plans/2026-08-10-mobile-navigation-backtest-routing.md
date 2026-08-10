@@ -4,58 +4,109 @@
 
 **Goal:** Make the mobile menu overlay the homepage without layout movement and provide a real `/backtest` destination from desktop and mobile navigation.
 
-**Architecture:** Keep the homepage's anchor navigation and extend each navigation item with either `href` or `to`. Render anchor items as buttons and Backtest as a router link. Move the mobile navigation out of document flow with a fixed viewport layer, lock body scrolling while it is open, and add one replaceable file-based Backtest page.
+**Architecture:** Keep the homepage's anchor navigation and extend each navigation item with either `href` or `to`. Render anchor items as buttons and Backtest as a router link. Place a content-height paper menu inside a transparent fixed viewport layer, lock covered page interaction without changing its width, and keep the replaceable file-based Backtest page.
 
 **Tech Stack:** Vue 3 Composition API, Quasar 2, Vue Router file-based pages, scoped SCSS, Node-driven Chrome DevTools Protocol browser checks
 
 ## Global Constraints
 
 - Preserve the existing editorial visual system and desktop homepage layout.
-- Below 768px, the menu begins under the 68px header and fills the remaining viewport.
+- Below 768px, the menu panel begins under the 68px header and is only as tall as its content.
+- A transparent backdrop fills the remaining viewport, blocks background interaction, and closes the menu when tapped.
+- Scroll locking must not change the homepage or header width.
 - 시장, 리서치, 테마, 아카이브 remain same-page actions; only BACKTEST opens a separate route.
 - Backtest functionality and final branding remain outside this implementation.
 - Add no runtime dependency or test framework.
 
 ---
 
-### Task 1: Fixed Mobile Menu Overlay
+### Task 1: Content-Height Mobile Menu Overlay
 
 **Files:**
 
 - Modify: `src/pages/index.vue`
+- Modify: `src/css/app.scss`
 - Test: `/tmp/donkebi-navigation-regression.mjs` (ephemeral browser check; do not commit)
 
 **Interfaces:**
 
 - Consumes: `navigationItems` entries containing either `href: string` or `to: string`.
-- Produces: `closeMobileMenu({ restoreFocus?: boolean })`, a fixed `#mobile-navigation` layer, and restored body overflow on close/unmount.
+- Produces: `closeMobileMenu({ restoreFocus?: boolean })`, `.mobile-menu-layer`, content-height `#mobile-navigation`, stable scrollbar geometry, and restored body overflow on close/unmount.
 
 - [ ] **Step 1: Write the failing browser check**
 
-Create an ephemeral CDP check that loads the mobile homepage, records `.hero` top and `document.body.style.overflow`, clicks `.menu-button`, then asserts:
+Create an ephemeral CDP check that loads the mobile homepage, records `.hero` geometry and `document.body.style.overflow`, clicks `.menu-button`, then asserts:
 
 ```js
-const beforeTop = document.querySelector('.hero').getBoundingClientRect().top
+const before = document.querySelector('.hero').getBoundingClientRect()
 document.querySelector('.menu-button').click()
-await new Promise(resolve => requestAnimationFrame(resolve))
-const afterTop = document.querySelector('.hero').getBoundingClientRect().top
+await new Promise(resolve => setTimeout(resolve, 240))
+const after = document.querySelector('.hero').getBoundingClientRect()
+const panel = document.querySelector('.mobile-nav').getBoundingClientRect()
+const layer = document.querySelector('.mobile-menu-layer').getBoundingClientRect()
 
-if (beforeTop !== afterTop)
-  throw new Error('mobile menu moved homepage content')
+if (before.top !== after.top || before.width !== after.width) {
+  throw new Error('mobile menu changed homepage geometry')
+}
 if (document.body.style.overflow !== 'hidden') {
   throw new Error('mobile menu did not lock background scrolling')
 }
+if (panel.bottom >= innerHeight) throw new Error('menu panel is full height')
+if (layer.bottom !== innerHeight) throw new Error('backdrop is incomplete')
 ```
 
 - [ ] **Step 2: Run the check to verify RED**
 
 Run: `node /tmp/donkebi-navigation-regression.mjs`
 
-Expected: FAIL because the current header expands in document flow and body overflow is not locked.
+Expected: FAIL because the current opaque menu panel extends to the bottom of the viewport and has no separate transparent backdrop.
 
 - [ ] **Step 3: Implement the overlay and lifecycle**
 
-In `src/pages/index.vue`, use a single close function and a watcher:
+In `src/pages/index.vue`, keep the single close function, body-scroll lifecycle, inert page binding, Escape focus restoration, and desktop-breakpoint cleanup. Wrap the navigation panel in a fixed layer:
+
+```vue
+<transition name="menu-reveal">
+  <div
+    v-if="mobileMenuOpen"
+    class="mobile-menu-layer"
+    @click.self="closeMobileMenu()"
+  >
+    <nav id="mobile-navigation" class="mobile-nav dk-container">
+      <!-- existing navigation controls -->
+    </nav>
+  </div>
+</transition>
+```
+
+Reserve scrollbar space globally in `src/css/app.scss`:
+
+```scss
+html {
+  scrollbar-gutter: stable;
+}
+```
+
+Use a fixed transparent layer and a natural-height paper panel:
+
+```scss
+.mobile-menu-layer {
+  position: fixed;
+  top: 68px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.mobile-nav {
+  max-height: calc(100dvh - 68px);
+  overflow-y: auto;
+  background: var(--dk-paper);
+}
+```
+
+Animate only `.mobile-nav` from `translateY(-100%)` so the transparent backdrop itself remains stationary. Preserve the body overflow watcher:
 
 ```js
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -82,33 +133,17 @@ onBeforeUnmount(() => {
 })
 ```
 
-Use `closeMobileMenu({ restoreFocus: true })` for Escape. Under the mobile breakpoint, style the menu as:
-
-```scss
-.mobile-nav {
-  position: fixed;
-  top: 68px;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
-  align-content: start;
-  overflow-y: auto;
-  background: var(--dk-paper);
-}
-```
-
 - [ ] **Step 4: Run the check to verify GREEN**
 
 Run: `node /tmp/donkebi-navigation-regression.mjs`
 
-Expected: PASS; homepage top is unchanged, body scrolling is locked, Escape closes the menu and returns focus, and document width remains 390px.
+Expected: PASS; panel height follows content, transparent backdrop reaches the viewport bottom, backdrop tap only closes the menu, homepage geometry is unchanged, body scrolling is locked, and Escape restores focus.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/pages/index.vue
-git commit -m "fix: overlay mobile navigation"
+git add src/pages/index.vue src/css/app.scss
+git commit -m "fix: refine mobile navigation overlay"
 ```
 
 ### Task 2: Backtest Route Contract
