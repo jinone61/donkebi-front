@@ -1,19 +1,34 @@
 <template>
   <div class="backtest-page">
-    <div class="row items-center justify-between bg-grey-4 sticky-header q-py-sm">
+    <div
+      class="row items-center justify-between bg-grey-4 sticky-header q-py-sm"
+    >
       <div class="col-auto row items-center q-pl-sm no-wrap">
         <div class="text-h6 text-green-8"></div>
       </div>
       <div class="col-auto row items-center q-pr-sm no-wrap">
-        <q-btn flat dense round icon="menu" aria-label="Menu" color="grey-8" @click="toggleMenu" />
+        <q-btn
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Menu"
+          color="grey-8"
+          @click="toggleMenu"
+        />
       </div>
     </div>
 
-    <div v-if="!isAuthenticated" class="auth-area row justify-center items-center bg-grey-2">
+    <div
+      v-if="!isAuthenticated"
+      class="auth-area row justify-center items-center bg-grey-2"
+    >
       <q-card flat bordered class="auth-card q-pa-md shadow-2">
         <q-card-section class="text-center">
           <div class="text-h6 text-weight-bold text-grey-8">Backtest</div>
-          <div class="text-caption text-grey-6 q-mt-xs">비밀번호를 입력해 주세요.</div>
+          <div class="text-caption text-grey-6 q-mt-xs"
+            >비밀번호를 입력해 주세요.</div
+          >
         </q-card-section>
         <q-card-section>
           <q-input
@@ -29,7 +44,12 @@
           />
         </q-card-section>
         <q-card-actions align="center">
-          <q-btn label="확인" color="green-5" class="full-width" @click="checkPassword" />
+          <q-btn
+            label="확인"
+            color="green-5"
+            class="full-width"
+            @click="checkPassword"
+          />
         </q-card-actions>
       </q-card>
     </div>
@@ -51,7 +71,11 @@
       <q-tab-panels v-model="activeTab" animated class="bg-transparent">
         <q-tab-panel name="settings" class="q-pa-none">
           <div class="content-container settings-container">
-            <q-banner v-if="submitError" rounded class="bg-red-1 text-negative q-mb-md">
+            <q-banner
+              v-if="submitError"
+              rounded
+              class="bg-red-1 text-negative q-mb-md"
+            >
               {{ submitError }}
             </q-banner>
 
@@ -60,8 +84,12 @@
               rounded
               class="bg-orange-1 text-orange-10 q-mb-md"
             >
-              <div class="text-weight-bold q-mb-xs">입력값을 확인해 주세요.</div>
-              <div v-for="message in validationErrors" :key="message">• {{ message }}</div>
+              <div class="text-weight-bold q-mb-xs"
+                >입력값을 확인해 주세요.</div
+              >
+              <div v-for="message in validationErrors" :key="message"
+                >• {{ message }}</div
+              >
             </q-banner>
 
             <q-form @submit.prevent="runBacktest">
@@ -171,15 +199,24 @@
               </q-dialog>
 
               <q-card flat bordered class="section-card strategy-settings">
-                <q-expansion-item expand-separator header-class="section-heading">
+                <q-expansion-item
+                  expand-separator
+                  header-class="section-heading"
+                >
                   <template #header>
                     <q-item-section>
                       <div class="text-h6 text-grey-9">공격 모드</div>
-                      <div class="text-caption text-grey-6">공격 티어의 분할과 매수·매도 조건</div>
+                      <div class="text-caption text-grey-6"
+                        >공격 티어의 분할과 매수·매도 조건</div
+                      >
                     </q-item-section>
                     <q-item-section side>
                       <div class="column items-end q-gutter-y-xs">
-                        <q-badge outline color="grey-7" :label="selectedPreset" />
+                        <q-badge
+                          outline
+                          color="grey-7"
+                          :label="selectedPreset"
+                        />
                         <q-badge
                           :color="isCustomPreset ? 'green-6' : 'grey-6'"
                           :label="isCustomPreset ? '수정 가능' : '잠김'"
@@ -208,15 +245,24 @@
               </q-card>
 
               <q-card flat bordered class="section-card strategy-settings">
-                <q-expansion-item expand-separator header-class="section-heading">
+                <q-expansion-item
+                  expand-separator
+                  header-class="section-heading"
+                >
                   <template #header>
                     <q-item-section>
                       <div class="text-h6 text-grey-9">방어 모드</div>
-                      <div class="text-caption text-grey-6">방어 티어와 이동평균 기반 조건</div>
+                      <div class="text-caption text-grey-6"
+                        >방어 티어와 이동평균 기반 조건</div
+                      >
                     </q-item-section>
                     <q-item-section side>
                       <div class="column items-end q-gutter-y-xs">
-                        <q-badge outline color="grey-7" :label="selectedPreset" />
+                        <q-badge
+                          outline
+                          color="grey-7"
+                          :label="selectedPreset"
+                        />
                         <q-badge
                           :color="isCustomPreset ? 'green-6' : 'grey-6'"
                           :label="isCustomPreset ? '수정 가능' : '잠김'"
@@ -239,13 +285,17 @@
                       dense
                       color="green-5"
                       @update:model-value="
-                        field.key === 'splitCount' ? handleDefenseSplitCount() : markCustom()
+                        field.key === 'splitCount'
+                          ? handleDefenseSplitCount()
+                          : markCustom()
                       "
                     />
                   </q-card-section>
                   <q-card-section class="q-pt-none">
                     <div class="row items-center justify-between q-mb-sm">
-                      <div class="text-subtitle2 text-grey-8">티어별 매수 비율</div>
+                      <div class="text-subtitle2 text-grey-8"
+                        >티어별 매수 비율</div
+                      >
                       <q-badge
                         :color="tierRatioTotal === 100 ? 'green-6' : 'orange-7'"
                         :label="`합계 ${formatNumber(tierRatioTotal, 2)}%`"
@@ -255,7 +305,9 @@
                       <q-input
                         v-for="(_, index) in form.defenseMode.tierBuyRatiosPct"
                         :key="`ratio-${index}`"
-                        v-model.number="form.defenseMode.tierBuyRatiosPct[index]"
+                        v-model.number="
+                          form.defenseMode.tierBuyRatiosPct[index]
+                        "
                         type="number"
                         :label="`방T${index + 1}`"
                         suffix="%"
@@ -292,13 +344,18 @@
               <q-card-section class="section-heading">
                 <div class="row items-center justify-between q-col-gutter-md">
                   <div>
-                    <div class="text-h6 text-grey-9">{{ backtestResult.symbol }} 백테스트</div>
+                    <div class="text-h6 text-grey-9"
+                      >{{ backtestResult.symbol }} 백테스트</div
+                    >
                     <div class="text-caption text-grey-6">
                       {{ backtestResult.actualStartDate }} ~
                       {{ backtestResult.backtestedThroughDate }}
                     </div>
                   </div>
-                  <q-badge color="green-6" :label="finalPortfolio.currency || 'USD'" />
+                  <q-badge
+                    color="green-6"
+                    :label="finalPortfolio.currency || 'USD'"
+                  />
                 </div>
               </q-card-section>
               <q-banner
@@ -321,22 +378,30 @@
                 class="metric-card"
               >
                 <div class="metric-label">{{ card.label }}</div>
-                <div class="metric-value" :class="card.valueClass">{{ card.value }}</div>
-                <div v-if="card.caption" class="metric-caption">{{ card.caption }}</div>
+                <div class="metric-value" :class="card.valueClass">{{
+                  card.value
+                }}</div>
+                <div v-if="card.caption" class="metric-caption">{{
+                  card.caption
+                }}</div>
               </q-card>
             </div>
 
             <q-card flat bordered class="section-card">
               <q-card-section class="section-heading">
                 <div class="text-h6 text-grey-9">최종 포트폴리오</div>
-                <div class="text-caption text-grey-6">{{ finalPortfolio.date || '-' }} 기준</div>
+                <div class="text-caption text-grey-6"
+                  >{{ finalPortfolio.date || '-' }} 기준</div
+                >
               </q-card-section>
               <q-separator />
               <q-card-section>
                 <div class="metric-grid compact-grid">
                   <div class="metric-card">
                     <div class="metric-label">가용 현금</div>
-                    <div class="metric-value">{{ formatMoney(finalPortfolio.availableCash) }}</div>
+                    <div class="metric-value">{{
+                      formatMoney(finalPortfolio.availableCash)
+                    }}</div>
                   </div>
                   <div class="metric-card">
                     <div class="metric-label">보유 평가액</div>
@@ -352,12 +417,16 @@
                   </div>
                   <div class="metric-card">
                     <div class="metric-label">마지막 종가</div>
-                    <div class="metric-value">{{ formatPrice(finalPortfolio.closePrice) }}</div>
+                    <div class="metric-value">{{
+                      formatPrice(finalPortfolio.closePrice)
+                    }}</div>
                   </div>
                 </div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-sm">
+                <div
+                  class="text-subtitle1 text-weight-bold text-grey-8 q-mb-sm"
+                >
                   티어별 보유 현황
                 </div>
                 <q-table
@@ -377,8 +446,13 @@
                       <q-card flat bordered class="mobile-data-card">
                         <div class="mobile-data-card__header">
                           <div class="row items-center q-gutter-xs">
-                            <q-badge :color="modeColor(props.row.mode)" :label="props.row.mode" />
-                            <span class="text-weight-bold text-grey-8">{{ props.row.tier }}</span>
+                            <q-badge
+                              :color="modeColor(props.row.mode)"
+                              :label="props.row.mode"
+                            />
+                            <span class="text-weight-bold text-grey-8">{{
+                              props.row.tier
+                            }}</span>
                           </div>
                           <span class="text-caption text-grey-6">
                             {{ formatInteger(props.row.quantity) }}주
@@ -393,7 +467,9 @@
                           </div>
                           <div>
                             <div class="data-label">평가액</div>
-                            <div class="data-value">{{ formatMoney(props.row.marketValue) }}</div>
+                            <div class="data-value">{{
+                              formatMoney(props.row.marketValue)
+                            }}</div>
                           </div>
                           <div>
                             <div class="data-label">미실현 손익</div>
@@ -408,7 +484,9 @@
                             <div class="data-label">수익률</div>
                             <div
                               class="data-value"
-                              :class="profitClass(props.row.unrealizedReturnPct)"
+                              :class="
+                                profitClass(props.row.unrealizedReturnPct)
+                              "
                             >
                               {{ formatPct(props.row.unrealizedReturnPct) }}
                             </div>
@@ -419,7 +497,10 @@
                   </template>
                   <template #body-cell-mode="props">
                     <q-td :props="props">
-                      <q-badge :color="modeColor(props.value)" :label="props.value" />
+                      <q-badge
+                        :color="modeColor(props.value)"
+                        :label="props.value"
+                      />
                     </q-td>
                   </template>
                   <template #body-cell-averageBuyPrice="props">
@@ -439,14 +520,18 @@
                     </q-td>
                   </template>
                 </q-table>
-                <div v-else class="empty-message">최종 보유 티어가 없습니다.</div>
+                <div v-else class="empty-message"
+                  >최종 보유 티어가 없습니다.</div
+                >
               </q-card-section>
             </q-card>
 
             <q-card flat bordered class="section-card">
               <q-card-section class="section-heading">
                 <div class="text-h6 text-grey-9">가격 및 체결</div>
-                <div class="text-caption text-grey-6">일별 종가와 실제 매수·매도 체결 위치</div>
+                <div class="text-caption text-grey-6"
+                  >일별 종가와 실제 매수·매도 체결 위치</div
+                >
               </q-card-section>
               <q-separator />
               <q-card-section>
@@ -458,14 +543,18 @@
                     :options="priceChartOptions"
                   />
                 </div>
-                <div v-else class="empty-message">차트로 표시할 일별 데이터가 없습니다.</div>
+                <div v-else class="empty-message"
+                  >차트로 표시할 일별 데이터가 없습니다.</div
+                >
               </q-card-section>
             </q-card>
 
             <q-card flat bordered class="section-card">
               <q-card-section class="section-heading">
                 <div class="text-h6 text-grey-9">포트폴리오 성과</div>
-                <div class="text-caption text-grey-6">총자산과 drawdown 추이</div>
+                <div class="text-caption text-grey-6"
+                  >총자산과 drawdown 추이</div
+                >
               </q-card-section>
               <q-separator />
               <q-card-section>
@@ -477,12 +566,16 @@
                     :options="performanceChartOptions"
                   />
                 </div>
-                <div v-else class="empty-message">차트로 표시할 일별 데이터가 없습니다.</div>
+                <div v-else class="empty-message"
+                  >차트로 표시할 일별 데이터가 없습니다.</div
+                >
               </q-card-section>
             </q-card>
 
             <q-card flat bordered class="section-card">
-              <q-card-section class="section-heading row items-center justify-between">
+              <q-card-section
+                class="section-heading row items-center justify-between"
+              >
                 <div>
                   <div class="text-h6 text-grey-9">일별 백테스트 내역</div>
                   <div class="text-caption text-grey-6">
@@ -516,27 +609,38 @@
                     <template #header>
                       <div class="daily-row daily-desktop-summary">
                         <div class="daily-cell">
-                          <span class="mobile-label">날짜</span>{{ day.sessionDate }}
+                          <span class="mobile-label">날짜</span
+                          >{{ day.sessionDate }}
                         </div>
                         <div class="daily-cell">
                           <span class="mobile-label">모드</span>
-                          <q-badge :color="modeColor(day.mode)" :label="day.mode" />
+                          <q-badge
+                            :color="modeColor(day.mode)"
+                            :label="day.mode"
+                          />
                         </div>
                         <div class="daily-cell">
-                          <span class="mobile-label">종가</span>{{ formatPrice(day.closePrice) }}
+                          <span class="mobile-label">종가</span
+                          >{{ formatPrice(day.closePrice) }}
                         </div>
                         <div class="daily-cell">
-                          <span class="mobile-label">총자산</span>{{ formatMoney(day.totalAsset) }}
+                          <span class="mobile-label">총자산</span
+                          >{{ formatMoney(day.totalAsset) }}
                         </div>
-                        <div class="daily-cell" :class="profitClass(day.drawdownPct)">
+                        <div
+                          class="daily-cell"
+                          :class="profitClass(day.drawdownPct)"
+                        >
                           <span class="mobile-label">DD</span
                           >{{ formatPct(day.drawdownPct, false) }}
                         </div>
                         <div class="daily-cell">
-                          <span class="mobile-label">주문</span>{{ day.orders.length }}
+                          <span class="mobile-label">주문</span
+                          >{{ day.orders.length }}
                         </div>
                         <div class="daily-cell">
-                          <span class="mobile-label">체결</span>{{ day.executions.length }}
+                          <span class="mobile-label">체결</span
+                          >{{ day.executions.length }}
                         </div>
                         <div class="daily-cell">
                           <span class="mobile-label">마감 현금</span
@@ -549,10 +653,15 @@
                       </div>
                       <div class="daily-mobile-summary">
                         <div class="daily-mobile-summary__header">
-                          <span class="text-weight-bold text-grey-8">{{ day.sessionDate }}</span>
+                          <span class="text-weight-bold text-grey-8">{{
+                            day.sessionDate
+                          }}</span>
                           <span class="daily-mobile-summary__meta"
                             >종가 {{ formatPrice(day.closePrice) }} ·
-                            <q-badge :color="modeColor(day.mode)" :label="day.mode" />
+                            <q-badge
+                              :color="modeColor(day.mode)"
+                              :label="day.mode"
+                            />
                           </span>
                         </div>
                         <div class="daily-mobile-summary__values">
@@ -574,13 +683,15 @@
                         </div>
                         <div class="daily-mobile-summary__meta">
                           <span
-                            ><span>현금</span> {{ formatMoney(day.closingCash) }} ({{
+                            ><span>현금</span>
+                            {{ formatMoney(day.closingCash) }} ({{
                               formatPct(day.cashRatioPct, false)
                             }})</span
                           >
                           <span></span>
                           <span
-                            >주문 {{ day.orders.length }} · 체결 {{ day.executions.length }}</span
+                            >주문 {{ day.orders.length }} · 체결
+                            {{ day.executions.length }}</span
                           >
                         </div>
                       </div>
@@ -592,21 +703,30 @@
                         <div class="detail-summary">
                           <span>목표일 {{ day.plan?.targetDate || '-' }}</span>
                           <span>모드 {{ day.plan?.mode || '-' }}</span>
-                          <span>기준 매수가 {{ formatPrice(day.plan?.buyPrice) }}</span>
+                          <span
+                            >기준 매수가
+                            {{ formatPrice(day.plan?.buyPrice) }}</span
+                          >
                         </div>
                         <div v-if="day.plan?.buyOrder" class="detail-note">
                           매수 {{ day.plan.buyOrder.tier }} ·
                           {{ formatInteger(day.plan.buyOrder.quantity) }}주 ·
                           {{ formatPrice(day.plan.buyOrder.orderPrice) }}
                         </div>
-                        <div v-if="day.plan?.sellOrders?.length" class="detail-note">
+                        <div
+                          v-if="day.plan?.sellOrders?.length"
+                          class="detail-note"
+                        >
                           매도 계획 {{ day.plan.sellOrders.length }}건
                         </div>
                       </div>
 
                       <div class="detail-section">
                         <div class="detail-title">주문 및 체결</div>
-                        <div v-if="day.orderExecutionRows.length" class="table-scroll">
+                        <div
+                          v-if="day.orderExecutionRows.length"
+                          class="table-scroll"
+                        >
                           <q-markup-table flat bordered dense>
                             <thead>
                               <tr>
@@ -633,9 +753,15 @@
                                 </td>
                                 <td>{{ row.tier }}</td>
                                 <td>{{ row.orderType }}</td>
-                                <td class="text-right">{{ formatPrice(row.orderPrice) }}</td>
-                                <td class="text-right">{{ formatInteger(row.orderedQuantity) }}</td>
-                                <td class="text-right">{{ formatPrice(row.executionPrice) }}</td>
+                                <td class="text-right">{{
+                                  formatPrice(row.orderPrice)
+                                }}</td>
+                                <td class="text-right">{{
+                                  formatInteger(row.orderedQuantity)
+                                }}</td>
+                                <td class="text-right">{{
+                                  formatPrice(row.executionPrice)
+                                }}</td>
                                 <td class="text-right">
                                   {{ formatInteger(row.executedQuantity) }}
                                 </td>
@@ -652,10 +778,17 @@
                       <div class="detail-section">
                         <div class="detail-title">현금 흐름</div>
                         <div class="detail-summary q-mb-sm">
-                          <span>시작 {{ formatMoney(day.cash?.openingCash) }}</span>
-                          <span>마감 {{ formatMoney(day.cash?.closingCash) }}</span>
+                          <span
+                            >시작 {{ formatMoney(day.cash?.openingCash) }}</span
+                          >
+                          <span
+                            >마감 {{ formatMoney(day.cash?.closingCash) }}</span
+                          >
                         </div>
-                        <div v-if="day.transactions.length" class="table-scroll">
+                        <div
+                          v-if="day.transactions.length"
+                          class="table-scroll"
+                        >
                           <q-markup-table flat bordered dense>
                             <thead>
                               <tr>
@@ -678,7 +811,9 @@
                                 >
                                   {{ formatMoney(transaction.changeAmount) }}
                                 </td>
-                                <td class="text-right">{{ formatMoney(transaction.cashAfter) }}</td>
+                                <td class="text-right">{{
+                                  formatMoney(transaction.cashAfter)
+                                }}</td>
                               </tr>
                             </tbody>
                           </q-markup-table>
@@ -697,7 +832,9 @@
                     />
                   </div>
                 </div>
-                <div v-else class="empty-message q-pa-lg">일별 결과가 없습니다.</div>
+                <div v-else class="empty-message q-pa-lg"
+                  >일별 결과가 없습니다.</div
+                >
               </q-card-section>
             </q-card>
           </div>
@@ -706,7 +843,9 @@
         <q-tab-panel name="plan" class="q-pa-none">
           <div class="content-container" v-if="hasResult">
             <q-card flat bordered class="section-card">
-              <q-card-section class="section-heading row items-center justify-between">
+              <q-card-section
+                class="section-heading row items-center justify-between"
+              >
                 <div>
                   <div class="text-h6 text-grey-9">다음 거래 계획</div>
                   <div class="text-caption text-grey-6">
@@ -718,14 +857,19 @@
                     color="grey-7"
                     :label="nextPlan.targetDate || backtestResult.targetDate"
                   />
-                  <q-badge :color="modeColor(nextPlan.mode)" :label="nextPlan.mode || '-'" />
+                  <q-badge
+                    :color="modeColor(nextPlan.mode)"
+                    :label="nextPlan.mode || '-'"
+                  />
                 </div>
               </q-card-section>
 
               <q-separator />
 
               <q-card-section>
-                <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-sm">매수 계획</div>
+                <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-sm"
+                  >매수 계획</div
+                >
                 <q-table
                   v-if="nextBuyOrders.length"
                   flat
@@ -743,7 +887,10 @@
                       <q-card flat bordered class="mobile-data-card">
                         <div class="mobile-data-card__header">
                           <div class="row items-center q-gutter-xs">
-                            <q-badge color="blue-grey-7" :label="props.row.tier" />
+                            <q-badge
+                              color="blue-grey-7"
+                              :label="props.row.tier"
+                            />
                             <span class="text-weight-bold text-grey-8">
                               {{ props.row.orderType }} 매수
                             </span>
@@ -759,15 +906,21 @@
                           </div>
                           <div>
                             <div class="data-label">주문가</div>
-                            <div class="data-value">{{ formatPrice(props.row.orderPrice) }}</div>
+                            <div class="data-value">{{
+                              formatPrice(props.row.orderPrice)
+                            }}</div>
                           </div>
                           <div>
                             <div class="data-label">수량</div>
-                            <div class="data-value">{{ formatInteger(props.row.quantity) }}주</div>
+                            <div class="data-value"
+                              >{{ formatInteger(props.row.quantity) }}주</div
+                            >
                           </div>
                           <div>
                             <div class="data-label">주문 방식</div>
-                            <div class="data-value">{{ props.row.orderType }}</div>
+                            <div class="data-value">{{
+                              props.row.orderType
+                            }}</div>
                           </div>
                         </div>
                       </q-card>
@@ -780,14 +933,20 @@
                     <q-td :props="props">{{ formatPrice(props.value) }}</q-td>
                   </template>
                   <template #body-cell-quantity="props">
-                    <q-td :props="props">{{ formatInteger(props.value) }}주</q-td>
+                    <q-td :props="props"
+                      >{{ formatInteger(props.value) }}주</q-td
+                    >
                   </template>
                 </q-table>
-                <div v-else class="empty-message">다음 매수 계획이 없습니다.</div>
+                <div v-else class="empty-message"
+                  >다음 매수 계획이 없습니다.</div
+                >
               </q-card-section>
 
               <q-card-section class="q-pt-none">
-                <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-sm">매도 계획</div>
+                <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-sm"
+                  >매도 계획</div
+                >
                 <q-table
                   v-if="nextSellOrders.length"
                   flat
@@ -805,7 +964,10 @@
                       <q-card flat bordered class="mobile-data-card">
                         <div class="mobile-data-card__header">
                           <div class="row items-center q-gutter-xs">
-                            <q-badge color="blue-grey-7" :label="props.row.tier" />
+                            <q-badge
+                              color="blue-grey-7"
+                              :label="props.row.tier"
+                            />
                             <span class="text-weight-bold text-grey-8">
                               {{ props.row.orderType }} 매도
                             </span>
@@ -815,20 +977,28 @@
                         <div class="mobile-data-card__grid">
                           <div>
                             <div class="data-label">수량</div>
-                            <div class="data-value">{{ formatInteger(props.row.quantity) }}주</div>
+                            <div class="data-value"
+                              >{{ formatInteger(props.row.quantity) }}주</div
+                            >
                           </div>
                           <div>
                             <div class="data-label">주문가</div>
-                            <div class="data-value">{{ formatPrice(props.row.orderPrice) }}</div>
+                            <div class="data-value">{{
+                              formatPrice(props.row.orderPrice)
+                            }}</div>
                           </div>
                           <div>
                             <div class="data-label">매수일</div>
-                            <div class="data-value">{{ props.row.buySessionDate }}</div>
+                            <div class="data-value">{{
+                              props.row.buySessionDate
+                            }}</div>
                           </div>
                           <div>
                             <div class="data-label">보유/최대</div>
                             <div class="data-value">
-                              {{ props.row.heldSessionCount }}/{{ props.row.maxHoldDays }}일
+                              {{ props.row.heldSessionCount }}/{{
+                                props.row.maxHoldDays
+                              }}일
                             </div>
                           </div>
                         </div>
@@ -839,7 +1009,9 @@
                     <q-td :props="props">{{ formatPrice(props.value) }}</q-td>
                   </template>
                 </q-table>
-                <div v-else class="empty-message">다음 매도 계획이 없습니다.</div>
+                <div v-else class="empty-message"
+                  >다음 매도 계획이 없습니다.</div
+                >
               </q-card-section>
             </q-card>
 
@@ -873,18 +1045,28 @@
                               :color="sideColor(props.row.tradeSide)"
                               :label="props.row.tradeSide"
                             />
-                            <span class="text-weight-bold text-grey-8">{{ props.row.tier }}</span>
+                            <span class="text-weight-bold text-grey-8">{{
+                              props.row.tier
+                            }}</span>
                           </div>
-                          <span class="text-caption text-grey-6">{{ props.row.orderType }}</span>
+                          <span class="text-caption text-grey-6">{{
+                            props.row.orderType
+                          }}</span>
                         </div>
-                        <div class="mobile-data-card__grid mobile-data-card__grid--three">
+                        <div
+                          class="mobile-data-card__grid mobile-data-card__grid--three"
+                        >
                           <div>
                             <div class="data-label">주문가</div>
-                            <div class="data-value">{{ formatPrice(props.row.orderPrice) }}</div>
+                            <div class="data-value">{{
+                              formatPrice(props.row.orderPrice)
+                            }}</div>
                           </div>
                           <div>
                             <div class="data-label">수량</div>
-                            <div class="data-value">{{ formatInteger(props.row.quantity) }}주</div>
+                            <div class="data-value"
+                              >{{ formatInteger(props.row.quantity) }}주</div
+                            >
                           </div>
                           <div>
                             <div class="data-label">배정금액</div>
@@ -898,7 +1080,10 @@
                   </template>
                   <template #body-cell-tradeSide="props">
                     <q-td :props="props">
-                      <q-badge :color="sideColor(props.value)" :label="props.value" />
+                      <q-badge
+                        :color="sideColor(props.value)"
+                        :label="props.value"
+                      />
                     </q-td>
                   </template>
                   <template #body-cell-allocationAmount="props">
@@ -908,7 +1093,9 @@
                     <q-td :props="props">{{ formatPrice(props.value) }}</q-td>
                   </template>
                 </q-table>
-                <div v-else class="empty-message">생성된 다음 주문이 없습니다.</div>
+                <div v-else class="empty-message"
+                  >생성된 다음 주문이 없습니다.</div
+                >
               </q-card-section>
             </q-card>
           </div>
@@ -920,7 +1107,7 @@
 
 <script setup>
 import { computed, inject, reactive, ref } from 'vue'
-import { api } from 'boot/axios'
+import { api } from '@/boot/axios'
 import { useQuasar } from 'quasar'
 import {
   CategoryScale,
@@ -932,7 +1119,7 @@ import {
   LineElement,
   PointElement,
   ScatterController,
-  Tooltip,
+  Tooltip
 } from 'chart.js'
 import { Chart } from 'vue-chartjs'
 
@@ -945,7 +1132,7 @@ ChartJS.register(
   LineElement,
   Filler,
   Tooltip,
-  Legend,
+  Legend
 )
 
 function finiteNumber(value) {
@@ -955,15 +1142,16 @@ function finiteNumber(value) {
 }
 
 function mergeOrdersWithExecutions(orders = [], executions = []) {
-  return orders.map((order) => {
+  return orders.map(order => {
     const execution = executions.find(
-      (candidate) => candidate.tradeSide === order.tradeSide && candidate.tier === order.tier,
+      candidate =>
+        candidate.tradeSide === order.tradeSide && candidate.tier === order.tier
     )
 
     return {
       ...order,
       executionPrice: execution?.price ?? null,
-      executedQuantity: execution?.quantity ?? 0,
+      executedQuantity: execution?.quantity ?? 0
     }
   })
 }
@@ -983,7 +1171,7 @@ function formatMonthTickLabel(currentLabel, previousLabel) {
 }
 
 const $q = useQuasar()
-const toggleMenu = inject('toggleMenu')
+const toggleMenu = inject('toggleMenu', () => {})
 
 const BACKTEST_URL = '/api/dualsniper/backtest'
 const PAGE_PASSWORD = '1q2w3e!!'
@@ -997,7 +1185,7 @@ const COMMON_DEFENSE_MODE = {
   buyCondition2ClosePct: 5.5,
   sellConditionMaPct: 0.7,
   maWindow: 3,
-  tierBuyRatiosPct: [6, 13, 20, 27, 34],
+  tierBuyRatiosPct: [6, 13, 20, 27, 34]
 }
 
 const PRESETS = {
@@ -1006,57 +1194,67 @@ const PRESETS = {
       splitCount: 6,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: -0.1,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
   'Preset 2': {
     attackMode: {
       splitCount: 6,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 0.5,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
   'Preset 3': {
     attackMode: {
       splitCount: 5,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 0.5,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
   'Preset 4': {
     attackMode: {
       splitCount: 7,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 8,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
   'Preset 5': {
     attackMode: {
       splitCount: 6,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 8,
-      sellConditionAlpha: 0.4,
-    },
-  },
+      sellConditionAlpha: 0.4
+    }
+  }
 }
 
 const presetOptions = [...Object.keys(PRESETS), CUSTOM_PRESET]
 const attackFields = [
   { key: 'splitCount', label: '공격 분할 수', step: 1 },
   { key: 'holdingPeriodAlpha', label: '보유기간 계수', step: 0.1 },
-  { key: 'buyConditionClosePct', label: '종가 매수조건', suffix: '%', step: 0.1 },
-  { key: 'sellConditionAlpha', label: '매도조건 계수', step: 0.1 },
+  {
+    key: 'buyConditionClosePct',
+    label: '종가 매수조건',
+    suffix: '%',
+    step: 0.1
+  },
+  { key: 'sellConditionAlpha', label: '매도조건 계수', step: 0.1 }
 ]
 const defenseFields = [
   { key: 'splitCount', label: '방어 분할 수', step: 1 },
   { key: 'holdingPeriod', label: '최대 보유기간', suffix: '일', step: 1 },
   { key: 'buyCondition1MaPct', label: 'MA 매수조건', suffix: '%', step: 0.1 },
-  { key: 'buyCondition2ClosePct', label: '종가 매수조건', suffix: '%', step: 0.1 },
+  {
+    key: 'buyCondition2ClosePct',
+    label: '종가 매수조건',
+    suffix: '%',
+    step: 0.1
+  },
   { key: 'sellConditionMaPct', label: 'MA 매도조건', suffix: '%', step: 0.1 },
-  { key: 'maWindow', label: 'MA 기간', suffix: '일', step: 1 },
+  { key: 'maWindow', label: 'MA 기간', suffix: '일', step: 1 }
 ]
 
 const isAuthenticated = ref(false)
@@ -1079,58 +1277,68 @@ const form = reactive({
   initialAvailableCash: 120000,
   commissionRatePct: 0.04,
   attackMode: cloneAttackMode(PRESETS['Preset 5'].attackMode),
-  defenseMode: cloneDefenseMode(COMMON_DEFENSE_MODE),
+  defenseMode: cloneDefenseMode(COMMON_DEFENSE_MODE)
 })
 
 const isCustomPreset = computed(() => selectedPreset.value === CUSTOM_PRESET)
 const hasResult = computed(() => Boolean(backtestResult.value))
-const finalPortfolio = computed(() => backtestResult.value?.finalPortfolio || {})
+const finalPortfolio = computed(
+  () => backtestResult.value?.finalPortfolio || {}
+)
 const finalTiers = computed(() => finalPortfolio.value.tiers || [])
 const nextPlan = computed(() => backtestResult.value?.nextPlan || {})
 const nextSellOrders = computed(() => nextPlan.value.sellOrders || [])
 const nextOrders = computed(() =>
   (backtestResult.value?.nextOrders || []).map((order, index) => ({
     ...order,
-    rowKey: `${order.tradeSide}-${order.tier}-${index}`,
-  })),
+    rowKey: `${order.tradeSide}-${order.tier}-${index}`
+  }))
 )
 const nextBuyOrders = computed(() => {
   if (!nextPlan.value.buyOrder) return []
 
   const matchingOrder = nextOrders.value.find(
-    (order) => order.tradeSide === 'BUY' && order.tier === nextPlan.value.buyOrder.tier,
+    order =>
+      order.tradeSide === 'BUY' && order.tier === nextPlan.value.buyOrder.tier
   )
 
   return [
     {
       ...nextPlan.value.buyOrder,
-      orderType: matchingOrder?.orderType || 'LOC',
-    },
+      orderType: matchingOrder?.orderType || 'LOC'
+    }
   ]
 })
 const startDateWasAdjusted = computed(
   () =>
     backtestResult.value?.requestedStartDate &&
-    backtestResult.value.requestedStartDate !== backtestResult.value.actualStartDate,
+    backtestResult.value.requestedStartDate !==
+      backtestResult.value.actualStartDate
 )
 const resultKey = computed(
   () =>
-    `${backtestResult.value?.symbol || ''}-${backtestResult.value?.actualStartDate || ''}-${backtestResult.value?.backtestedThroughDate || ''}`,
+    `${backtestResult.value?.symbol || ''}-${backtestResult.value?.actualStartDate || ''}-${backtestResult.value?.backtestedThroughDate || ''}`
 )
 
 const tierRatioTotal = computed(() =>
-  form.defenseMode.tierBuyRatiosPct.reduce((sum, value) => sum + (toNumber(value) || 0), 0),
+  form.defenseMode.tierBuyRatiosPct.reduce(
+    (sum, value) => sum + (toNumber(value) || 0),
+    0
+  )
 )
 
 const validationErrors = computed(() => {
   const errors = []
   if (!form.symbol.trim()) errors.push('종목을 입력해 주세요.')
-  if (!form.startDate || !form.targetDate) errors.push('시작일과 목표일을 입력해 주세요.')
+  if (!form.startDate || !form.targetDate)
+    errors.push('시작일과 목표일을 입력해 주세요.')
   if (form.startDate && form.targetDate && form.startDate > form.targetDate) {
     errors.push('시작일은 목표일보다 늦을 수 없습니다.')
   }
-  if (!isPositiveNumber(form.initialAvailableCash)) errors.push('초기 현금은 0보다 커야 합니다.')
-  if (!isNonNegativeNumber(form.commissionRatePct)) errors.push('수수료율은 0 이상이어야 합니다.')
+  if (!isPositiveNumber(form.initialAvailableCash))
+    errors.push('초기 현금은 0보다 커야 합니다.')
+  if (!isNonNegativeNumber(form.commissionRatePct))
+    errors.push('수수료율은 0 이상이어야 합니다.')
   if (!isPositiveInteger(form.attackMode.splitCount))
     errors.push('공격 분할 수는 양의 정수여야 합니다.')
   if (!isPositiveNumber(form.attackMode.holdingPeriodAlpha))
@@ -1149,11 +1357,17 @@ const validationErrors = computed(() => {
     errors.push('방어 종가 매수조건을 확인해 주세요.')
   if (!isFiniteNumber(form.defenseMode.sellConditionMaPct))
     errors.push('방어 MA 매도조건을 확인해 주세요.')
-  if (!isPositiveInteger(form.defenseMode.maWindow)) errors.push('MA 기간은 양의 정수여야 합니다.')
-  if (form.defenseMode.tierBuyRatiosPct.length !== Number(form.defenseMode.splitCount)) {
+  if (!isPositiveInteger(form.defenseMode.maWindow))
+    errors.push('MA 기간은 양의 정수여야 합니다.')
+  if (
+    form.defenseMode.tierBuyRatiosPct.length !==
+    Number(form.defenseMode.splitCount)
+  ) {
     errors.push('티어별 매수 비율 개수는 방어 분할 수와 같아야 합니다.')
   }
-  if (form.defenseMode.tierBuyRatiosPct.some((value) => !isPositiveNumber(value))) {
+  if (
+    form.defenseMode.tierBuyRatiosPct.some(value => !isPositiveNumber(value))
+  ) {
     errors.push('각 티어 매수 비율은 0보다 커야 합니다.')
   }
   if (Math.abs(tierRatioTotal.value - 100) > 0.0001) {
@@ -1163,7 +1377,7 @@ const validationErrors = computed(() => {
 })
 
 const dailyRows = computed(() =>
-  (backtestResult.value?.dailyResults || []).map((day) => {
+  (backtestResult.value?.dailyResults || []).map(day => {
     const orders = day.orders || []
     const executions = day.executions || []
     const totalAsset = day.portfolio?.totalAsset
@@ -1178,16 +1392,22 @@ const dailyRows = computed(() =>
       transactions: day.cash?.transactions || [],
       totalAsset,
       closingCash,
-      cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
+      cashRatioPct: calculateCashRatioPct(closingCash, totalAsset)
     }
-  }),
+  })
 )
 
 const dailyHistoryRows = computed(() =>
-  [...dailyRows.value].sort((left, right) => right.sessionDate.localeCompare(left.sessionDate)),
+  [...dailyRows.value].sort((left, right) =>
+    right.sessionDate.localeCompare(left.sessionDate)
+  )
 )
-const visibleDailyRows = computed(() => dailyHistoryRows.value.slice(0, visibleDailyCount.value))
-const hasMoreDailyRows = computed(() => visibleDailyCount.value < dailyHistoryRows.value.length)
+const visibleDailyRows = computed(() =>
+  dailyHistoryRows.value.slice(0, visibleDailyCount.value)
+)
+const hasMoreDailyRows = computed(
+  () => visibleDailyCount.value < dailyHistoryRows.value.length
+)
 const latestDailyRow = computed(() => dailyHistoryRows.value[0] || null)
 
 const summaryCards = computed(() => {
@@ -1203,38 +1423,41 @@ const summaryCards = computed(() => {
     {
       label: '최고',
       value: formatMoney(ath.totalAsset),
-      caption: ath.sessionDate || '-',
+      caption: ath.sessionDate || '-'
     },
     {
       label: '원금',
       value: formatMoney(initialCash),
-      caption: initialDate || '-',
+      caption: initialDate || '-'
     },
     {
       label: '투자기간',
-      value: Math.ceil(Math.abs(new Date() - new Date(initialDate)) / (1000 * 60 * 60 * 24)) + '일',
-      caption: `${initialDate} ~ ${new Date().toISOString().split('T')[0]}`,
+      value:
+        Math.ceil(
+          Math.abs(new Date() - new Date(initialDate)) / (1000 * 60 * 60 * 24)
+        ) + '일',
+      caption: `${initialDate} ~ ${new Date().toISOString().split('T')[0]}`
     },
     {
       label: '총손익',
       value: formatMoney(totalProfit),
-      valueClass: profitClass(totalProfit),
+      valueClass: profitClass(totalProfit)
     },
     {
       label: '총수익률',
       value: formatPct(totalReturnPct),
-      valueClass: profitClass(totalReturnPct),
+      valueClass: profitClass(totalReturnPct)
     },
     {
       label: 'MDD',
       value: formatPct(backtestResult.value?.maximumDrawdownPct, false),
-      valueClass: profitClass(backtestResult.value?.maximumDrawdownPct),
+      valueClass: profitClass(backtestResult.value?.maximumDrawdownPct)
     },
     {
       label: 'DD',
       value: formatPct(latestDailyRow.value?.drawdownPct, false),
-      valueClass: profitClass(latestDailyRow.value?.drawdownPct),
-    },
+      valueClass: profitClass(latestDailyRow.value?.drawdownPct)
+    }
   ]
 })
 
@@ -1243,14 +1466,14 @@ const priceChartData = computed(() => {
   const buyExecutions = []
   const sellExecutions = []
 
-  rows.forEach((day) => {
-    day.executions.forEach((execution) => {
+  rows.forEach(day => {
+    day.executions.forEach(execution => {
       const point = {
         x: execution.sessionDate || day.sessionDate,
         y: toNumber(execution.price),
         tier: execution.tier,
         quantity: execution.quantity,
-        tradeSide: execution.tradeSide,
+        tradeSide: execution.tradeSide
       }
       if (execution.tradeSide === 'BUY') buyExecutions.push(point)
       if (execution.tradeSide === 'SELL') sellExecutions.push(point)
@@ -1258,19 +1481,19 @@ const priceChartData = computed(() => {
   })
 
   return {
-    labels: rows.map((day) => day.sessionDate),
+    labels: rows.map(day => day.sessionDate),
     datasets: [
       {
         type: 'line',
         label: '종가',
-        data: rows.map((day) => toNumber(day.closePrice)),
+        data: rows.map(day => toNumber(day.closePrice)),
         borderColor: '#78909c',
         backgroundColor: 'rgba(38, 166, 154, 0.12)',
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
         tension: 0.15,
-        order: 1,
+        order: 1
       },
       {
         type: 'scatter',
@@ -1281,7 +1504,7 @@ const priceChartData = computed(() => {
         pointStyle: 'triangle',
         pointRadius: 6,
         pointHoverRadius: 8,
-        order: 0,
+        order: 0
       },
       {
         type: 'scatter',
@@ -1293,9 +1516,9 @@ const priceChartData = computed(() => {
         pointRotation: 180,
         pointRadius: 6,
         pointHoverRadius: 8,
-        order: 0,
-      },
-    ],
+        order: 0
+      }
+    ]
   }
 })
 
@@ -1304,23 +1527,29 @@ const performanceChartData = computed(() => {
   const initialCash = toNumber(backtestResult.value?.initialAvailableCash)
   const ath = backtestResult.value?.allTimeHigh
   const athPoint = ath
-    ? [{ x: ath.sessionDate, y: toNumber(ath.totalAsset), sessionDate: ath.sessionDate }]
+    ? [
+        {
+          x: ath.sessionDate,
+          y: toNumber(ath.totalAsset),
+          sessionDate: ath.sessionDate
+        }
+      ]
     : []
 
   return {
-    labels: rows.map((day) => day.sessionDate),
+    labels: rows.map(day => day.sessionDate),
     datasets: [
       {
         type: 'line',
         label: '총자산',
-        data: rows.map((day) => toNumber(day.totalAsset)),
+        data: rows.map(day => toNumber(day.totalAsset)),
         yAxisID: 'asset',
         borderColor: '#2e7d32',
         backgroundColor: 'rgba(46, 125, 50, 0.1)',
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
-        tension: 0.15,
+        tension: 0.15
       },
       {
         type: 'line',
@@ -1330,7 +1559,7 @@ const performanceChartData = computed(() => {
         borderColor: '#9e9e9e',
         borderDash: [6, 5],
         borderWidth: 1,
-        pointRadius: 0,
+        pointRadius: 0
       },
       {
         type: 'scatter',
@@ -1341,21 +1570,21 @@ const performanceChartData = computed(() => {
         borderColor: '#f2c037',
         pointStyle: 'rectRot',
         pointRadius: 7,
-        pointHoverRadius: 9,
+        pointHoverRadius: 9
       },
       {
         type: 'line',
         label: 'Drawdown',
-        data: rows.map((day) => toNumber(day.drawdownPct)),
+        data: rows.map(day => toNumber(day.drawdownPct)),
         yAxisID: 'drawdown',
         borderColor: '#42a5f5',
         backgroundColor: 'rgba(66, 165, 245, 0.15)',
         borderWidth: 1.5,
         pointRadius: 0,
         fill: 'origin',
-        tension: 0.15,
-      },
-    ],
+        tension: 0.15
+      }
+    ]
   }
 })
 
@@ -1373,8 +1602,8 @@ const priceChartOptions = computed(() => {
           usePointStyle: true,
           boxWidth: isMobile ? 8 : 10,
           padding: isMobile ? 8 : 10,
-          font: { size: isMobile ? 10 : 12 },
-        },
+          font: { size: isMobile ? 10 : 12 }
+        }
       },
       tooltip: {
         callbacks: {
@@ -1384,9 +1613,9 @@ const priceChartOptions = computed(() => {
               return `${raw.tradeSide} ${raw.tier} · ${formatPrice(raw.y)} · ${formatInteger(raw.quantity)}주`
             }
             return `종가 ${formatPrice(context.parsed.y)}`
-          },
-        },
-      },
+          }
+        }
+      }
     },
     scales: {
       x: {
@@ -1399,20 +1628,21 @@ const priceChartOptions = computed(() => {
           callback(value) {
             const index = Number(value)
             const currentLabel = this.getLabelForValue(index)
-            const previousLabel = index > 0 ? this.getLabelForValue(index - 1) : undefined
+            const previousLabel =
+              index > 0 ? this.getLabelForValue(index - 1) : undefined
             return formatMonthTickLabel(currentLabel, previousLabel)
-          },
-        },
+          }
+        }
       },
       y: {
         ticks: {
           maxTicksLimit: isMobile ? 6 : undefined,
           font: { size: isMobile ? 10 : 12 },
-          callback: (value) => `$${formatNumber(value, 2)}`,
+          callback: value => `$${formatNumber(value, 2)}`
         },
-        grid: { color: 'rgba(0, 0, 0, 0.06)' },
-      },
-    },
+        grid: { color: 'rgba(0, 0, 0, 0.06)' }
+      }
+    }
   }
 })
 
@@ -1430,8 +1660,8 @@ const performanceChartOptions = computed(() => {
           usePointStyle: true,
           boxWidth: isMobile ? 8 : 10,
           padding: isMobile ? 8 : 10,
-          font: { size: isMobile ? 10 : 12 },
-        },
+          font: { size: isMobile ? 10 : 12 }
+        }
       },
       tooltip: {
         callbacks: {
@@ -1440,9 +1670,9 @@ const performanceChartOptions = computed(() => {
               return `Drawdown ${formatPct(context.parsed.y, false)}`
             }
             return `${context.dataset.label} ${formatMoney(context.parsed.y)}`
-          },
-        },
-      },
+          }
+        }
+      }
     },
     scales: {
       x: {
@@ -1455,10 +1685,11 @@ const performanceChartOptions = computed(() => {
           callback(value) {
             const index = Number(value)
             const currentLabel = this.getLabelForValue(index)
-            const previousLabel = index > 0 ? this.getLabelForValue(index - 1) : undefined
+            const previousLabel =
+              index > 0 ? this.getLabelForValue(index - 1) : undefined
             return formatMonthTickLabel(currentLabel, previousLabel)
-          },
-        },
+          }
+        }
       },
       asset: {
         type: 'linear',
@@ -1466,9 +1697,9 @@ const performanceChartOptions = computed(() => {
         ticks: {
           maxTicksLimit: isMobile ? 6 : undefined,
           font: { size: isMobile ? 10 : 12 },
-          callback: (value) => `$${formatCompactNumber(value)}`,
+          callback: value => `$${formatCompactNumber(value)}`
         },
-        grid: { color: 'rgba(0, 0, 0, 0.06)' },
+        grid: { color: 'rgba(0, 0, 0, 0.06)' }
       },
       drawdown: {
         type: 'linear',
@@ -1477,58 +1708,98 @@ const performanceChartOptions = computed(() => {
         ticks: {
           maxTicksLimit: isMobile ? 6 : undefined,
           font: { size: isMobile ? 10 : 12 },
-          callback: (value) => `${value}%`,
+          callback: value => `${value}%`
         },
-        grid: { drawOnChartArea: false },
-      },
-    },
+        grid: { drawOnChartArea: false }
+      }
+    }
   }
 })
 
 const buyPlanColumns = [
   { name: 'tier', label: '티어', field: 'tier', align: 'left' },
-  { name: 'orderType', label: '주문 방식', field: 'orderType', align: 'center' },
-  { name: 'allocationAmount', label: '배정금액', field: 'allocationAmount', align: 'right' },
+  {
+    name: 'orderType',
+    label: '주문 방식',
+    field: 'orderType',
+    align: 'center'
+  },
+  {
+    name: 'allocationAmount',
+    label: '배정금액',
+    field: 'allocationAmount',
+    align: 'right'
+  },
   { name: 'orderPrice', label: '주문가', field: 'orderPrice', align: 'right' },
-  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' },
+  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' }
 ]
 
 const sellPlanColumns = [
   { name: 'tier', label: '티어', field: 'tier', align: 'left' },
   { name: 'quantity', label: '수량', field: 'quantity', align: 'right' },
   { name: 'orderPrice', label: '주문가', field: 'orderPrice', align: 'right' },
-  { name: 'buySessionDate', label: '매수일', field: 'buySessionDate', align: 'center' },
+  {
+    name: 'buySessionDate',
+    label: '매수일',
+    field: 'buySessionDate',
+    align: 'center'
+  },
   {
     name: 'holding',
     label: '보유/최대',
-    field: (row) => `${row.heldSessionCount}/${row.maxHoldDays}일`,
-    align: 'center',
+    field: row => `${row.heldSessionCount}/${row.maxHoldDays}일`,
+    align: 'center'
   },
-  { name: 'planType', label: '계획 유형', field: 'planType', align: 'center' },
+  { name: 'planType', label: '계획 유형', field: 'planType', align: 'center' }
 ]
 
 const nextOrderColumns = [
   { name: 'tradeSide', label: '구분', field: 'tradeSide', align: 'left' },
   { name: 'tier', label: '티어', field: 'tier', align: 'left' },
-  { name: 'orderType', label: '주문 방식', field: 'orderType', align: 'center' },
-  { name: 'allocationAmount', label: '배정금액', field: 'allocationAmount', align: 'right' },
+  {
+    name: 'orderType',
+    label: '주문 방식',
+    field: 'orderType',
+    align: 'center'
+  },
+  {
+    name: 'allocationAmount',
+    label: '배정금액',
+    field: 'allocationAmount',
+    align: 'right'
+  },
   { name: 'orderPrice', label: '주문가', field: 'orderPrice', align: 'right' },
-  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' },
+  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' }
 ]
 
 const tierColumns = [
   { name: 'mode', label: '모드', field: 'mode', align: 'left' },
   { name: 'tier', label: '티어', field: 'tier', align: 'left' },
   { name: 'quantity', label: '수량', field: 'quantity', align: 'right' },
-  { name: 'averageBuyPrice', label: '평균 매수가', field: 'averageBuyPrice', align: 'right' },
-  { name: 'marketValue', label: '평가액', field: 'marketValue', align: 'right' },
-  { name: 'unrealizedProfit', label: '미실현 손익', field: 'unrealizedProfit', align: 'right' },
+  {
+    name: 'averageBuyPrice',
+    label: '평균 매수가',
+    field: 'averageBuyPrice',
+    align: 'right'
+  },
+  {
+    name: 'marketValue',
+    label: '평가액',
+    field: 'marketValue',
+    align: 'right'
+  },
+  {
+    name: 'unrealizedProfit',
+    label: '미실현 손익',
+    field: 'unrealizedProfit',
+    align: 'right'
+  },
   {
     name: 'unrealizedReturnPct',
     label: '미실현 수익률',
     field: 'unrealizedReturnPct',
-    align: 'right',
-  },
+    align: 'right'
+  }
 ]
 
 function getKstToday() {
@@ -1536,9 +1807,11 @@ function getKstToday() {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit',
+    day: '2-digit'
   }).formatToParts(new Date())
-  const values = Object.fromEntries(dateParts.map(({ type, value }) => [type, value]))
+  const values = Object.fromEntries(
+    dateParts.map(({ type, value }) => [type, value])
+  )
 
   return `${values.year}-${values.month}-${values.day}`
 }
@@ -1573,7 +1846,8 @@ function applyPreset(name) {
 }
 
 function markCustom() {
-  if (selectedPreset.value !== CUSTOM_PRESET) selectedPreset.value = CUSTOM_PRESET
+  if (selectedPreset.value !== CUSTOM_PRESET)
+    selectedPreset.value = CUSTOM_PRESET
 }
 
 function handleDefenseSplitCount() {
@@ -1601,18 +1875,20 @@ function buildPayload() {
         split_count: Number(form.attackMode.splitCount),
         holding_period_alpha: Number(form.attackMode.holdingPeriodAlpha),
         buy_condition_close_pct: Number(form.attackMode.buyConditionClosePct),
-        sell_condition_alpha: Number(form.attackMode.sellConditionAlpha),
+        sell_condition_alpha: Number(form.attackMode.sellConditionAlpha)
       },
       defense_mode: {
         split_count: Number(form.defenseMode.splitCount),
         holding_period: Number(form.defenseMode.holdingPeriod),
         buy_condition_1_ma_pct: Number(form.defenseMode.buyCondition1MaPct),
-        buy_condition_2_close_pct: Number(form.defenseMode.buyCondition2ClosePct),
+        buy_condition_2_close_pct: Number(
+          form.defenseMode.buyCondition2ClosePct
+        ),
         sell_condition_ma_pct: Number(form.defenseMode.sellConditionMaPct),
         ma_window: Number(form.defenseMode.maWindow),
-        tier_buy_ratios_pct: form.defenseMode.tierBuyRatiosPct.map(Number),
-      },
-    },
+        tier_buy_ratios_pct: form.defenseMode.tierBuyRatiosPct.map(Number)
+      }
+    }
   }
 }
 
@@ -1633,11 +1909,17 @@ async function runBacktest() {
     visibleDailyCount.value = DAILY_HISTORY_PAGE_SIZE
     showValidation.value = false
     activeTab.value = 'status'
-    $q.notify({ type: 'positive', message: '백테스트가 완료되었습니다.', position: 'top' })
+    $q.notify({
+      type: 'positive',
+      message: '백테스트가 완료되었습니다.',
+      position: 'top'
+    })
   } catch (error) {
-    const responseMessage = error.response?.data?.message || error.response?.data?.error
+    const responseMessage =
+      error.response?.data?.message || error.response?.data?.error
     console.log(error.response)
-    submitError.value = responseMessage || `백테스트 호출에 실패했습니다: ${error.message}`
+    submitError.value =
+      responseMessage || `백테스트 호출에 실패했습니다: ${error.message}`
     activeTab.value = 'settings'
   } finally {
     isLoading.value = false
@@ -1669,15 +1951,18 @@ function toNumber(value) {
 function formatNumber(value, maximumFractionDigits = 2) {
   const numericValue = toNumber(value)
   if (numericValue === null) return '-'
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(numericValue)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(
+    numericValue
+  )
 }
 
 function formatCompactNumber(value) {
   const numericValue = toNumber(value)
   if (numericValue === null) return '-'
-  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(
-    numericValue,
-  )
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1
+  }).format(numericValue)
 }
 
 function formatMoney(value) {
@@ -1688,7 +1973,7 @@ function formatMoney(value) {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(numericValue)
 }
 
@@ -1697,14 +1982,16 @@ function formatPrice(value) {
   if (numericValue === null) return '-'
   return `$${new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(numericValue)}`
 }
 
 function formatInteger(value) {
   const numericValue = toNumber(value)
   if (numericValue === null) return '-'
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(numericValue)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
+    numericValue
+  )
 }
 
 function formatPct(value, showSign = true) {
@@ -1792,7 +2079,8 @@ function sideColor(side) {
   gap: 10px;
 }
 
-.date-input.q-field--outlined.q-field--readonly :deep(.q-field__control::before) {
+.date-input.q-field--outlined.q-field--readonly
+  :deep(.q-field__control::before) {
   border-style: solid;
 }
 
