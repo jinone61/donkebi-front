@@ -1,1 +1,147 @@
-// app global css
+:root {
+  --dk-paper: #f4f1ea;
+  --dk-surface: #fbfaf7;
+  --dk-ink: #171717;
+  --dk-muted: #74736f;
+  --dk-line: rgba(23, 23, 23, 0.18);
+  --dk-line-strong: rgba(23, 23, 23, 0.58);
+  --dk-positive: #a64b40;
+  --dk-negative: #456b82;
+  --dk-font-sans:
+    'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --dk-font-serif: 'Noto Serif KR', Georgia, serif;
+  --dk-page-gutter: clamp(20px, 4.45vw, 64px);
+  --dk-section-space: clamp(72px, 8.35vw, 120px);
+  --dk-content-max: 1440px;
+  --dk-fast: 180ms;
+  --dk-slow: 620ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--dk-paper);
+  color: var(--dk-ink);
+  font-family: var(--dk-font-sans);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--dk-paper);
+  color: var(--dk-ink);
+  font-family: var(--dk-font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 1px solid var(--dk-ink);
+  outline-offset: 5px;
+}
+
+::selection {
+  background: var(--dk-ink);
+  color: var(--dk-paper);
+}
+
+.dk-container {
+  width: min(100%, var(--dk-content-max));
+  margin-inline: auto;
+  padding-inline: var(--dk-page-gutter);
+}
+
+.dk-section {
+  padding-block: var(--dk-section-space);
+}
+
+.dk-eyebrow {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.dk-serif {
+  font-family: var(--dk-font-serif);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+}
+
+.dk-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.dk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dk-reveal {
+  animation: dk-reveal var(--dk-slow) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dk-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
