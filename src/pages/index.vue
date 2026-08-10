@@ -60,24 +60,42 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { navigationItems } from '@/content/home.js'
 
 const mobileMenuOpen = ref(false)
 const menuButton = ref(null)
+const previousBodyOverflow = ref('')
+
+function closeMobileMenu({ restoreFocus = false } = {}) {
+  mobileMenuOpen.value = false
+  if (restoreFocus) requestAnimationFrame(() => menuButton.value?.focus())
+}
 
 function handleKeydown(event) {
   if (event.key !== 'Escape' || !mobileMenuOpen.value) return
 
-  mobileMenuOpen.value = false
-  menuButton.value?.focus()
+  closeMobileMenu({ restoreFocus: true })
 }
 
 onMounted(() => document.addEventListener('keydown', handleKeydown))
-onBeforeUnmount(() => document.removeEventListener('keydown', handleKeydown))
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflow = previousBodyOverflow.value
+})
+
+watch(mobileMenuOpen, isOpen => {
+  if (isOpen) {
+    previousBodyOverflow.value = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return
+  }
+
+  document.body.style.overflow = previousBodyOverflow.value
+})
 
 function scrollTo(selector) {
-  mobileMenuOpen.value = false
+  closeMobileMenu()
   requestAnimationFrame(() => {
     document
       .querySelector(selector)
@@ -190,8 +208,17 @@ function scrollTo(selector) {
   }
 
   .mobile-nav {
+    position: fixed;
+    top: 68px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    align-content: start;
     padding-block: 18px 30px;
+    overflow-y: auto;
     border-top: 1px solid var(--dk-line);
+    background: var(--dk-paper);
 
     button {
       display: flex;
