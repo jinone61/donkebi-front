@@ -22,6 +22,7 @@
             ref="menuButton"
             type="button"
             class="icon-button menu-button"
+            :class="{ 'menu-button--open': mobileMenuOpen }"
             :aria-expanded="mobileMenuOpen"
             aria-controls="mobile-navigation"
             :aria-label="mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'"
@@ -34,43 +35,57 @@
       </div>
 
       <transition name="menu-reveal">
-        <nav
+        <div
           v-if="mobileMenuOpen"
-          id="mobile-navigation"
-          class="mobile-nav dk-container"
-          aria-label="모바일 메뉴"
+          class="mobile-menu-layer"
+          @click.self="closeMobileMenu()"
         >
-          <template v-for="item in navigationItems" :key="item.href ?? item.to">
-            <router-link
-              v-if="item.to"
-              :to="item.to"
-              @click="closeMobileMenu()"
+          <nav
+            id="mobile-navigation"
+            class="mobile-nav dk-container"
+            aria-label="모바일 메뉴"
+          >
+            <template
+              v-for="item in navigationItems"
+              :key="item.href ?? item.to"
             >
-              <span>{{ item.label }}</span>
-              <span aria-hidden="true">↗</span>
-            </router-link>
-            <button v-else type="button" @click="scrollTo(item.href)">
-              <span>{{ item.label }}</span>
-              <span aria-hidden="true">↗</span>
-            </button>
-          </template>
-        </nav>
+              <router-link
+                v-if="item.to"
+                :to="item.to"
+                @click="closeMobileMenu()"
+              >
+                <span>{{ item.label }}</span>
+                <span aria-hidden="true">↗</span>
+              </router-link>
+              <button v-else type="button" @click="scrollTo(item.href)">
+                <span>{{ item.label }}</span>
+                <span aria-hidden="true">↗</span>
+              </button>
+            </template>
+          </nav>
+        </div>
       </transition>
     </q-header>
 
-    <q-page-container>
+    <q-page-container
+      :inert="mobileMenuOpen"
+      :aria-hidden="mobileMenuOpen ? 'true' : undefined"
+    >
       <router-view />
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { navigationItems } from '@/content/home.js'
 
+const router = useRouter()
 const mobileMenuOpen = ref(false)
 const menuButton = ref(null)
 const previousBodyOverflow = ref('')
+let desktopMediaQuery
 
 function closeMobileMenu({ restoreFocus = false } = {}) {
   mobileMenuOpen.value = false
@@ -83,9 +98,18 @@ function handleKeydown(event) {
   closeMobileMenu({ restoreFocus: true })
 }
 
-onMounted(() => document.addEventListener('keydown', handleKeydown))
+function handleDesktopChange(event) {
+  if (event.matches) closeMobileMenu()
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+  desktopMediaQuery = window.matchMedia('(min-width: 768px)')
+  desktopMediaQuery.addEventListener('change', handleDesktopChange)
+})
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeydown)
+  desktopMediaQuery?.removeEventListener('change', handleDesktopChange)
   document.body.style.overflow = previousBodyOverflow.value
 })
 
@@ -99,8 +123,14 @@ watch(mobileMenuOpen, isOpen => {
   document.body.style.overflow = previousBodyOverflow.value
 })
 
-function scrollTo(selector) {
+async function scrollTo(selector) {
   closeMobileMenu()
+
+  if (router.currentRoute.value.path !== '/') {
+    await router.push('/')
+    await nextTick()
+  }
+
   requestAnimationFrame(() => {
     document
       .querySelector(selector)
@@ -181,17 +211,37 @@ function scrollTo(selector) {
 
 .menu-button {
   display: none;
-  align-content: center;
-  gap: 6px;
+  place-items: center;
 
   span {
+    grid-area: 1 / 1;
     display: block;
     width: 19px;
     height: 1px;
     background: currentColor;
+    transition: transform var(--dk-fast);
+  }
+
+  span:first-child {
+    transform: translateY(-3.5px);
+  }
+
+  span:last-child {
+    transform: translateY(3.5px);
+  }
+
+  &--open {
+    span:first-child {
+      transform: rotate(45deg);
+    }
+
+    span:last-child {
+      transform: rotate(-45deg);
+    }
   }
 }
 
+.mobile-menu-layer,
 .mobile-nav {
   display: none;
 }
@@ -208,21 +258,31 @@ function scrollTo(selector) {
     }
   }
 
-  .menu-button,
-  .mobile-nav {
+  .menu-button {
     display: grid;
   }
 
-  .mobile-nav {
+  .mobile-menu-layer {
     position: fixed;
     top: 68px;
     right: 0;
     bottom: 0;
     left: 0;
     z-index: 1;
+    display: block;
+    overflow: hidden;
+    background: rgba(23, 23, 23, 0.14);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .mobile-nav {
+    display: grid;
     align-content: start;
+    max-height: calc(100dvh - 68px);
     padding-block: 18px 30px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     border-top: 1px solid var(--dk-line);
     background: var(--dk-paper);
 
@@ -243,14 +303,28 @@ function scrollTo(selector) {
   .menu-reveal-enter-active,
   .menu-reveal-leave-active {
     transition:
+      background-color var(--dk-fast),
+      backdrop-filter var(--dk-fast);
+  }
+
+  .menu-reveal-enter-active .mobile-nav,
+  .menu-reveal-leave-active .mobile-nav {
+    transition:
       opacity var(--dk-fast),
       transform var(--dk-fast);
   }
 
   .menu-reveal-enter-from,
   .menu-reveal-leave-to {
+    background-color: transparent;
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+  }
+
+  .menu-reveal-enter-from .mobile-nav,
+  .menu-reveal-leave-to .mobile-nav {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-100%);
   }
 }
 </style>

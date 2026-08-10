@@ -12,9 +12,12 @@
 
 - Preserve the existing editorial visual system and desktop homepage layout.
 - Below 768px, the menu panel begins under the 68px header and is only as tall as its content.
-- A transparent backdrop fills the remaining viewport, blocks background interaction, and closes the menu when tapped.
-- Scroll locking must not change the homepage or header width.
+- The panel animation is clipped at the header boundary so it appears from behind the header, and the hamburger animates into an X while open.
+- A backdrop with `blur(4px)` and a 14% charcoal tint fills the remaining viewport, blocks background interaction, and closes the menu when tapped.
+- Opening and closing use matching 180ms panel and backdrop transitions.
+- Scroll locking must not change the homepage or header width, and the root scrollbar must remain visible.
 - 시장, 리서치, 테마, 아카이브 remain same-page actions; only BACKTEST opens a separate route.
+- When a section action is used from Backtest, navigate home before scrolling to its target.
 - Backtest functionality and final branding remain outside this implementation.
 - Add no runtime dependency or test framework.
 
@@ -43,7 +46,9 @@ document.querySelector('.menu-button').click()
 await new Promise(resolve => setTimeout(resolve, 240))
 const after = document.querySelector('.hero').getBoundingClientRect()
 const panel = document.querySelector('.mobile-nav').getBoundingClientRect()
-const layer = document.querySelector('.mobile-menu-layer').getBoundingClientRect()
+const layer = document
+  .querySelector('.mobile-menu-layer')
+  .getBoundingClientRect()
 
 if (before.top !== after.top || before.width !== after.width) {
   throw new Error('mobile menu changed homepage geometry')
@@ -83,6 +88,7 @@ Reserve scrollbar space globally in `src/css/app.scss`:
 
 ```scss
 html {
+  overflow-y: scroll;
   scrollbar-gutter: stable;
 }
 ```
@@ -97,6 +103,9 @@ Use a fixed transparent layer and a natural-height paper panel:
   bottom: 0;
   left: 0;
   z-index: 1;
+  background: rgba(23, 23, 23, 0.14);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .mobile-nav {
@@ -152,12 +161,12 @@ git commit -m "fix: refine mobile navigation overlay"
 
 - Modify: `src/content/home.js`
 - Modify: `src/pages/index.vue`
-- Create: `src/pages/backtest.vue`
+- Create: `src/pages/index/backtest.vue`
 - Test: `/tmp/donkebi-navigation-regression.mjs` (extend the Task 1 check)
 
 **Interfaces:**
 
-- Consumes: Vue Router's generated `/backtest` route from `src/pages/backtest.vue`.
+- Consumes: Vue Router's generated `/backtest` child route from `src/pages/index/backtest.vue`.
 - Produces: `{ label: 'BACKTEST', to: '/backtest' }` in `navigationItems` and a replaceable Backtest page contract.
 
 - [ ] **Step 1: Extend the browser check and verify RED**
@@ -196,7 +205,7 @@ In each navigation loop, render `router-link` when `item.to` exists and the exis
 
 - [ ] **Step 3: Add the replaceable Backtest page**
 
-Create `src/pages/backtest.vue` with this semantic structure:
+Create `src/pages/index/backtest.vue` with this semantic structure:
 
 ```vue
 <template>
@@ -231,6 +240,6 @@ Expected: browser check PASS, lint exits 0, Quasar production build succeeds, an
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/content/home.js src/pages/index.vue src/pages/backtest.vue
+git add src/content/home.js src/pages/index.vue src/pages/index/backtest.vue
 git commit -m "feat: add backtest route entry"
 ```

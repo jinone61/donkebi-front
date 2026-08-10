@@ -6,11 +6,11 @@ Improve the existing editorial homepage without revisiting its visual system. Th
 
 ## Mobile Menu
 
-On screens below 768px, the menu opens directly beneath the 68px header. The opaque paper-colored panel is only as tall as its navigation content and slides down over the homepage without changing document flow. A transparent fixed backdrop covers the rest of the viewport so the page remains visible behind it.
+On screens below 768px, the menu opens directly beneath the 68px header. The opaque paper-colored panel is only as tall as its navigation content and slides down from behind the header without changing document flow or painting over the header. A fixed backdrop covers the rest of the viewport with a 4px blur and a 14% charcoal tint, keeping the page visible while clearly separating it from the menu.
 
-While open, the backdrop blocks page interaction and background scrolling. Tapping the transparent area closes only the menu. Covered page content is removed from keyboard navigation, while Escape closes the layer and restores focus to the menu button. Choosing any item closes the layer before scrolling or navigating.
+While open, the backdrop blocks page interaction and background scrolling. Tapping the backdrop closes only the menu. Opening and closing use matching 180ms panel and backdrop transitions, and the hamburger lines animate into an X while open. Covered page content is removed from keyboard navigation, while Escape closes the layer and restores focus to the menu button. Choosing any item closes the layer before scrolling or navigating.
 
-Locking scroll must not change the page width. Reserve the browser scrollbar gutter so the homepage and fixed header keep identical horizontal geometry before, during, and after menu use. Close and clean up the menu automatically when the viewport enters the desktop breakpoint.
+Locking scroll must not change the page width or hide the scrollbar. Keep the root vertical scrollbar visible and reserve its gutter so the homepage and fixed header retain identical horizontal geometry before, during, and after menu use. Close and clean up the menu automatically when the viewport enters the desktop breakpoint.
 
 Desktop navigation remains unchanged.
 
@@ -21,11 +21,11 @@ Navigation data will distinguish same-page anchors from application routes:
 - 시장, 리서치, 테마, 아카이브 continue to scroll to sections on `/`.
 - BACKTEST navigates to `/backtest` through Vue Router.
 
-Both desktop and mobile navigation render the appropriate control for each destination. Same-page actions remain buttons; Backtest is a router link with normal browser navigation semantics.
+Both desktop and mobile navigation render the appropriate control for each destination. Section actions remain buttons; when used from Backtest they return to the homepage before scrolling to their target. Backtest is a router link with normal browser navigation semantics.
 
 ## Backtest Placeholder
 
-Add `src/pages/backtest.vue` as a temporary standalone page discovered by the existing file-based router. It uses the current paper, ink, serif typography, and spacing tokens, with a short “preparing” message and a link back home. The future imported Backtest page can replace this file without changing the homepage navigation contract.
+Add `src/pages/index/backtest.vue` as a temporary page nested under the shared site layout by the existing file-based router. It keeps the `/backtest` URL while reusing the site header and uses the current paper, ink, serif typography, and spacing tokens, with a short “preparing” message and a link back home. The future imported Backtest page can replace this file without changing the homepage navigation contract.
 
 ## Verification
 

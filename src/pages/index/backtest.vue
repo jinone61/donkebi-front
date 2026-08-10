@@ -1,5 +1,5 @@
 <template>
-  <main class="backtest-placeholder">
+  <q-page class="backtest-placeholder">
     <div class="backtest-placeholder__inner dk-container">
       <div class="backtest-placeholder__intro">
         <p class="dk-eyebrow">Backtest · In Preparation</p>
@@ -22,12 +22,11 @@
         <span>SEOUL · 2026</span>
       </div>
     </div>
-  </main>
+  </q-page>
 </template>
 
 <style scoped lang="scss">
 .backtest-placeholder {
-  min-height: 100dvh;
   background: var(--dk-paper);
   color: var(--dk-ink);
 
@@ -37,7 +36,7 @@
     grid-template-columns: repeat(12, 1fr);
     gap: 24px;
     align-items: center;
-    min-height: 100dvh;
+    min-height: inherit;
     padding-block: clamp(80px, 9vw, 130px);
   }
 

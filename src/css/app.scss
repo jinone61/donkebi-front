@@ -31,6 +31,8 @@
 }
 
 html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
   background: var(--dk-paper);
   color: var(--dk-ink);
   font-family: var(--dk-font-sans);
