@@ -35,9 +35,7 @@
         <div class="dk-container">
           <div class="section-intro">
             <p class="dk-eyebrow">The System</p>
-            <h2 class="dk-serif"
-              >Built to think in rules.<br />Built to act.</h2
-            >
+            <h2 class="dk-serif">Built to think.<br />Built to act.</h2>
             <p>
               순간의 확신보다 검증된 원칙을 따릅니다. Donkebi는 시장을 관찰하고,
               조건을 평가하고, 같은 전략을 과거에서 검증한 뒤 실행 가능한
@@ -61,18 +59,23 @@
         <div class="backtest-section__inner dk-container">
           <div class="backtest-section__copy">
             <p class="dk-eyebrow">Private Simulation Interface</p>
-            <h2 class="dk-serif">Before it acts,<br />it remembers.</h2>
+            <h2 class="dk-serif">AI driven,<br />Real-world magic.</h2>
             <p>
-              전략 조건과 기간을 입력하고 과거의 모든 주문을 다시 실행합니다.
-              자산의 변화, 낙폭, 체결 기록과 다음 주문까지 하나의 흐름으로
-              확인하세요.
+              AI. 기술과 경험의 정점에서, <br/>시장의 불확실성을 자산으로 바꾸는 현대의 마법을 경험하세요.
             </p>
             <router-link class="section-link" to="/backtest">
               Enter Backtest <span aria-hidden="true">→</span>
             </router-link>
           </div>
 
-          <div class="simulation-plate" aria-hidden="true">
+          <div
+            ref="simulationPlate"
+            class="simulation-plate"
+            :class="{
+              'simulation-plate--revealed': isSimulationPlateRevealed
+            }"
+            aria-hidden="true"
+          >
             <div class="simulation-plate__head">
               <span>SIMULATION / 01</span>
               <span>READY</span>
@@ -80,10 +83,28 @@
             <div class="simulation-plate__graph">
               <svg viewBox="0 0 620 250" preserveAspectRatio="none">
                 <path
-                  d="M0 215 C55 207 74 190 119 193 S181 150 226 164 S290 116 337 129 S407 74 452 91 S531 40 620 24"
+                  class="simulation-plate__line simulation-plate__line--market"
+                  d="M0 188 C38 180 64 195 96 176 C124 160 149 171 180 142 C212 115 235 129 267 92 C285 71 298 51 316 44 C339 52 354 80 381 72 C411 64 432 94 459 87 C487 80 508 113 537 105 C565 98 589 130 620 125"
+                />
+                <path
+                  class="simulation-plate__line simulation-plate__line--donkebi"
+                  d="M0 188 C55 182 75 166 120 170 S181 132 228 145 S290 96 337 110 S407 63 452 78 S531 34 620 28"
                 />
               </svg>
-              <span class="simulation-plate__marker"></span>
+              <span
+                class="simulation-plate__marker simulation-plate__marker--asset"
+              ></span>
+              <span
+                class="simulation-plate__marker simulation-plate__marker--market"
+              ></span>
+              <span
+                class="simulation-plate__label simulation-plate__label--donkebi"
+                >ASSET</span
+              >
+              <span
+                class="simulation-plate__label simulation-plate__label--market"
+                >MARKET</span
+              >
             </div>
             <div class="simulation-plate__meta">
               <span>STRATEGY</span>
@@ -148,7 +169,45 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
 import DkTextLink from '@/components/DkTextLink.vue'
+
+const simulationPlate = ref(null)
+const isSimulationPlateRevealed = ref(false)
+let simulationPlateObserver
+
+onMounted(() => {
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches
+
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    isSimulationPlateRevealed.value = true
+    return
+  }
+
+  simulationPlateObserver = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry?.isIntersecting) return
+
+      isSimulationPlateRevealed.value = true
+      simulationPlateObserver?.disconnect()
+      simulationPlateObserver = undefined
+    },
+    { threshold: 0.35 }
+  )
+
+  if (simulationPlate.value) {
+    simulationPlateObserver.observe(simulationPlate.value)
+  } else {
+    isSimulationPlateRevealed.value = true
+  }
+})
+
+onBeforeUnmount(() => {
+  simulationPlateObserver?.disconnect()
+})
 
 const agentSteps = [
   {
@@ -407,7 +466,7 @@ const agentSteps = [
     h2 {
       margin: 36px 0 0;
       font-size: clamp(3.3rem, 5.8vw, 6.1rem);
-      line-height: 1.08;
+      line-height: 1.12;
     }
 
     > p:not(.dk-eyebrow) {
@@ -466,26 +525,109 @@ const agentSteps = [
       width: 100%;
       height: 100%;
       overflow: visible;
+      clip-path: inset(0 100% 0 0);
       fill: none;
+    }
+  }
+
+  &__line {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+
+    &--market {
+      stroke: rgba(244, 241, 234, 0.48);
+      stroke-width: 1.2;
+      stroke-dasharray: 5 7;
+    }
+
+    &--donkebi {
       stroke: var(--dk-paper);
-      stroke-width: 1.3;
+      stroke-width: 1.4;
     }
   }
 
   &__marker {
     position: absolute;
-    top: 14%;
-    right: 0;
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--dk-paper);
+    opacity: 0;
+    transform: scale(0.4);
+
+    &--asset {
+      top: calc(11.2% - 3.5px);
+      right: -3.5px;
+      background: var(--dk-paper);
+    }
+
+    &--market {
+      top: calc(50% - 3.5px);
+      right: -3.5px;
+      background: rgba(244, 241, 234, 0.5);
+    }
+  }
+
+  &__label {
+    position: absolute;
+    right: 0;
+    padding: 4px 0 4px 8px;
+    background: var(--dk-ink);
+    font-size: 0.5rem;
+    letter-spacing: 0.12em;
+    opacity: 0;
+    transform: translateX(-8px);
+
+    &--donkebi {
+      top: 1%;
+      color: var(--dk-paper);
+    }
+
+    &--market {
+      top: calc(50% + 8px);
+      background: transparent;
+      color: rgba(244, 241, 234, 0.48);
+    }
   }
 
   &__meta {
     justify-content: flex-start;
     gap: 32px;
     color: rgba(244, 241, 234, 0.55);
+  }
+
+  &--revealed {
+    .simulation-plate__graph svg {
+      animation: simulation-chart-reveal 1.4s cubic-bezier(0.22, 1, 0.36, 1)
+        forwards;
+    }
+
+    .simulation-plate__marker {
+      animation: simulation-marker-reveal 360ms ease-out 1.05s forwards;
+    }
+
+    .simulation-plate__label {
+      animation: simulation-label-reveal 380ms ease-out 1.08s forwards;
+    }
+  }
+}
+
+@keyframes simulation-chart-reveal {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes simulation-marker-reveal {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes simulation-label-reveal {
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -617,6 +759,20 @@ const agentSteps = [
     font-size: 0.56rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .simulation-plate {
+    &__graph svg {
+      clip-path: none;
+    }
+
+    &__marker,
+    &__label {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 

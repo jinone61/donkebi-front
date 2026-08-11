@@ -20,10 +20,12 @@
 ### Task 1: Refine the home headline and market line
 
 **Files:**
+
 - Modify: `src/pages/index/(home).vue`
 - Test: `tests/brand-pages.test.mjs`
 
 **Interfaces:**
+
 - Consumes: existing `.backtest-section__copy` typography and `.simulation-plate__line--market` SVG styling
 - Produces: `.backtest-section__headline-line` for the second headline line and a multi-swing market path
 

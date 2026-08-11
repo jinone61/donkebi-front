@@ -50,6 +50,47 @@ test('mobile system descriptions use the available content width', async () => {
   )
 })
 
+test('home backtest story contrasts the market with Donkebi', async () => {
+  const source = await readSource('src/pages/index/(home).vue')
+  const normalizedSource = source.replace(/\s+/g, ' ')
+
+  assert.match(source, /AI driven,<br \/>Real-world magic\./)
+  assert.match(
+    normalizedSource,
+    /AI\. 기술과 경험의 정점에서, 시장의 불확실성을 자산으로 바꾸는 현대의 마법을 경험하세요\./
+  )
+  assert.match(source, /simulation-plate__line--market/)
+  assert.match(source, /simulation-plate__line--donkebi/)
+  assert.match(source, />MARKET<\/span/)
+  assert.match(source, />ASSET<\/span/)
+  assert.match(
+    source,
+    /simulation-plate__line--market"[\s\S]*?d="M0 188[\s\S]*?620 125"/
+  )
+  assert.match(
+    source,
+    /simulation-plate__line--donkebi"[\s\S]*?d="M0 188[\s\S]*?620 28"/
+  )
+  assert.match(source, /simulation-plate__marker--asset/)
+  assert.match(source, /simulation-plate__marker--market/)
+  assert.match(
+    source,
+    /&--asset \{[\s\S]*?top: calc\(11\.2% - 3\.5px\);[\s\S]*?right: -3\.5px;/
+  )
+  assert.match(
+    source,
+    /&--market \{[\s\S]*?stroke: rgba\(244, 241, 234, 0\.48\);[\s\S]*?stroke-width: 1\.2;/
+  )
+  assert.match(
+    source,
+    /&--market \{[\s\S]*?top: calc\(50% - 3\.5px\);[\s\S]*?right: -3\.5px;[\s\S]*?background: rgba\(244, 241, 234, 0\.5\);/
+  )
+  assert.match(
+    source,
+    /&--market \{[\s\S]*?top: calc\(50% \+ 8px\);[\s\S]*?background: transparent;/
+  )
+})
+
 test('new backtest route renders the editable workspace component', async () => {
   const source = await readSource('src/pages/index/backtest.vue')
 
