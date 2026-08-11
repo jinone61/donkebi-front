@@ -1,71 +1,71 @@
 <template>
   <div class="backtest-page">
-    <div
-      class="row items-center justify-between bg-grey-4 sticky-header q-py-sm"
-    >
-      <div class="col-auto row items-center q-pl-sm no-wrap">
-        <div class="text-h6 text-green-8"></div>
-      </div>
-      <div class="col-auto row items-center q-pr-sm no-wrap">
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          color="grey-8"
-          @click="toggleMenu"
-        />
-      </div>
-    </div>
+    <div v-if="!isAuthenticated" class="auth-area">
+      <div class="auth-shell dk-container">
+        <div class="auth-intro dk-reveal">
+          <p class="dk-eyebrow">Private Simulation Interface</p>
+          <h1 class="dk-serif">Enter the<br />simulation.</h1>
+          <p>
+            Donkebi의 전략 검증 인터페이스입니다. 승인된 사용자만 접근할 수
+            있습니다.
+          </p>
+          <div class="auth-intro__meta" aria-hidden="true">
+            <span>AGENT / 01</span>
+            <span>ACCESS / RESTRICTED</span>
+          </div>
+        </div>
 
-    <div
-      v-if="!isAuthenticated"
-      class="auth-area row justify-center items-center bg-grey-2"
-    >
-      <q-card flat bordered class="auth-card q-pa-md shadow-2">
-        <q-card-section class="text-center">
-          <div class="text-h6 text-weight-bold text-grey-8">Backtest</div>
-          <div class="text-caption text-grey-6 q-mt-xs"
-            >비밀번호를 입력해 주세요.</div
-          >
-        </q-card-section>
-        <q-card-section>
+        <q-form class="auth-form dk-reveal" @submit.prevent="checkPassword">
+          <div class="auth-form__head">
+            <span>AUTHENTICATION</span>
+            <span>01 / 01</span>
+          </div>
           <q-input
             v-model="inputPassword"
             type="password"
             label="비밀번호"
             outlined
-            dense
-            color="green-5"
+            color="dark"
             :error="passwordError"
             error-message="비밀번호가 틀렸습니다."
-            @keyup.enter="checkPassword"
           />
-        </q-card-section>
-        <q-card-actions align="center">
           <q-btn
-            label="확인"
-            color="green-5"
-            class="full-width"
-            @click="checkPassword"
+            type="submit"
+            label="ENTER INTERFACE"
+            color="dark"
+            unelevated
+            class="full-width auth-form__button"
           />
-        </q-card-actions>
-      </q-card>
+        </q-form>
+      </div>
     </div>
 
     <template v-else>
+      <section class="workspace-intro dk-container">
+        <div>
+          <p class="dk-eyebrow">Backtest · Agent 01</p>
+          <h1 class="dk-serif">Strategy<br />simulation.</h1>
+        </div>
+        <div class="workspace-intro__note">
+          <span class="workspace-intro__status"><i></i> SYSTEM READY</span>
+          <p>
+            같은 전략을 과거의 시장 위에서 다시 실행합니다. 조건을 설정한 뒤
+            성과와 다음 주문을 하나의 흐름으로 확인하세요.
+          </p>
+        </div>
+      </section>
+
       <q-tabs
         v-model="activeTab"
         dense
         align="justify"
-        active-color="green-8"
-        indicator-color="green-6"
-        class="bg-white text-grey-7 tabs-bar"
+        active-color="dark"
+        indicator-color="dark"
+        class="tabs-bar"
       >
-        <q-tab name="settings" label="입력설정" />
-        <q-tab name="status" label="현황" :disable="!hasResult" />
-        <q-tab name="plan" label="주문계획" :disable="!hasResult" />
+        <q-tab name="settings" label="SETUP" />
+        <q-tab name="status" label="PERFORMANCE" :disable="!hasResult" />
+        <q-tab name="plan" label="ORDERS" :disable="!hasResult" />
       </q-tabs>
 
       <q-tab-panels v-model="activeTab" animated class="bg-transparent">
@@ -326,9 +326,8 @@
 
               <q-btn
                 type="submit"
-                label="백테스트 실행"
-                icon="play_arrow"
-                color="green-5"
+                label="RUN SIMULATION"
+                color="dark"
                 unelevated
                 class="full-width run-button"
                 :loading="isLoading"
@@ -1106,7 +1105,7 @@
 </template>
 
 <script setup>
-import { computed, inject, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { api } from '@/boot/axios'
 import { useQuasar } from 'quasar'
 import {
@@ -1171,8 +1170,6 @@ function formatMonthTickLabel(currentLabel, previousLabel) {
 }
 
 const $q = useQuasar()
-const toggleMenu = inject('toggleMenu', () => {})
-
 const BACKTEST_URL = '/api/dualsniper/backtest'
 const PAGE_PASSWORD = '1q2w3e!!'
 const CUSTOM_PRESET = 'Custom'
@@ -1487,8 +1484,8 @@ const priceChartData = computed(() => {
         type: 'line',
         label: '종가',
         data: rows.map(day => toNumber(day.closePrice)),
-        borderColor: '#78909c',
-        backgroundColor: 'rgba(38, 166, 154, 0.12)',
+        borderColor: '#171717',
+        backgroundColor: 'rgba(23, 23, 23, 0.06)',
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
@@ -1499,8 +1496,8 @@ const priceChartData = computed(() => {
         type: 'scatter',
         label: '매수 체결',
         data: buyExecutions,
-        backgroundColor: '#d32f2f',
-        borderColor: '#d32f2f',
+        backgroundColor: '#a64b40',
+        borderColor: '#a64b40',
         pointStyle: 'triangle',
         pointRadius: 6,
         pointHoverRadius: 8,
@@ -1510,8 +1507,8 @@ const priceChartData = computed(() => {
         type: 'scatter',
         label: '매도 체결',
         data: sellExecutions,
-        backgroundColor: '#1976d2',
-        borderColor: '#1976d2',
+        backgroundColor: '#456b82',
+        borderColor: '#456b82',
         pointStyle: 'triangle',
         pointRotation: 180,
         pointRadius: 6,
@@ -1544,8 +1541,8 @@ const performanceChartData = computed(() => {
         label: '총자산',
         data: rows.map(day => toNumber(day.totalAsset)),
         yAxisID: 'asset',
-        borderColor: '#2e7d32',
-        backgroundColor: 'rgba(46, 125, 50, 0.1)',
+        borderColor: '#171717',
+        backgroundColor: 'rgba(23, 23, 23, 0.06)',
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
@@ -1566,8 +1563,8 @@ const performanceChartData = computed(() => {
         label: 'ATH',
         data: athPoint,
         yAxisID: 'asset',
-        backgroundColor: '#f2c037',
-        borderColor: '#f2c037',
+        backgroundColor: '#8c806b',
+        borderColor: '#8c806b',
         pointStyle: 'rectRot',
         pointRadius: 7,
         pointHoverRadius: 9
@@ -1577,7 +1574,7 @@ const performanceChartData = computed(() => {
         label: 'Drawdown',
         data: rows.map(day => toNumber(day.drawdownPct)),
         yAxisID: 'drawdown',
-        borderColor: '#42a5f5',
+        borderColor: '#456b82',
         backgroundColor: 'rgba(66, 165, 245, 0.15)',
         borderWidth: 1.5,
         pointRadius: 0,
@@ -2371,6 +2368,459 @@ function sideColor(side) {
 
   .daily-detail {
     padding: 12px;
+  }
+}
+</style>
+
+<style scoped lang="scss">
+.backtest-page {
+  min-height: calc(100vh - 82px);
+  background: var(--dk-paper);
+  color: var(--dk-ink);
+}
+
+.auth-area {
+  display: block;
+  height: auto;
+  min-height: calc(100vh - 82px);
+  background: var(--dk-paper);
+}
+
+.auth-shell {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  align-items: center;
+  min-height: calc(100vh - 82px);
+  padding-block: clamp(72px, 8vw, 120px);
+}
+
+.auth-intro {
+  grid-column: 1 / 8;
+
+  h1 {
+    margin: 38px 0 0;
+    font-size: clamp(4.2rem, 7.5vw, 7.8rem);
+    line-height: 1.02;
+  }
+
+  > p:not(.dk-eyebrow) {
+    max-width: 440px;
+    margin: 32px 0 0;
+    color: var(--dk-muted);
+    font-size: 0.82rem;
+    line-height: 1.85;
+  }
+
+  &__meta {
+    display: flex;
+    gap: 32px;
+    margin-top: 70px;
+    color: var(--dk-muted);
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+  }
+}
+
+.auth-form {
+  grid-column: 9 / 13;
+  padding-top: 18px;
+  border-top: 1px solid var(--dk-ink);
+  animation-delay: 150ms;
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 46px;
+    font-size: 0.56rem;
+    letter-spacing: 0.13em;
+  }
+
+  &__button {
+    height: 52px;
+    margin-top: 12px;
+    border-radius: 0;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+  }
+}
+
+.workspace-intro {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  align-items: end;
+  padding-block: clamp(68px, 7vw, 105px) clamp(52px, 6vw, 86px);
+
+  > div:first-child {
+    grid-column: 1 / 8;
+  }
+
+  h1 {
+    margin: 34px 0 0;
+    font-size: clamp(4rem, 7vw, 7.5rem);
+    line-height: 1.02;
+  }
+
+  &__note {
+    grid-column: 9 / 13;
+    padding-top: 18px;
+    border-top: 1px solid var(--dk-line-strong);
+
+    > p {
+      margin: 24px 0 0;
+      color: var(--dk-muted);
+      font-size: 0.76rem;
+      line-height: 1.8;
+    }
+  }
+
+  &__status {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.56rem;
+    letter-spacing: 0.13em;
+
+    i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #486b52;
+    }
+  }
+}
+
+.tabs-bar {
+  position: sticky;
+  top: 82px;
+  z-index: 4;
+  min-height: 58px;
+  border-block: 1px solid var(--dk-line);
+  background: rgba(244, 241, 234, 0.94);
+  color: var(--dk-muted);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  :deep(.q-tab) {
+    min-height: 58px;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+  }
+}
+
+:deep(.q-tab-panels),
+:deep(.q-tab-panel) {
+  background: transparent;
+}
+
+.content-container {
+  width: min(1240px, calc(100% - (var(--dk-page-gutter) * 2)));
+  padding: clamp(42px, 5vw, 76px) 0 clamp(80px, 8vw, 120px);
+}
+
+.settings-container {
+  max-width: 1040px;
+}
+
+.section-card {
+  overflow: hidden;
+  margin-bottom: 42px;
+  border: 0;
+  border-top: 1px solid var(--dk-line-strong);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.section-heading {
+  padding: 22px 0;
+
+  :deep(.text-h6) {
+    color: var(--dk-ink) !important;
+    font-family: var(--dk-font-serif);
+    font-size: 1.5rem;
+    font-weight: 400;
+  }
+
+  :deep(.text-caption) {
+    margin-top: 5px;
+    color: var(--dk-muted) !important;
+    font-size: 0.67rem;
+    letter-spacing: 0.02em;
+  }
+}
+
+.settings-grid {
+  gap: 18px 20px;
+  padding: 28px 0;
+}
+
+.ratio-grid {
+  gap: 12px;
+}
+
+:deep(.q-separator) {
+  background: var(--dk-line);
+}
+
+:deep(.q-field__control) {
+  border-radius: 0;
+  background: rgba(251, 250, 247, 0.72);
+}
+
+:deep(.q-field--outlined .q-field__control::before) {
+  border-color: var(--dk-line);
+}
+
+:deep(.q-field--outlined.q-field--focused .q-field__control::after) {
+  border-color: var(--dk-ink);
+  border-width: 1px;
+}
+
+:deep(.q-field__label),
+:deep(.q-field__native),
+:deep(.q-field__prefix),
+:deep(.q-field__suffix) {
+  color: var(--dk-ink);
+}
+
+:deep(.q-expansion-item__container > .q-item) {
+  min-height: 90px;
+  padding-inline: 0;
+}
+
+:deep(.q-badge) {
+  border-radius: 0;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+}
+
+:deep(.text-green-5),
+:deep(.text-green-6),
+:deep(.text-green-7),
+:deep(.text-green-8) {
+  color: var(--dk-ink) !important;
+}
+
+:deep(.bg-green-5),
+:deep(.bg-green-6),
+:deep(.bg-green-7),
+:deep(.bg-green-8) {
+  background: var(--dk-ink) !important;
+}
+
+.run-button {
+  height: 58px;
+  border-radius: 0;
+  font-size: 0.64rem;
+  letter-spacing: 0.15em;
+}
+
+.metric-grid {
+  gap: 1px;
+  background: var(--dk-line);
+}
+
+.summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 42px;
+  border-block: 1px solid var(--dk-line);
+}
+
+.compact-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: transparent;
+}
+
+.metric-card {
+  min-height: 114px;
+  padding: 20px;
+  border: 0;
+  border-radius: 0;
+  background: var(--dk-surface);
+  box-shadow: none;
+}
+
+.metric-label,
+.data-label {
+  color: var(--dk-muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  margin-top: 18px;
+  color: var(--dk-ink);
+  font-family: var(--dk-font-serif);
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  font-weight: 400;
+}
+
+.metric-caption {
+  color: var(--dk-muted);
+}
+
+.chart-container {
+  height: 420px;
+  padding: 24px 0;
+}
+
+:deep(.q-table__container) {
+  border: 1px solid var(--dk-line);
+  border-radius: 0;
+  background: var(--dk-surface);
+  box-shadow: none;
+}
+
+:deep(.q-table thead tr),
+:deep(.q-table tbody td) {
+  background: transparent;
+}
+
+:deep(.q-table th) {
+  color: var(--dk-muted);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+:deep(.q-table td) {
+  color: var(--dk-ink);
+  font-size: 0.72rem;
+}
+
+.daily-history {
+  gap: 0;
+  border-top: 1px solid var(--dk-line);
+}
+
+.daily-history-item {
+  border: 0;
+  border-bottom: 1px solid var(--dk-line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.daily-header {
+  background: var(--dk-surface);
+  color: var(--dk-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+}
+
+.daily-row,
+.data-value,
+.detail-title {
+  color: var(--dk-ink);
+}
+
+.daily-detail {
+  background: var(--dk-surface) !important;
+}
+
+.mobile-data-card {
+  border-radius: 0;
+  background: var(--dk-surface);
+}
+
+.empty-message {
+  color: var(--dk-muted);
+}
+
+@media (max-width: 900px) {
+  .auth-intro {
+    grid-column: 1 / 7;
+  }
+
+  .auth-form {
+    grid-column: 8 / 13;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .backtest-page {
+    min-height: calc(100vh - 68px);
+  }
+
+  .auth-area,
+  .auth-shell {
+    min-height: calc(100vh - 68px);
+  }
+
+  .auth-shell,
+  .workspace-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 74px;
+    align-items: stretch;
+  }
+
+  .auth-intro h1,
+  .workspace-intro h1 {
+    font-size: clamp(3.8rem, 17vw, 5.5rem);
+  }
+
+  .auth-form {
+    width: 100%;
+  }
+
+  .workspace-intro {
+    padding-block: 64px;
+
+    &__note {
+      padding-top: 22px;
+    }
+  }
+
+  .tabs-bar {
+    top: 68px;
+  }
+
+  .content-container {
+    width: calc(100% - (var(--dk-page-gutter) * 2));
+    padding-top: 40px;
+  }
+
+  .settings-grid,
+  .basic-settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .summary-grid,
+  .compact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-card {
+    min-height: 105px;
+    padding: 16px;
+  }
+
+  .chart-container {
+    height: 320px;
+    padding-inline: 0;
+  }
+
+  .section-card {
+    margin-bottom: 34px;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-intro__meta {
+    display: grid;
+    gap: 8px;
+  }
+
+  .summary-grid,
+  .compact-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

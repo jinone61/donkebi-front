@@ -2,7 +2,7 @@
   "name": "donkebi",
   "version": "0.0.1",
   "private": true,
-  "description": "Editorial market research interface for considered investing",
+  "description": "Quiet AI agent trading system for strategy simulation and execution",
   "keywords": [
     "quasar",
     "quasar-app",
@@ -15,6 +15,7 @@
   "author": "Jinwon <jinone61@gmail.com>",
   "type": "module",
   "scripts": {
+    "test": "node tests/brand-pages.test.mjs",
     "lint": "oxfmt && oxlint --fix",
     "lint:check": "oxfmt --check && oxlint",
     "dev": "quasar dev",

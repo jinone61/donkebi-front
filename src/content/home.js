@@ -1,10 +1,8 @@
 export const navigationItems = [
-  { label: '시장', href: '#market' },
-  { label: '리서치', href: '#research' },
-  { label: '테마', href: '#perspective' },
-  { label: '아카이브', href: '#archive' },
-  { label: 'BACKTESTOriginal', to: '/BacktestPage' },
-  { label: 'BACKTEST', to: '/backtest' }
+  { label: 'SYSTEM', href: '#system' },
+  { label: 'BACKTEST', to: '/backtest' },
+  { label: 'PRINCIPLE', href: '#principle' },
+  { label: 'ORIGIN', href: '#origin' }
 ]
 
 export const marketSnapshot = {

@@ -3,97 +3,129 @@
     <main>
       <section class="hero dk-container" aria-labelledby="hero-title">
         <div class="hero__copy dk-reveal">
-          <p class="dk-eyebrow">Independent Market Research</p>
+          <p class="dk-eyebrow">AI Agent Trading System</p>
           <h1 id="hero-title" class="dk-serif">
-            시장을 읽는<br />
-            새로운 감각.
+            An agent for<br />the market.
           </h1>
           <p class="hero__intro">
-            숫자 너머의 흐름을 발견합니다. Donkebi는 시장의 변화와 투자자의 판단
-            사이에 선명한 관점을 더합니다.
+            전략을 검증하고, 시장의 시간에 맞춰 움직입니다. Donkebi는 반복
+            가능한 원칙을 실제 행동으로 전환하는 AI Trading Agent입니다.
           </p>
-          <DkTextLink label="오늘의 리서치" to="#perspective" />
+          <DkTextLink label="Discover the system" to="#system" />
         </div>
 
-        <div class="hero__market dk-reveal">
-          <DkMarketMetric v-bind="marketSnapshot" />
-          <svg
-            class="hero__sparkline"
-            aria-label="KOSPI 장중 상승 추이"
-            role="img"
-            viewBox="0 0 420 120"
-          >
-            <path
-              d="M1 98 35 81 69 87 103 63 137 70 171 48 205 58 239 44 273 51 307 31 341 38 375 17 419 5"
-            />
-          </svg>
+        <div class="agent-figure dk-reveal" aria-label="Donkebi agent status">
+          <div class="agent-figure__orbit agent-figure__orbit--outer"></div>
+          <div class="agent-figure__orbit agent-figure__orbit--inner"></div>
+          <div class="agent-figure__core"></div>
+          <span class="agent-figure__tick agent-figure__tick--one"></span>
+          <span class="agent-figure__tick agent-figure__tick--two"></span>
+          <span class="agent-figure__tick agent-figure__tick--three"></span>
+          <div class="agent-figure__status">
+            <span>AGENT 01</span>
+            <span><i></i> OBSERVING</span>
+          </div>
         </div>
 
         <div class="hero__foot" aria-hidden="true">
-          <span>Seoul · 37.5665° N</span>
-          <span>Scroll to explore</span>
+          <span>DONKEBI · SEOUL</span>
+          <span>System online · 24 / 7</span>
         </div>
       </section>
 
-      <section id="perspective" class="perspective dk-section">
-        <div class="perspective__inner dk-container">
-          <DkEditorialImage
-            class="perspective__image"
-            :src="architectureImage"
-            alt="채광창 아래 긴 콘크리트 벽과 검은 기하학 오브제가 놓인 가상의 건축 공간"
-            :caption="featuredResearch.caption"
-          />
-
-          <div class="perspective__copy">
-            <p class="dk-eyebrow">{{ featuredResearch.eyebrow }}</p>
-            <h2 class="dk-serif">{{ featuredResearch.title }}</h2>
-            <p>{{ featuredResearch.summary }}</p>
-            <DkTextLink label="관점 읽기" to="#research" />
-          </div>
-        </div>
-      </section>
-
-      <section id="market" class="market dk-section">
+      <section id="system" class="system dk-section">
         <div class="dk-container">
-          <DkSectionHeader
-            eyebrow="Market Pulse"
-            title="오늘의 움직임을, 더 긴 흐름 위에서 봅니다."
-            description="한 번의 등락보다 방향을 만드는 리듬에 집중합니다. 기간을 바꿔 같은 데이터의 다른 표정을 살펴보세요."
-          />
+          <div class="section-intro">
+            <p class="dk-eyebrow">The System</p>
+            <h2 class="dk-serif"
+              >Built to think in rules.<br />Built to act.</h2
+            >
+            <p>
+              순간의 확신보다 검증된 원칙을 따릅니다. Donkebi는 시장을 관찰하고,
+              조건을 평가하고, 같은 전략을 과거에서 검증한 뒤 실행 가능한
+              행동으로 정리합니다.
+            </p>
+          </div>
 
-          <div class="market__summary">
-            <DkMarketMetric v-bind="marketSnapshot" />
-            <div class="market__note">
-              <span class="dk-eyebrow">Session Note</span>
-              <p
-                >대형주 중심의 완만한 상승. 거래 강도는 오후 들어 점진적으로
-                확대됐습니다.</p
-              >
+          <ol class="agent-cycle" aria-label="Agent process">
+            <li v-for="(step, index) in agentSteps" :key="step.name">
+              <span class="agent-cycle__index">0{{ index + 1 }}</span>
+              <div>
+                <h3>{{ step.name }}</h3>
+                <p>{{ step.description }}</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="backtest" class="backtest-section dk-section">
+        <div class="backtest-section__inner dk-container">
+          <div class="backtest-section__copy">
+            <p class="dk-eyebrow">Private Simulation Interface</p>
+            <h2 class="dk-serif">Before it acts,<br />it remembers.</h2>
+            <p>
+              전략 조건과 기간을 입력하고 과거의 모든 주문을 다시 실행합니다.
+              자산의 변화, 낙폭, 체결 기록과 다음 주문까지 하나의 흐름으로
+              확인하세요.
+            </p>
+            <router-link class="section-link" to="/backtest">
+              Enter Backtest <span aria-hidden="true">→</span>
+            </router-link>
+          </div>
+
+          <div class="simulation-plate" aria-hidden="true">
+            <div class="simulation-plate__head">
+              <span>SIMULATION / 01</span>
+              <span>READY</span>
+            </div>
+            <div class="simulation-plate__graph">
+              <svg viewBox="0 0 620 250" preserveAspectRatio="none">
+                <path
+                  d="M0 215 C55 207 74 190 119 193 S181 150 226 164 S290 116 337 129 S407 74 452 91 S531 40 620 24"
+                />
+              </svg>
+              <span class="simulation-plate__marker"></span>
+            </div>
+            <div class="simulation-plate__meta">
+              <span>STRATEGY</span>
+              <span>PERFORMANCE</span>
+              <span>ORDERS</span>
             </div>
           </div>
-
-          <DkTrendChart
-            v-model="activePeriod"
-            :points="activeMarketSeries"
-            :periods="chartPeriods"
-          />
         </div>
       </section>
 
-      <section id="research" class="research dk-section">
-        <div class="dk-container">
-          <DkSectionHeader
-            eyebrow="Research Index"
-            title="빠른 뉴스보다 오래 남는 해석."
-            description="매크로, 기업, 수급을 하나의 관점으로 연결한 Donkebi의 최신 리서치입니다."
-          />
+      <section id="principle" class="principle dk-section">
+        <div class="principle__inner dk-container">
+          <p class="dk-eyebrow">Our Principle</p>
+          <blockquote class="dk-serif">
+            Discipline over prediction.<br />Evidence before action.
+          </blockquote>
+          <div class="principle__note">
+            <span>01 / 01</span>
+            <p>
+              우리는 시장을 안다고 말하지 않습니다. 대신 같은 원칙을 흔들림 없이
+              반복하고, 행동하기 전에 그 결과를 확인합니다.
+            </p>
+          </div>
+        </div>
+      </section>
 
-          <div id="archive" class="research__list">
-            <DkResearchItem
-              v-for="item in researchItems"
-              :key="item.index"
-              v-bind="item"
-            />
+      <section id="origin" class="origin dk-section">
+        <div class="origin__inner dk-container">
+          <div class="origin__mark" aria-hidden="true">
+            <span>D</span>
+            <i></i>
+          </div>
+          <div class="origin__copy">
+            <p class="dk-eyebrow">Origin · Claude Shannon</p>
+            <h2 class="dk-serif">From Shannon’s Devil<br />to Donkebi.</h2>
+            <p>
+              규칙과 변동성에 대한 Claude Shannon의 사고에서 출발했습니다.
+              ‘샤논의 도깨비’라는 이름은 보이지 않는 곳에서 원칙을 지키며
+              움직이는 존재, Donkebi가 되었습니다.
+            </p>
           </div>
         </div>
       </section>
@@ -101,26 +133,16 @@
 
     <footer class="site-footer">
       <div class="site-footer__inner dk-container">
-        <div class="site-footer__intro">
-          <p class="dk-eyebrow">Weekly Perspective</p>
-          <h2 class="dk-serif">생각할 시간을<br />준비하고 있습니다.</h2>
-          <p class="site-footer__notice">
-            Weekly Perspective는 준비 중입니다. 지금은 공개된 리서치를 먼저
-            살펴보세요.
-          </p>
-          <DkTextLink label="리서치 둘러보기" to="#research" />
+        <div>
+          <p class="dk-eyebrow">DONKEBI</p>
+          <h2 class="dk-serif">Quietly observing.<br />Ready to act.</h2>
         </div>
-
-        <div class="site-footer__nav">
-          <section v-for="group in footerGroups" :key="group.title">
-            <h3>{{ group.title }}</h3>
-            <span v-for="item in group.items" :key="item">{{ item }}</span>
-          </section>
-        </div>
-
+        <router-link class="site-footer__access" to="/backtest">
+          Private Access <span aria-hidden="true">↗</span>
+        </router-link>
         <div class="site-footer__bottom">
           <span>© 2026 DONKEBI</span>
-          <span>Independent research for considered decisions.</span>
+          <span>AI Agent Trading System · Seoul</span>
         </div>
       </div>
     </footer>
@@ -128,27 +150,26 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import DkEditorialImage from '@/components/DkEditorialImage.vue'
-import DkMarketMetric from '@/components/DkMarketMetric.vue'
-import DkResearchItem from '@/components/DkResearchItem.vue'
-import DkSectionHeader from '@/components/DkSectionHeader.vue'
 import DkTextLink from '@/components/DkTextLink.vue'
-import DkTrendChart from '@/components/DkTrendChart.vue'
-import {
-  chartPeriods,
-  featuredResearch,
-  footerGroups,
-  marketSeriesByPeriod,
-  marketSnapshot,
-  researchItems
-} from '@/content/home.js'
-import architectureImage from '@/assets/editorial/architecture.webp'
 
-const activePeriod = ref('1D')
-const activeMarketSeries = computed(
-  () => marketSeriesByPeriod[activePeriod.value] ?? marketSeriesByPeriod['1D']
-)
+const agentSteps = [
+  {
+    name: 'Observe',
+    description: '시장 데이터와 전략의 조건을 끊임없이 관찰합니다.'
+  },
+  {
+    name: 'Validate',
+    description: '현재 상태가 행동할 수 있는 규칙과 일치하는지 평가합니다.'
+  },
+  {
+    name: 'Simulate',
+    description: '같은 원칙을 과거에 적용해 결과와 위험을 다시 확인합니다.'
+  },
+  {
+    name: 'Execute',
+    description: '정해진 시간에 실행 가능한 주문으로 전략을 전환합니다.'
+  }
+]
 </script>
 
 <style scoped lang="scss">
@@ -163,41 +184,26 @@ const activeMarketSeries = computed(
   gap: 24px;
   align-items: center;
   min-height: calc(100vh - 82px);
-  padding-block: clamp(86px, 9vw, 140px) 66px;
+  padding-block: clamp(82px, 9vw, 140px) 68px;
 
   &__copy {
-    grid-column: 1 / 7;
-    animation-delay: 80ms;
+    grid-column: 1 / 8;
+    animation-delay: 60ms;
   }
 
   h1 {
-    max-width: 740px;
-    margin: 40px 0 0;
-    font-size: clamp(4rem, 7.3vw, 7.6rem);
-    line-height: 1.04;
+    max-width: 850px;
+    margin: 38px 0 0;
+    font-size: clamp(4.3rem, 8vw, 8.6rem);
+    line-height: 0.98;
   }
 
   &__intro {
-    max-width: 470px;
-    margin: 34px 0 28px;
+    max-width: 500px;
+    margin: 38px 0 30px;
     color: var(--dk-muted);
-    font-size: 0.91rem;
-    line-height: 1.85;
-  }
-
-  &__market {
-    grid-column: 9 / 13;
-    padding-left: clamp(0px, 2vw, 28px);
-    animation-delay: 180ms;
-  }
-
-  &__sparkline {
-    width: 100%;
-    margin-top: 54px;
-    overflow: visible;
-    fill: none;
-    stroke: var(--dk-ink);
-    stroke-width: 1.4;
+    font-size: 0.88rem;
+    line-height: 1.9;
   }
 
   &__foot {
@@ -208,14 +214,186 @@ const activeMarketSeries = computed(
     display: flex;
     justify-content: space-between;
     color: var(--dk-muted);
-    font-size: 0.58rem;
-    letter-spacing: 0.1em;
+    font-size: 0.57rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 }
 
-.perspective {
+.agent-figure {
+  position: relative;
+  grid-column: 9 / 13;
+  aspect-ratio: 1;
+  animation-delay: 180ms;
+
+  &__orbit,
+  &__core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  &__orbit {
+    border: 1px solid var(--dk-line);
+
+    &--outer {
+      width: 100%;
+      height: 100%;
+    }
+
+    &--inner {
+      width: 66%;
+      height: 66%;
+    }
+  }
+
+  &__core {
+    width: 26%;
+    height: 26%;
+    background: var(--dk-ink);
+    box-shadow: 0 0 0 0 rgba(23, 23, 23, 0.18);
+    animation: agent-pulse 3.2s ease-out infinite;
+  }
+
+  &__tick {
+    position: absolute;
+    width: 1px;
+    height: 10%;
+    background: var(--dk-ink);
+
+    &--one {
+      top: 8%;
+      left: 52%;
+    }
+
+    &--two {
+      right: 13%;
+      bottom: 24%;
+      height: 6%;
+    }
+
+    &--three {
+      bottom: 11%;
+      left: 27%;
+      height: 8%;
+    }
+  }
+
+  &__status {
+    position: absolute;
+    right: 0;
+    bottom: -34px;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.55rem;
+    letter-spacing: 0.13em;
+
+    span:last-child {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #486b52;
+    }
+  }
+}
+
+@keyframes agent-pulse {
+  60%,
+  100% {
+    box-shadow: 0 0 0 36px rgba(23, 23, 23, 0);
+  }
+}
+
+.system {
+  scroll-margin-top: 82px;
   background: var(--dk-surface);
+}
+
+.section-intro {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  align-items: start;
+
+  > .dk-eyebrow {
+    grid-column: 1 / 4;
+  }
+
+  h2 {
+    grid-column: 4 / 10;
+    margin: -14px 0 0;
+    font-size: clamp(3rem, 5.8vw, 6.2rem);
+    line-height: 1.08;
+  }
+
+  > p:last-child {
+    grid-column: 10 / 13;
+    margin: 0;
+    color: var(--dk-muted);
+    font-size: 0.78rem;
+    line-height: 1.85;
+  }
+}
+
+.agent-cycle {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: clamp(70px, 9vw, 130px) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--dk-ink);
+  list-style: none;
+
+  li {
+    min-height: 240px;
+    padding: 18px 24px 24px;
+    border-right: 1px solid var(--dk-line);
+
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      border-right: 0;
+    }
+  }
+
+  &__index {
+    font-size: 0.58rem;
+    letter-spacing: 0.13em;
+  }
+
+  div {
+    margin-top: 92px;
+  }
+
+  h3 {
+    margin: 0;
+    font-family: var(--dk-font-serif);
+    font-size: 1.7rem;
+    font-weight: 400;
+  }
+
+  p {
+    max-width: 220px;
+    margin: 15px 0 0;
+    color: var(--dk-muted);
+    font-size: 0.72rem;
+    line-height: 1.75;
+  }
+}
+
+.backtest-section {
+  scroll-margin-top: 82px;
 
   &__inner {
     display: grid;
@@ -224,67 +402,176 @@ const activeMarketSeries = computed(
     align-items: center;
   }
 
-  &__image {
-    grid-column: 1 / 7;
-  }
-
   &__copy {
-    grid-column: 8 / 13;
-    max-width: 570px;
-    padding-left: clamp(0px, 3vw, 48px);
+    grid-column: 1 / 6;
 
     h2 {
-      margin: 38px 0 0;
-      font-size: clamp(2.8rem, 5.3vw, 5.7rem);
-      line-height: 1.16;
+      margin: 36px 0 0;
+      font-size: clamp(3.3rem, 5.8vw, 6.1rem);
+      line-height: 1.08;
     }
 
     > p:not(.dk-eyebrow) {
-      max-width: 450px;
-      margin: 28px 0 30px;
+      max-width: 430px;
+      margin: 30px 0;
       color: var(--dk-muted);
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       line-height: 1.85;
     }
   }
 }
 
-.market {
-  scroll-margin-top: 82px;
+.section-link {
+  display: inline-flex;
+  gap: 20px;
+  align-items: center;
+  padding-block: 8px;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  transition: gap var(--dk-fast);
 
-  &__summary {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 24px;
-    align-items: end;
-    padding-block: clamp(36px, 4vw, 58px);
-    border-block: 1px solid var(--dk-line);
-
-    > :first-child {
-      grid-column: 1 / 6;
-    }
-  }
-
-  &__note {
-    grid-column: 9 / 13;
-    padding-bottom: 8px;
-
-    p {
-      margin: 16px 0 0;
-      color: var(--dk-muted);
-      font-size: 0.78rem;
-      line-height: 1.7;
-    }
-  }
-
-  :deep(.trend-chart) {
-    padding-top: clamp(38px, 5vw, 72px);
+  &:hover {
+    gap: 28px;
   }
 }
 
-.research {
+.simulation-plate {
+  grid-column: 7 / 13;
+  min-height: 520px;
+  padding: 24px;
+  background: var(--dk-ink);
+  color: var(--dk-paper);
+
+  &__head,
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+  }
+
+  &__graph {
+    position: relative;
+    height: 390px;
+    margin-block: 28px 22px;
+    border-block: 1px solid rgba(244, 241, 234, 0.16);
+    background-image:
+      linear-gradient(rgba(244, 241, 234, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244, 241, 234, 0.08) 1px, transparent 1px);
+    background-size: 25% 25%;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      fill: none;
+      stroke: var(--dk-paper);
+      stroke-width: 1.3;
+    }
+  }
+
+  &__marker {
+    position: absolute;
+    top: 14%;
+    right: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--dk-paper);
+  }
+
+  &__meta {
+    justify-content: flex-start;
+    gap: 32px;
+    color: rgba(244, 241, 234, 0.55);
+  }
+}
+
+.principle {
   scroll-margin-top: 82px;
   background: var(--dk-surface);
+
+  blockquote {
+    margin: clamp(58px, 7vw, 100px) 0 0;
+    font-size: clamp(3.6rem, 7.4vw, 8rem);
+    line-height: 1.04;
+  }
+
+  &__note {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    margin-top: clamp(60px, 8vw, 110px);
+    padding-top: 22px;
+    border-top: 1px solid var(--dk-line);
+    font-size: 0.6rem;
+
+    p {
+      grid-column: 9 / 13;
+      margin: 0;
+      color: var(--dk-muted);
+      font-size: 0.78rem;
+      line-height: 1.8;
+    }
+  }
+}
+
+.origin {
+  scroll-margin-top: 82px;
+
+  &__inner {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    align-items: center;
+  }
+
+  &__mark {
+    position: relative;
+    display: grid;
+    grid-column: 1 / 6;
+    aspect-ratio: 1;
+    place-items: center;
+    border: 1px solid var(--dk-line);
+    border-radius: 50%;
+
+    span {
+      font-family: var(--dk-font-serif);
+      font-size: clamp(5rem, 12vw, 12rem);
+    }
+
+    i {
+      position: absolute;
+      right: 10%;
+      bottom: 18%;
+      width: 15%;
+      height: 15%;
+      border-radius: 50%;
+      background: var(--dk-ink);
+    }
+  }
+
+  &__copy {
+    grid-column: 7 / 13;
+    padding-left: clamp(0px, 4vw, 64px);
+
+    h2 {
+      margin: 38px 0 0;
+      font-size: clamp(3.1rem, 5.7vw, 6rem);
+      line-height: 1.1;
+    }
+
+    > p:last-child {
+      max-width: 470px;
+      margin: 32px 0 0;
+      color: var(--dk-muted);
+      font-size: 0.82rem;
+      line-height: 1.9;
+    }
+  }
 }
 
 .site-footer {
@@ -295,87 +582,61 @@ const activeMarketSeries = computed(
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 24px;
-    padding-block: clamp(76px, 8vw, 120px) 30px;
-  }
+    padding-block: clamp(80px, 9vw, 130px) 30px;
 
-  &__intro {
-    grid-column: 1 / 7;
+    > div:first-child {
+      grid-column: 1 / 8;
+    }
 
     h2 {
-      margin: 34px 0 0;
-      font-size: clamp(2.9rem, 5.7vw, 6rem);
-      line-height: 1.12;
+      margin: 36px 0 0;
+      font-size: clamp(3.2rem, 6vw, 6.4rem);
+      line-height: 1.08;
     }
   }
 
-  &__notice {
-    max-width: 520px;
-    margin: 42px 0 22px;
-    color: rgba(244, 241, 234, 0.72);
-    font-size: 0.78rem;
-    line-height: 1.8;
-  }
-
-  &__nav {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-column: 9 / 13;
-    gap: 24px;
-    padding-top: 8px;
-
-    section {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    h3 {
-      margin: 0 0 9px;
-      font-size: 0.62rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    span {
-      width: max-content;
-      color: rgba(244, 241, 234, 0.72);
-      font-size: 0.7rem;
-    }
+  &__access {
+    display: flex;
+    grid-column: 10 / 13;
+    align-self: end;
+    justify-content: space-between;
+    padding-block: 14px;
+    border-block: 1px solid rgba(244, 241, 234, 0.28);
+    font-size: 0.62rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
   }
 
   &__bottom {
     display: flex;
     grid-column: 1 / -1;
     justify-content: space-between;
-    margin-top: 92px;
-    padding-top: 25px;
+    margin-top: 100px;
+    padding-top: 24px;
     border-top: 1px solid rgba(244, 241, 234, 0.18);
-    color: rgba(244, 241, 234, 0.7);
-    font-size: 0.57rem;
-    letter-spacing: 0.09em;
+    color: rgba(244, 241, 234, 0.65);
+    font-size: 0.56rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 }
 
 @media (max-width: 1023px) {
-  .hero {
-    &__copy {
-      grid-column: 1 / 8;
-    }
-
-    &__market {
-      grid-column: 9 / 13;
-    }
+  .hero__copy {
+    grid-column: 1 / 8;
   }
 
-  .perspective {
-    &__image {
-      grid-column: 1 / 7;
+  .agent-figure {
+    grid-column: 9 / 13;
+  }
+
+  .section-intro {
+    h2 {
+      grid-column: 4 / 9;
     }
 
-    &__copy {
-      grid-column: 7 / 13;
+    > p:last-child {
+      grid-column: 9 / 13;
     }
   }
 }
@@ -384,22 +645,15 @@ const activeMarketSeries = computed(
   .hero {
     display: block;
     min-height: auto;
-    padding-block: 94px 88px;
+    padding-block: 88px 96px;
 
     h1 {
-      margin-top: 32px;
-      font-size: clamp(3.8rem, 18vw, 5.6rem);
+      margin-top: 30px;
+      font-size: clamp(4rem, 18vw, 5.7rem);
     }
 
-    &__market {
-      margin-top: 94px;
-      padding-top: 34px;
-      padding-left: 0;
-      border-top: 1px solid var(--dk-line);
-    }
-
-    &__sparkline {
-      max-height: 110px;
+    &__intro {
+      margin-top: 30px;
     }
 
     &__foot {
@@ -407,33 +661,84 @@ const activeMarketSeries = computed(
     }
   }
 
-  .perspective {
-    &__inner {
-      display: flex;
-      flex-direction: column;
-      gap: 58px;
-      align-items: stretch;
+  .agent-figure {
+    width: min(86vw, 430px);
+    margin: 110px auto 34px;
+  }
+
+  .section-intro {
+    display: block;
+
+    h2 {
+      margin-top: 34px;
     }
 
-    &__image {
-      order: 2;
-    }
-
-    &__copy {
-      order: 1;
-      padding-left: 0;
+    > p:last-child {
+      width: 100%;
+      max-width: none;
+      margin-top: 30px;
     }
   }
 
-  .market {
-    &__summary {
-      display: block;
+  .agent-cycle {
+    grid-template-columns: 1fr;
+
+    li {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      min-height: auto;
+      padding: 18px 0 24px;
+      border-right: 0;
+      border-bottom: 1px solid var(--dk-line);
+    }
+
+    p {
+      max-width: none;
+    }
+
+    div {
+      margin-top: 0;
+    }
+  }
+
+  .backtest-section__inner,
+  .origin__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+    align-items: stretch;
+  }
+
+  .simulation-plate {
+    min-height: 390px;
+    padding: 18px;
+
+    &__graph {
+      height: 275px;
+    }
+  }
+
+  .principle {
+    blockquote {
+      font-size: clamp(3.5rem, 15vw, 5rem);
     }
 
     &__note {
-      margin-top: 44px;
-      padding-top: 30px;
-      border-top: 1px solid var(--dk-line);
+      display: block;
+
+      p {
+        margin-top: 25px;
+      }
+    }
+  }
+
+  .origin {
+    &__mark {
+      width: min(82vw, 430px);
+    }
+
+    &__copy {
+      padding-left: 0;
     }
   }
 
@@ -442,16 +747,14 @@ const activeMarketSeries = computed(
       display: block;
     }
 
-    &__nav {
-      margin-top: 76px;
-      padding-top: 44px;
-      border-top: 1px solid rgba(244, 241, 234, 0.18);
+    &__access {
+      margin-top: 70px;
     }
 
     &__bottom {
       display: grid;
-      gap: 9px;
-      margin-top: 64px;
+      gap: 8px;
+      margin-top: 70px;
     }
   }
 }
