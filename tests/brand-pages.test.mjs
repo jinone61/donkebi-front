@@ -27,7 +27,15 @@ test('package metadata describes the AI agent trading product', async () => {
 test('home presents the quiet AI trading agent narrative', async () => {
   const source = await readSource('src/pages/index/(home).vue')
 
-  assert.match(source, /An agent for<br \/>the market\./)
+  assert.match(source, /돈 나와라 와라,<br \/>뚝딱\./)
+  assert.match(
+    source,
+    /\.hero \{[\s\S]*?h1 \{[\s\S]*?font-size: clamp\(3\.5rem, 6\.5vw, 7rem\);/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.hero \{[\s\S]*?h1 \{[\s\S]*?font-size: clamp\(2\.5rem, 12\.5vw, 4\.6rem\);/
+  )
   for (const sectionId of ['system', 'backtest', 'principle', 'origin']) {
     assert.match(source, new RegExp(`id="${sectionId}"`))
   }

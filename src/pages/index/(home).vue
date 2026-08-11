@@ -4,9 +4,7 @@
       <section class="hero dk-container" aria-labelledby="hero-title">
         <div class="hero__copy dk-reveal">
           <p class="dk-eyebrow">AI Agent Trading System</p>
-          <h1 id="hero-title" class="dk-serif">
-            An agent for<br />the market.
-          </h1>
+          <h1 id="hero-title" class="dk-serif"> 돈 나와라 와라,<br />뚝딱. </h1>
           <p class="hero__intro">
             전략을 검증하고, 시장의 시간에 맞춰 움직입니다. Donkebi는 반복
             가능한 원칙을 실제 행동으로 전환하는 AI Trading Agent입니다.
@@ -194,8 +192,9 @@ const agentSteps = [
   h1 {
     max-width: 850px;
     margin: 38px 0 0;
-    font-size: clamp(4.3rem, 8vw, 8.6rem);
+    font-size: clamp(3.5rem, 6.5vw, 7rem);
     line-height: 0.98;
+    white-space: nowrap;
   }
 
   &__intro {
@@ -649,7 +648,7 @@ const agentSteps = [
 
     h1 {
       margin-top: 30px;
-      font-size: clamp(4rem, 18vw, 5.7rem);
+      font-size: clamp(2.5rem, 12.5vw, 4.6rem);
     }
 
     &__intro {
