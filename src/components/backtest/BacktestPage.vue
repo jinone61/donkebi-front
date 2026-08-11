@@ -291,7 +291,7 @@
                       "
                     />
                   </q-card-section>
-                  <q-card-section class="q-pt-none">
+                  <q-card-section class="q-pt-none tier-ratio-section">
                     <div class="row items-center justify-between q-mb-sm">
                       <div class="text-subtitle2 text-grey-8"
                         >티어별 매수 비율</div
@@ -2555,6 +2555,10 @@ function sideColor(side) {
 
 .ratio-grid {
   gap: 12px;
+}
+
+.tier-ratio-section {
+  padding-inline: 0;
 }
 
 :deep(.q-separator) {

@@ -19,33 +19,33 @@
 ### Task 1: Align the tier-ratio section
 
 **Files:**
+
 - Modify: `src/components/backtest/BacktestPage.vue:294`
 - Modify: `src/components/backtest/BacktestPage.vue:2556`
-- Test: `tests/brand-pages.test.mjs`
+- Test: temporary browser QA script under `/tmp`
 
 **Interfaces:**
+
 - Consumes: the existing tier-ratio `q-card-section` and `.ratio-grid`
 - Produces: `.tier-ratio-section`, whose horizontal padding is zero
 
-- [ ] **Step 1: Write the failing regression test**
+- [ ] **Step 1: Write the failing browser regression check**
 
 ```js
-test('tier ratio section aligns with the defense settings grid', async () => {
-  const source = await readSource('src/components/backtest/BacktestPage.vue')
+const defenseGrid = document.querySelectorAll('.settings-grid')[2]
+const ratioGrid = document.querySelector('.ratio-grid')
+const defenseRect = defenseGrid.getBoundingClientRect()
+const ratioRect = ratioGrid.getBoundingClientRect()
 
-  assert.match(source, /q-card-section class="q-pt-none tier-ratio-section"/)
-  assert.match(
-    source,
-    /\.tier-ratio-section \{[\s\S]*?padding-inline: 0;/
-  )
-})
+assert.ok(Math.abs(defenseRect.left - ratioRect.left) < 1)
+assert.ok(Math.abs(defenseRect.right - ratioRect.right) < 1)
 ```
 
 - [ ] **Step 2: Run the focused test and verify it fails**
 
-Run: `npm test -- --test-name-pattern="tier ratio section"`
+Run the temporary QA script against the authenticated SETUP page at desktop and mobile widths.
 
-Expected: FAIL because `tier-ratio-section` does not exist.
+Expected: FAIL with a 16px inset on both sides of the ratio grid.
 
 - [ ] **Step 3: Add the dedicated class and remove its horizontal padding**
 
@@ -61,9 +61,9 @@ Expected: FAIL because `tier-ratio-section` does not exist.
 
 - [ ] **Step 4: Verify the focused test and project checks**
 
-Run: `npm test -- --test-name-pattern="tier ratio section"`
+Run the temporary browser QA script again.
 
-Expected: PASS.
+Expected: PASS at desktop and mobile widths.
 
 Run: `npm test && npm run lint:check && npm run build && git diff --check`
 
@@ -76,6 +76,6 @@ Open `http://127.0.0.1:9000/#/backtest`, authenticate, expand defense mode, and 
 - [ ] **Step 6: Commit the implementation**
 
 ```bash
-git add src/components/backtest/BacktestPage.vue tests/brand-pages.test.mjs
+git add src/components/backtest/BacktestPage.vue docs/superpowers/plans/2026-08-11-backtest-tier-ratio-alignment.md
 git commit -m "Align backtest tier ratio fields"
 ```
