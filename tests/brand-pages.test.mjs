@@ -69,6 +69,15 @@ test('editable backtest workspace uses the Donkebi instrument labels', async () 
   assert.match(source, /label="ORDERS"/)
 })
 
+test('mobile setup keeps all setting fields in two columns', async () => {
+  const source = await readSource('src/components/backtest/BacktestPage.vue')
+
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.settings-grid,[\s\S]*?\.basic-settings-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/
+  )
+})
+
 test('comparison BacktestPage remains byte-for-byte unchanged', async () => {
   const source = await readFile(
     new URL('../src/pages/index/BacktestPage.vue', import.meta.url)
