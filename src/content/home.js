@@ -1,6 +1,7 @@
 export const navigationItems = [
   { label: 'SYSTEM', href: '#system' },
   { label: 'BACKTEST', to: '/backtest' },
+  { label: 'BACKTEST_ORIGINAL', to: '/backtestPage' },
   { label: 'PRINCIPLE', href: '#principle' },
   { label: 'ORIGIN', href: '#origin' }
 ]
