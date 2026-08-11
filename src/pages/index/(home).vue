@@ -61,7 +61,8 @@
             <p class="dk-eyebrow">Private Simulation Interface</p>
             <h2 class="dk-serif">AI driven,<br />Real-world magic.</h2>
             <p>
-              AI. 기술과 경험의 정점에서, <br/>시장의 불확실성을 자산으로 바꾸는 현대의 마법을 경험하세요.
+              AI. 기술과 경험의 정점에서, <br />시장의 불확실성을 자산으로
+              바꾸는 현대의 마법을 경험하세요.
             </p>
             <router-link class="section-link" to="/backtest">
               Enter Backtest <span aria-hidden="true">→</span>
@@ -124,8 +125,7 @@
           <div class="principle__note">
             <span>01 / 01</span>
             <p>
-              우리는 시장을 안다고 말하지 않습니다. 대신 같은 원칙을 흔들림 없이
-              반복하고, 행동하기 전에 그 결과를 확인합니다.
+              우리는 시장을 안다고 말하지 않습니다. <br />대신 하나의 원칙 아래 시장을 끊임없이 관찰하고, 행동에 앞서 전략을 검증합니다.
             </p>
           </div>
         </div>
@@ -139,11 +139,11 @@
           </div>
           <div class="origin__copy">
             <p class="dk-eyebrow">Origin · Claude Shannon</p>
-            <h2 class="dk-serif">From Shannon’s Devil<br />to Donkebi.</h2>
+            <h2 class="dk-serif">Donkebi.<br />From Shannon’s Devil.</h2>
             <p>
-              규칙과 변동성에 대한 Claude Shannon의 사고에서 출발했습니다.
-              ‘샤논의 도깨비’라는 이름은 보이지 않는 곳에서 원칙을 지키며
-              움직이는 존재, Donkebi가 되었습니다.
+               정보이론의 아버지, Claude Shannon.
+               그는 불확실성을 다루는 규칙을 탐구했습니다.
+               오늘, Donkebi가 이어갑니다
             </p>
           </div>
         </div>
@@ -637,7 +637,7 @@ const agentSteps = [
 
   blockquote {
     margin: clamp(58px, 7vw, 100px) 0 0;
-    font-size: clamp(3.6rem, 7.4vw, 8rem);
+    font-size: clamp(3.1rem, 5.7vw, 6rem);
     line-height: 1.04;
   }
 
@@ -874,10 +874,6 @@ const agentSteps = [
   }
 
   .principle {
-    blockquote {
-      font-size: clamp(3.5rem, 15vw, 5rem);
-    }
-
     &__note {
       display: block;
 

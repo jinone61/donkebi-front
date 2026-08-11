@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Keep the eyebrow, English statement, Korean note, divider, spacing, background, typeface, and line height unchanged.
-- Use `clamp(2.6rem, 4.2vw, 4.6rem)` for the principle blockquote.
+- Use `clamp(3.1rem, 5.7vw, 6rem)` for the principle blockquote, matching the `Shannon’s Devil` heading.
 - Remove the mobile-only `clamp(3.5rem, 15vw, 5rem)` override.
 - Do not modify other home sections or either backtest implementation.
 
@@ -20,11 +20,13 @@
 ### Task 1: Rescale the Our Principle statement
 
 **Files:**
+
 - Modify: `tests/brand-pages.test.mjs`
 - Modify: `src/pages/index/(home).vue:634-642`
 - Modify: `src/pages/index/(home).vue:876-880`
 
 **Interfaces:**
+
 - Consumes: Existing `.principle blockquote` styles and the `brand-pages.test.mjs` source-regression pattern.
 - Produces: One responsive blockquote scale shared by desktop and mobile.
 
@@ -33,12 +35,12 @@
 Add this test to `tests/brand-pages.test.mjs`:
 
 ```js
-test('home principle uses a restrained responsive type scale', async () => {
+test('home principle matches the Shannon heading type scale', async () => {
   const source = await readSource('src/pages/index/(home).vue')
 
   assert.match(
     source,
-    /\.principle \{[\s\S]*?blockquote \{[\s\S]*?font-size: clamp\(2\.6rem, 4\.2vw, 4\.6rem\);/
+    /\.principle \{[\s\S]*?blockquote \{[^}]*font-size: clamp\(3\.1rem, 5\.7vw, 6rem\);[^}]*\}/
   )
   assert.doesNotMatch(source, /clamp\(3\.5rem, 15vw, 5rem\)/)
 })
@@ -55,7 +57,7 @@ Expected: FAIL because the source still contains the old base scale and mobile o
 In the base `.principle blockquote` rule, replace the font size with:
 
 ```scss
-font-size: clamp(2.6rem, 4.2vw, 4.6rem);
+font-size: clamp(3.1rem, 5.7vw, 6rem);
 ```
 
 Inside `@media (max-width: 767px)`, remove only this nested rule:

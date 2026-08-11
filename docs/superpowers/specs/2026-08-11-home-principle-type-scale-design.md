@@ -6,7 +6,7 @@ Reduce the visual weight of the home page `Our Principle` statement without chan
 
 ## Design
 
-Keep the eyebrow, English statement, Korean note, divider, spacing, and section background unchanged. Change the blockquote type scale from `clamp(3.6rem, 7.4vw, 8rem)` to `clamp(2.6rem, 4.2vw, 4.6rem)`. Remove the mobile-only `clamp(3.5rem, 15vw, 5rem)` override so small screens inherit the restrained base scale instead of enlarging the statement again. The statement spans the full content width, so it should remain slightly smaller than the half-width section headings while retaining clear hierarchy.
+Keep the eyebrow, English statement, Korean note, divider, spacing, and section background unchanged. Change the blockquote type scale from `clamp(3.6rem, 7.4vw, 8rem)` to `clamp(3.1rem, 5.7vw, 6rem)`, matching the `Shannon’s Devil` heading scale. Remove the mobile-only `clamp(3.5rem, 15vw, 5rem)` override so small screens inherit the shared base scale instead of enlarging the statement again. This keeps the full-width statement consistent with the home page heading system without returning to its former oversized maximum.
 
 ## Verification
 

@@ -50,6 +50,16 @@ test('mobile system descriptions use the available content width', async () => {
   )
 })
 
+test('home principle matches the Shannon heading type scale', async () => {
+  const source = await readSource('src/pages/index/(home).vue')
+
+  assert.match(
+    source,
+    /\.principle \{[\s\S]*?blockquote \{[^}]*font-size: clamp\(3\.1rem, 5\.7vw, 6rem\);[^}]*\}/
+  )
+  assert.doesNotMatch(source, /clamp\(3\.5rem, 15vw, 5rem\)/)
+})
+
 test('home backtest story contrasts the market with Donkebi', async () => {
   const source = await readSource('src/pages/index/(home).vue')
   const normalizedSource = source.replace(/\s+/g, ' ')
@@ -57,7 +67,7 @@ test('home backtest story contrasts the market with Donkebi', async () => {
   assert.match(source, /AI driven,<br \/>Real-world magic\./)
   assert.match(
     normalizedSource,
-    /AI\. 기술과 경험의 정점에서, 시장의 불확실성을 자산으로 바꾸는 현대의 마법을 경험하세요\./
+    /AI\. 기술과 경험의 정점에서,\s*<br\s*\/?>시장의 불확실성을 자산으로 바꾸는 현대의 마법을 경험하세요\./
   )
   assert.match(source, /simulation-plate__line--market/)
   assert.match(source, /simulation-plate__line--donkebi/)
