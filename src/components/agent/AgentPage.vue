@@ -891,6 +891,49 @@
                     <small v-if="metric.caption">{{ metric.caption }}</small>
                   </article>
                 </div>
+
+                <section
+                  class="current-tiers"
+                  aria-labelledby="current-tiers-title"
+                >
+                  <div class="current-tiers__heading">
+                    <div>
+                      <p class="section-index">CURRENT HOLDINGS</p>
+                      <h3 id="current-tiers-title">현재 Tier</h3>
+                    </div>
+                    <span>{{ currentTiers.length }} TIERS</span>
+                  </div>
+
+                  <div v-if="currentTiers.length" class="current-tiers__grid">
+                    <article v-for="tier in currentTiers" :key="tier.tier">
+                      <header>
+                        <strong>{{ tier.tier }}</strong>
+                        <span>{{ tier.mode || '-' }}</span>
+                      </header>
+                      <dl>
+                        <div>
+                          <dt>보유 수량</dt>
+                          <dd>{{ formatInteger(tier.quantity) }}주</dd>
+                        </div>
+                        <div>
+                          <dt>평균 매수가</dt>
+                          <dd>{{ formatPrice(tier.averageBuyPrice) }}</dd>
+                        </div>
+                        <div>
+                          <dt>평가액</dt>
+                          <dd>{{ formatMoney(tier.marketValue) }}</dd>
+                        </div>
+                        <div>
+                          <dt>수익률</dt>
+                          <dd :class="profitClass(tier.unrealizedReturnPct)">
+                            {{ formatPct(tier.unrealizedReturnPct) }}
+                          </dd>
+                        </div>
+                      </dl>
+                    </article>
+                  </div>
+                  <p v-else class="detail-empty">현재 보유 Tier가 없습니다.</p>
+                </section>
               </section>
 
               <section
@@ -1055,180 +1098,278 @@
                 </q-card>
               </section>
 
-              <section
-                class="agent-history"
+              <q-card
+                flat
+                bordered
+                class="section-card agent-history"
                 aria-labelledby="agent-history-title"
               >
-                <div class="section-heading section-heading--split">
+                <q-card-section
+                  class="section-heading row items-center justify-between"
+                >
                   <div>
-                    <p class="section-index">03 · OPERATION LOG</p>
-                    <h2 id="agent-history-title" class="dk-serif"
-                      >Every action, recorded.</h2
-                    >
-                    <p
-                      >계획부터 제출, 체결과 현금 흐름까지 일별로 확인합니다.</p
-                    >
+                    <div id="agent-history-title" class="text-h6 text-grey-9">
+                      일별 운영 내역
+                    </div>
+                    <div class="text-caption text-grey-6">
+                      날짜를 선택하면 주문·체결·현금 흐름을 확인할 수 있습니다.
+                    </div>
                   </div>
-                  <span>{{ dailyRows.length }} SESSIONS</span>
-                </div>
+                  <q-badge
+                    color="grey-7"
+                    :label="`${dailyRows.length} 거래일`"
+                  />
+                </q-card-section>
 
-                <div v-if="visibleHistoryRows.length" class="daily-history">
-                  <div class="history-head" aria-hidden="true">
-                    <span>날짜</span><span>모드</span><span>총자산</span
-                    ><span>DD</span><span>주문 / 체결</span>
-                  </div>
-                  <q-expansion-item
-                    v-for="day in visibleHistoryRows"
-                    :key="day.sessionDate"
-                    dense
-                    expand-separator
-                    class="daily-history-item"
-                    header-class="daily-item-header"
-                  >
-                    <template #header>
-                      <q-item-section>
-                        <div class="history-row">
-                          <strong>{{ day.sessionDate }}</strong>
-                          <span>{{ day.mode }}</span>
-                          <span>{{ formatMoney(day.totalAsset) }}</span>
-                          <span :class="profitClass(day.drawdownPct)">{{
-                            formatPct(day.drawdownPct)
-                          }}</span>
-                          <span
-                            >{{ day.orders.length }} /
-                            {{ day.executions.length }}</span
-                          >
-                        </div>
-                      </q-item-section>
-                    </template>
-
-                    <div class="history-detail">
-                      <div class="detail-summary">
-                        <div
-                          ><span>계획 기준일</span
-                          ><strong>{{
-                            day.plan?.basisDate || '-'
-                          }}</strong></div
-                        >
-                        <div
-                          ><span>대상일</span
-                          ><strong>{{
-                            day.plan?.targetDate || day.sessionDate
-                          }}</strong></div
-                        >
-                        <div
-                          ><span>완료 상태</span
-                          ><strong>{{
-                            day.plan?.completionStatus || '-'
-                          }}</strong></div
-                        >
-                        <div
-                          ><span>실행 소스</span
-                          ><strong>{{
-                            day.plan?.completionSource || '-'
-                          }}</strong></div
-                        >
-                      </div>
-
-                      <div class="detail-block">
-                        <h3>주문 및 체결</h3>
-                        <div v-if="day.orders.length" class="table-scroll">
-                          <q-markup-table flat dense separator="horizontal">
-                            <thead>
-                              <tr>
-                                <th>구분</th><th>티어</th><th>유형</th
-                                ><th class="text-right">주문가</th>
-                                <th class="text-right">수량</th
-                                ><th>제출 상태</th><th>Broker ID</th>
-                                <th class="text-right">체결가</th
-                                ><th class="text-right">체결수량</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr
-                                v-for="(order, index) in day.orders"
-                                :key="`${day.sessionDate}-${order.tier}-${index}`"
-                              >
-                                <td>{{ sideLabel(order.tradeSide) }}</td>
-                                <td>{{ order.tier }}</td>
-                                <td
-                                  >{{ order.orderType }} ·
-                                  {{ order.planType }}</td
-                                >
-                                <td class="text-right">{{
-                                  formatPrice(order.orderPrice)
-                                }}</td>
-                                <td class="text-right">{{
-                                  formatInteger(order.quantity)
-                                }}</td>
-                                <td>
-                                  {{ order.submission?.status || '미제출' }}
-                                  <small v-if="order.submission?.mode">{{
-                                    order.submission.mode
-                                  }}</small>
-                                </td>
-                                <td>
-                                  {{ order.submission?.brokerOrderId || '-' }}
-                                  <small
-                                    v-if="order.submission?.brokerErrorMessage"
-                                    class="text-negative"
-                                  >
-                                    {{ order.submission.brokerErrorMessage }}
-                                  </small>
-                                </td>
-                                <td class="text-right">{{
-                                  formatPrice(order.executionPrice)
-                                }}</td>
-                                <td class="text-right">{{
-                                  formatInteger(order.executedQuantity)
-                                }}</td>
-                              </tr>
-                            </tbody>
-                          </q-markup-table>
-                        </div>
-                        <p v-else class="detail-empty">주문 없음</p>
-                      </div>
-
-                      <div class="detail-block">
-                        <h3>현금 흐름</h3>
-                        <div
-                          v-if="day.transactions.length"
-                          class="cash-transactions"
-                        >
+                <q-card-section class="q-pa-sm">
+                  <div v-if="visibleHistoryRows.length" class="daily-history">
+                    <div class="daily-header desktop-only">
+                      <span>날짜</span><span>모드</span><span>종가</span
+                      ><span>총자산</span><span>DD</span><span>주문</span
+                      ><span>체결</span><span>마감 현금</span
+                      ><span>현금 비중</span>
+                    </div>
+                    <q-expansion-item
+                      v-for="day in visibleHistoryRows"
+                      :key="day.sessionDate"
+                      group="daily-results"
+                      dense
+                      expand-separator
+                      class="daily-history-item"
+                      header-class="daily-item-header"
+                    >
+                      <template #header>
+                        <div class="daily-row daily-desktop-summary">
+                          <div class="daily-cell">{{ day.sessionDate }}</div>
+                          <div class="daily-cell">
+                            <q-badge
+                              :color="modeColor(day.mode)"
+                              :label="day.mode"
+                            />
+                          </div>
+                          <div class="daily-cell">{{
+                            formatPrice(day.closePrice)
+                          }}</div>
+                          <div class="daily-cell">{{
+                            formatMoney(day.totalAsset)
+                          }}</div>
                           <div
-                            v-for="(transaction, index) in day.transactions"
-                            :key="`${transaction.eventKey}-${index}`"
+                            class="daily-cell"
+                            :class="profitClass(day.drawdownPct)"
                           >
-                            <span>{{ transaction.type }}</span>
-                            <strong
-                              :class="profitClass(transaction.changeAmount)"
-                              >{{
-                                formatMoney(transaction.changeAmount)
-                              }}</strong
+                            {{ formatPct(day.drawdownPct, false) }}
+                          </div>
+                          <div class="daily-cell">{{ day.orders.length }}</div>
+                          <div class="daily-cell">{{
+                            day.executions.length
+                          }}</div>
+                          <div class="daily-cell">{{
+                            formatMoney(day.closingCash)
+                          }}</div>
+                          <div class="daily-cell">{{
+                            formatPct(day.cashRatioPct, false)
+                          }}</div>
+                        </div>
+
+                        <div class="daily-mobile-summary">
+                          <div class="daily-mobile-summary__header">
+                            <span class="text-weight-bold text-grey-8">{{
+                              day.sessionDate
+                            }}</span>
+                            <span class="daily-mobile-summary__meta">
+                              종가 {{ formatPrice(day.closePrice) }} ·
+                              <q-badge
+                                :color="modeColor(day.mode)"
+                                :label="day.mode"
+                              />
+                            </span>
+                          </div>
+                          <div class="daily-mobile-summary__values">
+                            <div>
+                              <span class="data-label">자산</span>
+                              <span class="daily-mobile-summary__primary">
+                                {{ formatMoney(day.totalAsset) }}
+                              </span>
+                            </div>
+                            <div class="text-right">
+                              <span class="data-label">DD</span>
+                              <span
+                                class="daily-mobile-summary__primary"
+                                :class="profitClass(day.drawdownPct)"
+                              >
+                                {{ formatPct(day.drawdownPct, false) }}
+                              </span>
+                            </div>
+                          </div>
+                          <div class="daily-mobile-summary__meta">
+                            <span>
+                              <span>현금</span>
+                              {{ formatMoney(day.closingCash) }} ({{
+                                formatPct(day.cashRatioPct, false)
+                              }})
+                            </span>
+                            <span></span>
+                            <span>
+                              주문 {{ day.orders.length }} · 체결
+                              {{ day.executions.length }}
+                            </span>
+                          </div>
+                        </div>
+                      </template>
+
+                      <div class="daily-detail bg-grey-1">
+                        <div class="detail-section">
+                          <div class="detail-title">당일 계획</div>
+                          <div class="detail-summary">
+                            <span>기준일 {{ day.plan?.basisDate || '-' }}</span>
+                            <span
+                              >목표일
+                              {{
+                                day.plan?.targetDate || day.sessionDate
+                              }}</span
                             >
-                            <small
-                              >{{ formatMoney(transaction.cashBefore) }} →
-                              {{ formatMoney(transaction.cashAfter) }}</small
+                            <span>모드 {{ day.mode }}</span>
+                            <span
+                              >기준 매수가
+                              {{ formatPrice(day.plan?.buyPrice) }}</span
+                            >
+                            <span
+                              >{{ day.plan?.completionStatus || '-' }} ·
+                              {{ day.plan?.completionSource || '-' }}</span
                             >
                           </div>
                         </div>
-                        <p v-else class="detail-empty">현금 변동 없음</p>
-                      </div>
-                    </div>
-                  </q-expansion-item>
 
-                  <q-btn
-                    v-if="hasMoreHistory"
-                    flat
-                    no-caps
-                    color="dark"
-                    class="load-more"
-                    label="이전 기록 더보기"
-                    @click="visibleHistoryCount += DAILY_HISTORY_PAGE_SIZE"
-                  />
-                </div>
-                <p v-else class="empty-copy">일별 운영 기록이 없습니다.</p>
-              </section>
+                        <div class="detail-section">
+                          <div class="detail-title">주문 및 체결</div>
+                          <div v-if="day.orders.length" class="table-scroll">
+                            <q-markup-table flat bordered dense>
+                              <thead>
+                                <tr>
+                                  <th>구분</th><th>티어</th><th>유형</th
+                                  ><th class="text-right">수량</th
+                                  ><th>제출 상태</th><th>Broker ID</th>
+                                  <th class="text-right">주문가</th>
+                                  <th class="text-right">체결가</th
+                                  ><th class="text-right">체결수량</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr
+                                  v-for="(order, index) in day.orders"
+                                  :key="`${day.sessionDate}-${order.tier}-${index}`"
+                                >
+                                  <td>{{ sideLabel(order.tradeSide) }}</td>
+                                  <td>{{ order.tier }}</td>
+                                  <td>
+                                    {{ shortTypeLabel(order.orderType) }}·
+                                    {{ shortTypeLabel(order.planType) }}
+                                  </td>
+                                  <td class="text-right">{{
+                                    formatInteger(order.quantity)
+                                  }}</td>
+                                  <td>
+                                    {{ order.submission?.status || '미제출' }}
+                                    <small v-if="order.submission?.mode">{{
+                                      order.submission.mode
+                                    }}</small>
+                                  </td>
+                                  <td>
+                                    {{ order.submission?.brokerOrderId || '-' }}
+                                    <small
+                                      v-if="
+                                        order.submission?.brokerErrorMessage
+                                      "
+                                      class="text-negative"
+                                    >
+                                      {{ order.submission.brokerErrorMessage }}
+                                    </small>
+                                  </td>
+                                  <td class="text-right">{{
+                                    formatPrice(order.orderPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatPrice(order.executionPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatInteger(order.executedQuantity)
+                                  }}</td>
+                                </tr>
+                              </tbody>
+                            </q-markup-table>
+                          </div>
+                          <div v-else class="detail-note">주문 없음</div>
+                        </div>
+
+                        <div class="detail-section">
+                          <div class="detail-title">현금 흐름</div>
+                          <div class="detail-summary q-mb-sm">
+                            <span
+                              >시작
+                              {{ formatMoney(day.cash?.openingCash) }}</span
+                            >
+                            <span
+                              >마감
+                              {{ formatMoney(day.cash?.closingCash) }}</span
+                            >
+                          </div>
+                          <div
+                            v-if="day.transactions.length"
+                            class="table-scroll"
+                          >
+                            <q-markup-table flat bordered dense>
+                              <thead>
+                                <tr>
+                                  <th class="text-left">유형</th>
+                                  <th class="text-left">티어</th>
+                                  <th class="text-right">변동액</th>
+                                  <th class="text-right">변동 후 현금</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr
+                                  v-for="(
+                                    transaction, index
+                                  ) in day.transactions"
+                                  :key="`${transaction.eventKey}-${index}`"
+                                >
+                                  <td>{{ transaction.type }}</td>
+                                  <td>{{ transaction.tier || '-' }}</td>
+                                  <td
+                                    class="text-right"
+                                    :class="
+                                      profitClass(transaction.changeAmount)
+                                    "
+                                  >
+                                    {{ formatMoney(transaction.changeAmount) }}
+                                  </td>
+                                  <td class="text-right">
+                                    {{ formatMoney(transaction.cashAfter) }}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </q-markup-table>
+                          </div>
+                          <div v-else class="detail-note">현금 거래 없음</div>
+                        </div>
+                      </div>
+                    </q-expansion-item>
+
+                    <div v-if="hasMoreHistory" class="q-pa-md">
+                      <q-btn
+                        outline
+                        color="green-7"
+                        label="더 불러오기"
+                        class="full-width"
+                        @click="visibleHistoryCount += DAILY_HISTORY_PAGE_SIZE"
+                      />
+                    </div>
+                  </div>
+                  <div v-else class="empty-copy q-pa-lg">
+                    일별 운영 기록이 없습니다.
+                  </div>
+                </q-card-section>
+              </q-card>
             </template>
 
             <div v-else class="operation-empty-state">
@@ -1336,7 +1477,6 @@ const AGENT_RESULT_URL = '/api/dualsniper/strategies/results'
 const OPERATION_STATUS_URL = '/api/dualsniper/operations/status'
 const PAGE_PASSWORD = '1q2w3e!!'
 const DAILY_HISTORY_PAGE_SIZE = 30
-const INITIAL_EXPANDED_OPERATION_COUNT = 1
 const OPERATION_PHASES = [
   { jobType: 'PREPARE', label: 'Prepare', index: '01' },
   { jobType: 'APPLY', label: 'Apply', index: '02' },
@@ -1473,16 +1613,8 @@ function normalizeOperationResult(result = {}) {
   return { ...result, jobs, slides }
 }
 
-function getInitialExpandedOperationIds(slides = []) {
-  return [...slides]
-    .filter(slide => slide.job)
-    .sort(
-      (left, right) =>
-        (finiteNumber(right.job.id) ?? -Infinity) -
-        (finiteNumber(left.job.id) ?? -Infinity)
-    )
-    .slice(0, INITIAL_EXPANDED_OPERATION_COUNT)
-    .map(slide => slide.id)
+function getInitialExpandedOperationIds() {
+  return []
 }
 
 function formatOperationTime(value) {
@@ -1675,6 +1807,13 @@ function normalizeOrder(order = {}) {
   }
 }
 
+function calculateCashRatioPct(closingCash, totalAsset) {
+  const cash = finiteNumber(closingCash)
+  const assets = finiteNumber(totalAsset)
+  if (cash === null || assets === null || assets === 0) return null
+  return (cash / assets) * 100
+}
+
 function normalizeStrategyResult(result = {}) {
   return {
     ...result,
@@ -1687,13 +1826,16 @@ function normalizeStrategyResult(result = {}) {
     dailyRows: (result.dailyResults || [])
       .map(day => {
         const orders = (day.plan?.orders || []).map(normalizeOrder)
+        const totalAsset = day.portfolio?.totalAsset ?? null
+        const closingCash = day.cash?.closingCash ?? null
 
         return {
           ...day,
           mode: day.plan?.mode || '-',
           closePrice: day.portfolio?.closePrice ?? null,
-          totalAsset: day.portfolio?.totalAsset ?? null,
-          closingCash: day.cash?.closingCash ?? null,
+          totalAsset,
+          closingCash,
+          cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
           orders,
           executions: orders.flatMap(order =>
             order.execution ? [order.execution] : []
@@ -1821,6 +1963,7 @@ watch(activeTab, tab => {
 
 const dailyRows = computed(() => agentResult.value?.dailyRows || [])
 const finalPortfolio = computed(() => agentResult.value?.finalPortfolio || {})
+const currentTiers = computed(() => finalPortfolio.value.tiers || [])
 
 const latestDay = computed(() => dailyRows.value.at(-1) || null)
 const agentMetrics = computed(() => {
@@ -2314,10 +2457,21 @@ function profitClass(value) {
   return number > 0 ? 'value-positive' : 'value-negative'
 }
 
+function modeColor(mode) {
+  if (mode === '공격') return 'amber-8'
+  if (mode === '방어') return 'green-6'
+  return 'grey-6'
+}
+
 function sideLabel(side) {
   if (side === 'BUY') return '매수'
   if (side === 'SELL') return '매도'
   return side || '-'
+}
+
+function shortTypeLabel(value) {
+  const label = String(value || '').trim()
+  return label ? label.charAt(0).toUpperCase() : '-'
 }
 </script>
 
@@ -2537,8 +2691,7 @@ function sideLabel(side) {
 
 .agent-operation,
 .agent-overview,
-.agent-charts,
-.agent-history {
+.agent-charts {
   padding: 0;
   border: 0;
 }
@@ -2581,6 +2734,10 @@ function sideLabel(side) {
   justify-content: space-between;
   gap: 40px;
   align-items: flex-end;
+}
+
+.agent-operation > .section-heading {
+  margin-bottom: 22px;
 }
 
 .section-card {
@@ -2656,6 +2813,91 @@ function sideLabel(side) {
     color: var(--dk-muted);
     font-size: 11px;
   }
+}
+
+.current-tiers {
+  margin-top: 10px;
+  border: 1px solid var(--dk-line);
+  border-radius: 2px;
+  background: var(--dk-surface);
+}
+
+.current-tiers__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--dk-line);
+
+  h3 {
+    margin: 2px 0 0;
+    font-family: var(--dk-font-serif);
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  > span {
+    color: var(--dk-muted);
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+.current-tiers__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+
+  > article {
+    min-width: 0;
+    padding: 10px 12px;
+    border-right: 1px solid var(--dk-line);
+    border-bottom: 1px solid var(--dk-line);
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+
+      strong {
+        font-size: 0.75rem;
+      }
+
+      span {
+        padding: 2px 6px;
+        border: 1px solid var(--dk-line-strong);
+        color: var(--dk-muted);
+        font-size: 0.56rem;
+      }
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px 12px;
+      margin: 0;
+    }
+
+    dt {
+      color: var(--dk-muted);
+      font-size: 0.58rem;
+    }
+
+    dd {
+      margin: 2px 0 0;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.current-tiers > .detail-empty {
+  margin: 0;
+  padding: 18px 14px;
 }
 
 .operation-list {
@@ -3111,15 +3353,15 @@ function sideLabel(side) {
   background: var(--dk-surface);
 }
 
-.history-head,
-.history-row {
+.daily-header,
+.daily-row {
   display: grid;
-  grid-template-columns: 1fr 0.65fr 1fr 0.65fr 0.75fr;
-  gap: 16px;
+  grid-template-columns: 1.1fr 0.65fr 0.75fr 1.1fr 0.65fr 0.5fr 0.5fr 1.05fr 0.75fr;
+  gap: 8px;
   align-items: center;
 }
 
-.history-head {
+.daily-header {
   padding: 7px 44px 7px 12px;
   color: var(--dk-muted);
   font-size: 12px;
@@ -3127,105 +3369,90 @@ function sideLabel(side) {
   background: rgba(23, 23, 23, 0.035);
 }
 
-.history-row {
+.daily-row {
   width: 100%;
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
-
-  strong {
-    font-weight: 500;
-  }
+  color: var(--dk-ink);
+  font-size: 13px;
 }
 
-:deep(.daily-item-header) {
+.daily-cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-mobile-summary {
+  display: none;
+}
+
+.daily-history-item :deep(.daily-item-header) {
   min-height: 38px;
   padding: 3px 12px;
 }
 
-.history-detail {
+.daily-detail {
   padding: 16px;
-  border-top: 1px solid var(--dk-line);
-  background: var(--dk-surface);
+  background: var(--dk-surface) !important;
+}
+
+.detail-section + .detail-section {
+  margin-top: 16px;
+}
+
+.detail-title {
+  margin-bottom: 8px;
+  color: var(--dk-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .detail-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--dk-line);
-  border: 1px solid var(--dk-line);
-
-  > div {
-    display: flex;
-    padding: 13px;
-    flex-direction: column;
-    gap: 5px;
-    background: var(--dk-paper);
-
-    span {
-      color: var(--dk-muted);
-      font-size: 0.62rem;
-    }
-
-    strong {
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-  }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  color: var(--dk-muted);
+  font-size: 13px;
 }
 
-.detail-block {
-  margin-top: 24px;
-
-  h3 {
-    margin: 0 0 10px;
-    font-size: 0.78rem;
-    font-weight: 600;
-  }
+.detail-note {
+  margin-top: 6px;
+  color: var(--dk-muted);
+  font-size: 13px;
 }
 
 .table-scroll {
+  max-width: 100%;
   overflow-x: auto;
-
-  :deep(table) {
-    min-width: 920px;
-  }
-
-  :deep(th),
-  :deep(td) {
-    height: 34px;
-    padding: 5px 8px;
-    font-size: 0.68rem;
-    white-space: nowrap;
-  }
-
-  small {
-    display: block;
-    margin-top: 2px;
-    color: var(--dk-muted);
-  }
 }
 
-.cash-transactions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1px;
-  background: var(--dk-line);
-  border: 1px solid var(--dk-line);
+:deep(.q-table__container) {
+  border-color: var(--dk-line);
+  border-radius: 2px;
+  background: var(--dk-surface);
+  box-shadow: none;
+}
 
-  > div {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 5px 12px;
-    padding: 12px;
-    background: var(--dk-paper);
-    font-size: 0.7rem;
+:deep(.q-table thead tr),
+:deep(.q-table tbody td) {
+  background: transparent;
+}
 
-    small {
-      grid-column: 1 / -1;
-      color: var(--dk-muted);
-    }
-  }
+:deep(.q-table th) {
+  color: var(--dk-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+:deep(.q-table td) {
+  font-size: 0.7rem;
+}
+
+.table-scroll small {
+  display: block;
+  margin-top: 2px;
+  color: var(--dk-muted);
 }
 
 .empty-copy,
@@ -3236,13 +3463,6 @@ function sideLabel(side) {
 .detail-empty {
   margin: 0;
   font-size: 0.72rem;
-}
-
-.load-more {
-  width: 100%;
-  min-height: 50px;
-  border-radius: 0;
-  border-bottom: 1px solid var(--dk-line);
 }
 
 .value-positive {
@@ -3315,6 +3535,23 @@ function sideLabel(side) {
 
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .current-tiers__grid > article {
+    padding: 9px 8px;
+
+    dl {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    dt {
+      white-space: nowrap;
+    }
+
+    dd {
+      white-space: nowrap;
+    }
   }
 
   .metric-card {
@@ -3464,31 +3701,65 @@ function sideLabel(side) {
     height: 300px;
   }
 
-  .history-head {
+  .daily-desktop-summary,
+  .daily-header {
     display: none;
   }
 
-  .history-row {
-    grid-template-columns: 1fr auto;
-    gap: 5px 14px;
-
-    span:nth-child(3),
-    span:nth-child(5) {
-      text-align: right;
-    }
-  }
-
-  :deep(.daily-item-header) {
+  .daily-history-item :deep(.daily-item-header) {
     min-height: 48px;
     padding: 8px 12px;
   }
 
-  .history-detail {
-    padding: 16px 12px 24px;
+  .daily-mobile-summary {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 2px 0;
   }
 
-  .detail-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .daily-mobile-summary__header,
+  .daily-mobile-summary__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .daily-mobile-summary__values {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    margin-top: 5px;
+  }
+
+  .daily-mobile-summary__values > div {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .daily-mobile-summary__primary {
+    color: var(--dk-ink);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .daily-mobile-summary__meta {
+    margin-top: 4px;
+    color: var(--dk-muted);
+    font-size: 11px;
+  }
+
+  .data-label {
+    color: var(--dk-muted);
+    font-size: 11px;
+  }
+
+  .daily-detail {
+    padding: 12px;
   }
 }
 

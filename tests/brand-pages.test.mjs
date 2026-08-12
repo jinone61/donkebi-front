@@ -295,10 +295,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(source, /function normalizeOperationResult\(result = \{\}\)/)
   assert.match(source, /isMissing: !job/)
-  assert.match(
-    source,
-    /function getInitialExpandedOperationIds\(slides = \[\]\)/
-  )
+  assert.match(source, /function getInitialExpandedOperationIds\(\)/)
   assert.match(
     source,
     /function compareOperationSlidesByIdDesc\(left, right\)[\s\S]*?return rightId - leftId/
@@ -333,7 +330,7 @@ test('agent workspace separates live operation from performance', async () => {
   assert.match(operationPanel, /Market Data부터 Submit까지/)
   assert.match(performancePanel, /class="agent-overview"/)
   assert.match(performancePanel, /class="agent-charts"/)
-  assert.match(performancePanel, /class="agent-history"/)
+  assert.match(performancePanel, /class="section-card agent-history"/)
   assert.doesNotMatch(source, /import Agent(?:Overview|Charts|History)/)
 })
 
@@ -416,13 +413,39 @@ test('agent page covers current status charts and operation history', async () =
   assert.match(source, /submission\?\.brokerOrderId/)
   assert.match(source, /order\.executionPrice/)
   assert.match(source, /DAILY_HISTORY_PAGE_SIZE = 30/)
+  assert.match(
+    source,
+    /const currentTiers = computed\(\(\) => finalPortfolio\.value\.tiers \|\| \[\]\)/
+  )
+  assert.match(source, /<h3 id="current-tiers-title">현재 Tier<\/h3>/)
+  assert.match(source, /v-for="tier in currentTiers"/)
+  assert.match(source, /평균 매수가/)
+  assert.match(source, /<dt>수익률<\/dt>/)
+  assert.match(source, /일별 운영 내역/)
+  assert.match(source, /class="daily-header desktop-only"/)
+  assert.match(source, /class="daily-row daily-desktop-summary"/)
+  assert.match(source, /class="daily-mobile-summary"/)
+  assert.match(source, /group="daily-results"/)
+  assert.match(source, /class="daily-detail bg-grey-1"/)
+  assert.match(
+    source,
+    /유형[\s\S]*?수량[\s\S]*?제출 상태[\s\S]*?Broker ID[\s\S]*?주문가[\s\S]*?체결가[\s\S]*?체결수량/
+  )
+  assert.match(
+    source,
+    /shortTypeLabel\(order\.orderType\)[\s\S]*?shortTypeLabel\(order\.planType\)/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.current-tiers__grid > article \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/
+  )
 })
 
 test('agent summary cards use the compact readable simulation treatment', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
   const summaryStyles = source.slice(
     source.indexOf('.summary-grid {'),
-    source.indexOf('.operation-list {')
+    source.indexOf('.current-tiers {')
   )
 
   assert.match(summaryStyles, /gap: 10px;/)
@@ -436,14 +459,14 @@ test('agent summary cards use the compact readable simulation treatment', async 
   assert.doesNotMatch(summaryStyles, /font-family: var\(--dk-font-serif\)/)
 })
 
-test('agent operation flows with the page and opens only the latest recorded job', async () => {
+test('agent operation flows with the page and starts with every job closed', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
-  assert.match(source, /const INITIAL_EXPANDED_OPERATION_COUNT = 1/)
   assert.match(
     source,
-    /\.filter\(slide => slide\.job\)[\s\S]*?\.slice\(0, INITIAL_EXPANDED_OPERATION_COUNT\)/
+    /function getInitialExpandedOperationIds\(\) \{\s*return \[\]\s*\}/
   )
+  assert.doesNotMatch(source, /INITIAL_EXPANDED_OPERATION_COUNT/)
   assert.match(source, /v-show="isOperationExpanded\(slide\.id\)"/)
   assert.match(source, /@click="toggleOperation\(slide\.id\)"/)
   assert.match(
@@ -486,7 +509,7 @@ test('agent data workspace follows the simulation layout system', async () => {
   )
   assert.match(
     source,
-    /\.agent-overview,[\s\S]*?\.agent-history \{[\s\S]*?padding: 0;[\s\S]*?border: 0;/
+    /\.agent-operation,[\s\S]*?\.agent-charts \{[\s\S]*?padding: 0;[\s\S]*?border: 0;/
   )
   assert.match(
     source,
@@ -503,6 +526,22 @@ test('agent data workspace follows the simulation layout system', async () => {
   assert.match(
     source,
     /:deep\(\.daily-item-header\) \{[\s\S]*?min-height: 38px;[\s\S]*?padding: 3px 12px;/
+  )
+  assert.match(
+    source,
+    /\.agent-operation > \.section-heading \{[\s\S]*?margin-bottom: 22px;/
+  )
+  assert.match(
+    source,
+    /\.current-tiers__grid \{[\s\S]*?grid-template-columns: repeat\(auto-fit, minmax\(min\(100%, 300px\), 1fr\)\);/
+  )
+  assert.match(
+    source,
+    /\.daily-header,[\s\S]*?\.daily-row \{[\s\S]*?grid-template-columns: 1\.1fr 0\.65fr 0\.75fr 1\.1fr 0\.65fr 0\.5fr 0\.5fr 1\.05fr 0\.75fr;/
+  )
+  assert.match(
+    source,
+    /\.daily-mobile-summary__values \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto;/
   )
 })
 
