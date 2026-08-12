@@ -11,11 +11,5 @@
     "dist/": true,
     ".quasar/": true,
     "/quasar.config.js.temporary.*": true
-  },
-  "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

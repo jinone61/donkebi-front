@@ -2,6 +2,7 @@ export const navigationItems = [
   { label: "SYSTEM", href: "#system" },
   { label: "PRINCIPLE", href: "#principle" },
   { label: "ORIGIN", href: "#origin" },
+  { label: "AGENT", to: "/agent" },
   { label: "SIMULATION", to: "/simulation" },
 ];
 

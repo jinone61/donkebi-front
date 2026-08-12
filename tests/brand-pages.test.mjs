@@ -1,17 +1,27 @@
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
 import test from 'node:test'
 
 const readSource = path =>
   readFile(new URL(`../${path}`, import.meta.url), 'utf8')
+const execFileAsync = promisify(execFile)
 
 test('public navigation reflects the Donkebi agent story', async () => {
   const { navigationItems } = await import('../src/content/home.js')
 
   assert.deepEqual(
     navigationItems.map(item => item.label),
-    ['SYSTEM', 'PRINCIPLE', 'ORIGIN', 'SIMULATION']
+    ['SYSTEM', 'PRINCIPLE', 'ORIGIN', 'AGENT', 'SIMULATION']
+  )
+  assert.deepEqual(
+    navigationItems.filter(item => item.to),
+    [
+      { label: 'AGENT', to: '/agent' },
+      { label: 'SIMULATION', to: '/simulation' }
+    ]
   )
 })
 
@@ -124,6 +134,16 @@ test('simulation route renders the editable workspace component', async () => {
   assert.match(source, /<BacktestPage\s*\/>/)
 })
 
+test('agent route renders the independent operation workspace', async () => {
+  const source = await readSource('src/pages/index/agent.vue')
+
+  assert.match(
+    source,
+    /import AgentPage from '@\/components\/agent\/AgentPage\.vue'/
+  )
+  assert.match(source, /<AgentPage\s*\/>/)
+})
+
 test('editable backtest workspace combines Donkebi branding with Korean task labels', async () => {
   const source = await readSource('src/components/backtest/BacktestPage.vue')
 
@@ -149,7 +169,7 @@ test('editable backtest workspace carries the latest range tools without a dupli
 })
 
 test('editable backtest workspace keeps the comparison page logic in sync', async () => {
-  const comparisonSource = await readSource('src/pages/index/BacktestPage.vue')
+  const comparisonSource = await readSource('src/pages/index/Backtest_old.vue')
   const editableSource = await readSource(
     'src/components/backtest/BacktestPage.vue'
   )
@@ -240,9 +260,312 @@ test('daily order details show buy price instead of canceled quantity', async ()
   assert.doesNotMatch(orderDetail, /취소수량|canceledQuantity/)
 })
 
-test('comparison BacktestPage remains byte-for-byte unchanged', async () => {
+test('agent workspace owns its strategy result API and normalization', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(source, /const STRATEGY_ID = 1/)
+  assert.match(
+    source,
+    /const AGENT_RESULT_URL = '\/api\/dualsniper\/strategies\/results'/
+  )
+  assert.match(
+    source,
+    /api\.get\(\s*AGENT_RESULT_URL,\s*\{\s*params:\s*\{\s*strategyId:\s*STRATEGY_ID\s*\}\s*\}\s*\)/
+  )
+  assert.match(source, /day\.plan\?\.orders/)
+  assert.match(source, /order\.execution\?\.price/)
+  assert.match(source, /order\.execution\?\.quantity/)
+  assert.match(source, /day\.cash\?\.transactions/)
+})
+
+test('agent operation follows the status API in descending id order', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(
+    source,
+    /const OPERATION_STATUS_URL = '\/api\/dualsniper\/operations\/status'/
+  )
+  assert.match(
+    source,
+    /api\.get\(OPERATION_STATUS_URL, \{\s*params: \{ strategyId: STRATEGY_ID \}\s*\}\)/
+  )
+  assert.match(
+    source,
+    /const OPERATION_PHASES = \[[\s\S]*?jobType: 'PREPARE', label: 'Prepare',[\s\S]*?jobType: 'APPLY',[\s\S]*?jobType: 'PLAN',[\s\S]*?jobType: 'SUBMIT'/
+  )
+  assert.match(source, /function normalizeOperationResult\(result = \{\}\)/)
+  assert.match(source, /isMissing: !job/)
+  assert.match(
+    source,
+    /function getInitialExpandedOperationIds\(slides = \[\]\)/
+  )
+  assert.match(
+    source,
+    /function compareOperationSlidesByIdDesc\(left, right\)[\s\S]*?return rightId - leftId/
+  )
+  assert.match(
+    source,
+    /const missingComesFirst = missingSlide\.phaseIndex > recordedSlide\.phaseIndex/
+  )
+  assert.match(source, /\.sort\(compareOperationSlidesByIdDesc\)/)
+  assert.match(source, /isDateStart: index === 0/)
+})
+
+test('agent workspace separates live operation from performance', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const operationPanel = source.slice(
+    source.indexOf('v-show="activeTab === \'operation\'"'),
+    source.indexOf('v-show="activeTab === \'performance\'"')
+  )
+  const performancePanel = source.slice(
+    source.indexOf('v-show="activeTab === \'performance\'"'),
+    source.indexOf('</div>', source.indexOf('</main>'))
+  )
+
+  assert.match(source, /Private Access Only/)
+  assert.match(source, /Donkebi<br \/>Agent\./)
+  assert.match(source, /Donkebi, at work\./)
+  assert.match(source, /const activeTab = ref\('operation'\)/)
+  assert.match(source, /<q-tab name="operation" label="OPERATION" \/>/)
+  assert.match(source, /<q-tab name="performance" label="PERFORMANCE" \/>/)
+  assert.match(operationPanel, /class="operation-list"/)
+  assert.match(operationPanel, /<q-slide-transition>/)
+  assert.match(operationPanel, /Market Data부터 Submit까지/)
+  assert.match(performancePanel, /class="agent-overview"/)
+  assert.match(performancePanel, /class="agent-charts"/)
+  assert.match(performancePanel, /class="agent-history"/)
+  assert.doesNotMatch(source, /import Agent(?:Overview|Charts|History)/)
+})
+
+test('agent operation avoids nested and mobile horizontal scrolling', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.doesNotMatch(source, /<q-tab-panels|<q-tab-panel/)
+  assert.match(
+    source,
+    /\.agent-tab-panels,[\s\S]*?\.agent-tab-panel \{[\s\S]*?overflow: visible;/
+  )
+  assert.equal(
+    (source.match(/class="operation-desktop-table"/g) || []).length,
+    3
+  )
+  assert.equal((source.match(/class="operation-mobile-rows"/g) || []).length, 3)
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.operation-table-scroll \{[\s\S]*?overflow: visible;/
+  )
+  assert.match(
+    source,
+    /:deep\(\.operation-desktop-table\) \{[\s\S]*?display: none;/
+  )
+  assert.match(
+    source,
+    /\.operation-mobile-rows \{[\s\S]*?display: grid;[\s\S]*?overflow-wrap: anywhere;/
+  )
+  assert.match(
+    source,
+    /<dt>매수가[\s\S]*?v-if="order\.tradeSide === 'SELL'"[\s\S]*?<dt>매도가/
+  )
+  assert.match(
+    source,
+    /&:last-child:nth-child\(odd\) \{[\s\S]*?grid-column: 1 \/ -1;/
+  )
+})
+
+test('agent tabs use the simulation navigation treatment', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(
+    source,
+    /\.tabs-bar \{[\s\S]*?position: sticky;[\s\S]*?top: 82px;[\s\S]*?min-height: 52px;[\s\S]*?border-block: 1px solid var\(--dk-line\);[\s\S]*?backdrop-filter: blur\(4px\);/
+  )
+  assert.match(
+    source,
+    /:deep\(\.q-tab\) \{[\s\S]*?min-height: 52px;[\s\S]*?font-size: 0\.68rem;/
+  )
+})
+
+test('agent refresh sits beside the update time as an icon-only action', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const updateRow = source.slice(
+    source.indexOf('<div class="workspace-intro__update">'),
+    source.indexOf('</div>', source.indexOf('class="workspace-intro__refresh"'))
+  )
+
+  assert.match(updateRow, /UPDATED · \{\{ formatDateTime\(lastUpdatedAt\) \}\}/)
+  assert.match(updateRow, /icon="refresh"/)
+  assert.match(updateRow, /round/)
+  assert.match(updateRow, /aria-label="새로고침"/)
+  assert.doesNotMatch(updateRow, /\n\s+label="새로고침"/)
+  assert.match(
+    source,
+    /\.workspace-intro__update \{[\s\S]*?width: 100%;[\s\S]*?justify-content: flex-start;[\s\S]*?gap: 6px;/
+  )
+})
+
+test('agent page covers current status charts and operation history', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(source, /MODE TRANSITION/)
+  assert.match(source, /생성 주문/)
+  assert.match(source, /Broker 제출 내역/)
+  assert.match(source, /가격 및 체결/)
+  assert.match(source, /포트폴리오 성과/)
+  assert.match(source, /chart-range-adjustments/)
+  assert.match(source, /일별 운영 기록/)
+  assert.match(source, /submission\?\.brokerOrderId/)
+  assert.match(source, /order\.executionPrice/)
+  assert.match(source, /DAILY_HISTORY_PAGE_SIZE = 30/)
+})
+
+test('agent summary cards use the compact readable simulation treatment', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const summaryStyles = source.slice(
+    source.indexOf('.summary-grid {'),
+    source.indexOf('.operation-list {')
+  )
+
+  assert.match(summaryStyles, /gap: 10px;/)
+  assert.match(summaryStyles, /padding: 10px 14px;/)
+  assert.match(summaryStyles, /border: 1px solid var\(--dk-line\);/)
+  assert.match(summaryStyles, /background: var\(--dk-surface\);/)
+  assert.match(summaryStyles, /font-size: 18px;/)
+  assert.match(summaryStyles, /font-weight: 650;/)
+  assert.match(summaryStyles, /text-align: center;/)
+  assert.doesNotMatch(summaryStyles, /min-height: 130px/)
+  assert.doesNotMatch(summaryStyles, /font-family: var\(--dk-font-serif\)/)
+})
+
+test('agent operation flows with the page and opens only the latest recorded job', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(source, /const INITIAL_EXPANDED_OPERATION_COUNT = 1/)
+  assert.match(
+    source,
+    /\.filter\(slide => slide\.job\)[\s\S]*?\.slice\(0, INITIAL_EXPANDED_OPERATION_COUNT\)/
+  )
+  assert.match(source, /v-show="isOperationExpanded\(slide\.id\)"/)
+  assert.match(source, /@click="toggleOperation\(slide\.id\)"/)
+  assert.match(
+    source,
+    /@keydown\.enter\.prevent="toggleOperation\(slide\.id\)"/
+  )
+  assert.match(source, /\.operation-list \{[\s\S]*?display: grid;/)
+  assert.doesNotMatch(source, /overflow-y: auto|scroll-snap-type/)
+  assert.match(
+    source,
+    /\.operation-card__head \{[\s\S]*?min-height: 72px;[\s\S]*?padding: 9px 12px;/
+  )
+  assert.match(
+    source,
+    /\.operation-card__body \{[\s\S]*?padding: 10px 12px 12px;/
+  )
+})
+
+test('agent loads and refreshes operation and performance independently', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(source, /checkPassword\(\)[\s\S]*?fetchOperationResult\(\)/)
+  assert.match(
+    source,
+    /watch\(activeTab,[\s\S]*?tab === 'performance'[\s\S]*?!agentResult\.value[\s\S]*?fetchAgentResult\(\)/
+  )
+  assert.match(
+    source,
+    /function refreshActiveTab\(\)[\s\S]*?activeTab\.value === 'operation'[\s\S]*?fetchOperationResult\(\)[\s\S]*?fetchAgentResult\(\)/
+  )
+  assert.match(source, /@click="refreshActiveTab"/)
+})
+
+test('agent data workspace follows the simulation layout system', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(
+    source,
+    /\.content-container \{[\s\S]*?width: min\(1120px, calc\(100% - 24px\)\);[\s\S]*?padding: 24px 0 56px;/
+  )
+  assert.match(
+    source,
+    /\.agent-overview,[\s\S]*?\.agent-history \{[\s\S]*?padding: 0;[\s\S]*?border: 0;/
+  )
+  assert.match(
+    source,
+    /\.section-heading \{[\s\S]*?padding: 14px 16px;[\s\S]*?border: 1px solid var\(--dk-line\);[\s\S]*?background: var\(--dk-surface\);/
+  )
+  assert.match(
+    source,
+    /\.section-heading[\s\S]*?h2 \{[\s\S]*?font-size: 1\.22rem;/
+  )
+  assert.match(
+    source,
+    /\.charts-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?gap: 16px;/
+  )
+  assert.match(
+    source,
+    /:deep\(\.daily-item-header\) \{[\s\S]*?min-height: 38px;[\s\S]*?padding: 3px 12px;/
+  )
+})
+
+test('agent charts share the simulation hover guide experience', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(source, /id: 'agentChartRangeGuide'/)
+  assert.match(source, /afterDatasetsDraw\(chart, _args, options\)/)
+  assert.match(source, /onHover: updateChartHover/)
+  assert.match(source, /hoverDate: chartHoverDate\.value/)
+  assert.match(source, /ref="priceChartComponent"/)
+  assert.match(source, /ref="performanceChartComponent"/)
+  assert.match(source, /syncChartTooltips\(nextDate, chartComponents\)/)
+  assert.equal((source.match(/@mouseleave="clearChartHover"/g) || []).length, 2)
+})
+
+test('agent charts match the simulation card and color system', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+
+  assert.match(source, /class="section-card chart-range-card"/)
+  assert.equal((source.match(/class="chart-container"/g) || []).length, 2)
+  assert.match(source, /toggle-color="green-6"/)
+  assert.match(source, /color="green-6"/)
+  assert.match(source, /label-color="green-7"/)
+  assert.match(
+    source,
+    /:deep\(\.text-green-5\),[\s\S]*?color: var\(--dk-ink\) !important;/
+  )
+  assert.match(
+    source,
+    /:deep\(\.bg-green-5\),[\s\S]*?background: var\(--dk-ink\) !important;/
+  )
+  assert.match(source, /borderColor: '#78909c'/)
+  assert.match(source, /backgroundColor: '#d32f2f'/)
+  assert.match(source, /backgroundColor: '#1976d2'/)
+  assert.match(source, /borderColor: '#2e7d32'/)
+  assert.match(source, /backgroundColor: '#f2c037'/)
+  assert.match(source, /borderColor: '#42a5f5'/)
+  assert.match(source, /grid: \{ color: 'rgba\(0, 0, 0, 0\.06\)' \}/)
+})
+
+test('private agent samples and brainstorm artifacts stay outside Git', async () => {
+  const { stdout } = await execFileAsync(
+    'git',
+    [
+      'check-ignore',
+      'src/pages/index/strategy_result.json',
+      'src/pages/index/operation_result.json',
+      '.superpowers/brainstorm/layout.html'
+    ],
+    { cwd: new URL('..', import.meta.url) }
+  )
+
+  assert.deepEqual(stdout.trim().split('\n'), [
+    'src/pages/index/strategy_result.json',
+    'src/pages/index/operation_result.json',
+    '.superpowers/brainstorm/layout.html'
+  ])
+})
+
+test('comparison Backtest_old remains byte-for-byte unchanged', async () => {
   const source = await readFile(
-    new URL('../src/pages/index/BacktestPage.vue', import.meta.url)
+    new URL('../src/pages/index/Backtest_old.vue', import.meta.url)
   )
   const digest = createHash('sha256').update(source).digest('hex')
 

@@ -2,6 +2,11 @@
 .thumbs.db
 node_modules
 .worktrees/
+.superpowers/
+
+# Local operational API samples
+/src/pages/index/strategy_result.json
+/src/pages/index/operation_result.json
 
 # .env files
 .env*
