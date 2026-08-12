@@ -1,6 +1,6 @@
 export const navigationItems = [
   { label: 'SYSTEM', href: '#system' },
-  { label: 'SIMULATION', to: '/backtest' },
+  { label: 'SIMULATION', to: '/simulation' },
   { label: 'PRINCIPLE', href: '#principle' },
   { label: 'ORIGIN', href: '#origin' }
 ]
