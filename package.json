@@ -20,6 +20,7 @@
     "lint:check": "oxfmt --check && oxlint",
     "dev": "quasar dev",
     "build": "quasar build",
+    "deploy": "aws s3 sync ./dist/spa/ s3://donkebi-web --delete",
     "postinstall": "quasar prepare --silent"
   },
   "dependencies": {

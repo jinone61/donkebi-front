@@ -11,7 +11,7 @@ test('public navigation reflects the Donkebi agent story', async () => {
 
   assert.deepEqual(
     navigationItems.map(item => item.label),
-    ['SYSTEM', 'BACKTEST', 'PRINCIPLE', 'ORIGIN']
+    ['SYSTEM', 'PRINCIPLE', 'ORIGIN', 'SIMULATION']
   )
 })
 
@@ -21,6 +21,10 @@ test('package metadata describes the AI agent trading product', async () => {
   assert.equal(
     packageJson.description,
     'Quiet AI agent trading system for strategy simulation and execution'
+  )
+  assert.equal(
+    packageJson.scripts.deploy,
+    'aws s3 sync ./dist/spa/ s3://donkebi-web --delete'
   )
 })
 
@@ -39,6 +43,15 @@ test('home presents the quiet AI trading agent narrative', async () => {
   for (const sectionId of ['system', 'backtest', 'principle', 'origin']) {
     assert.match(source, new RegExp(`id="${sectionId}"`))
   }
+})
+
+test('home simulation links target the registered simulation route', async () => {
+  const source = await readSource('src/pages/index/(home).vue')
+  const routeTargets = [
+    ...source.matchAll(/<router-link[^>]*to="([^"]+)"/g)
+  ].map(match => match[1])
+
+  assert.deepEqual(routeTargets, ['/simulation', '/simulation', '/simulation'])
 })
 
 test('mobile system descriptions use the available content width', async () => {
@@ -101,8 +114,8 @@ test('home backtest story contrasts the market with Donkebi', async () => {
   )
 })
 
-test('new backtest route renders the editable workspace component', async () => {
-  const source = await readSource('src/pages/index/backtest.vue')
+test('simulation route renders the editable workspace component', async () => {
+  const source = await readSource('src/pages/index/simulation.vue')
 
   assert.match(
     source,
@@ -114,7 +127,8 @@ test('new backtest route renders the editable workspace component', async () => 
 test('editable backtest workspace combines Donkebi branding with Korean task labels', async () => {
   const source = await readSource('src/components/backtest/BacktestPage.vue')
 
-  assert.match(source, /Private Simulation Interface/)
+  assert.match(source, /Private Access Only/)
+  assert.match(source, /Donkebi<br \/>Simulation\./)
   assert.match(source, /Backtest · Agent 01/)
   assert.match(source, /Strategy simulation\./)
   assert.match(source, /같은 전략을 과거의 시장 위에서 다시 실행합니다\./)
@@ -141,7 +155,7 @@ test('editable backtest workspace keeps the comparison page logic in sync', asyn
   )
   const extractScript = source =>
     source.match(/<script setup>([\s\S]*?)<\/script>/)?.[1]
-  const normalizeScript = script => script?.replace(/[\s(),]/g, '')
+  const normalizeScript = script => script?.replace(/[\s(),;'"]/g, '')
   const expectedScript = extractScript(comparisonSource)
     ?.replace('computed, inject, reactive, ref', 'computed, reactive, ref')
     .replace("\nconst toggleMenu = inject('toggleMenu')", '')
@@ -166,6 +180,19 @@ test('mobile setup balances compact and long-form settings', async () => {
   assert.match(
     mobileStyles,
     /\.basic-settings-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/
+  )
+})
+
+test('mobile chart range controls group start and end adjustments by column', async () => {
+  const source = await readSource('src/components/backtest/BacktestPage.vue')
+  const mobileStyles = source.match(
+    /@media \(max-width: 599px\) \{[\s\S]*\n\}/
+  )?.[0]
+
+  assert.ok(mobileStyles)
+  assert.match(
+    mobileStyles,
+    /\.chart-range-adjustments \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?grid-template-rows: repeat\(2, auto\);[\s\S]*?grid-auto-flow: column;/
   )
 })
 

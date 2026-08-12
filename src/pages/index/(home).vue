@@ -10,7 +10,7 @@
             Donkebi는 그 흐름에 맞춰 스스로 생각하고 행동합니다.
           </p>
           <!-- <DkTextLink label="Discover the system" to="#system" /> -->
-          <router-link class="section-link" to="/backtest">
+          <router-link class="section-link" to="/simulation">
             Donkebi Simulation <span aria-hidden="true">→</span>
           </router-link>
         </div>
@@ -67,7 +67,7 @@
               AI. 기술과 경험의 정점에서, <br />시장의 불확실성을 자산으로
               바꾸는 현대의 마법을 경험하세요.
             </p>
-            <router-link class="section-link" to="/backtest">
+            <router-link class="section-link" to="/simulation">
               Enter Backtest <span aria-hidden="true">→</span>
             </router-link>
           </div>
@@ -159,7 +159,7 @@
           <p class="dk-eyebrow">DONKEBI</p>
           <h2 class="dk-serif">Quietly observing.<br />Ready to act.</h2>
         </div>
-        <router-link class="site-footer__access" to="/backtest">
+        <router-link class="site-footer__access" to="/simulation">
           Private Access <span aria-hidden="true">↗</span>
         </router-link>
         <div class="site-footer__bottom">
