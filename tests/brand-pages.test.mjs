@@ -111,22 +111,106 @@ test('new backtest route renders the editable workspace component', async () => 
   assert.match(source, /<BacktestPage\s*\/>/)
 })
 
-test('editable backtest workspace uses the Donkebi instrument labels', async () => {
+test('editable backtest workspace combines Donkebi branding with Korean task labels', async () => {
   const source = await readSource('src/components/backtest/BacktestPage.vue')
 
   assert.match(source, /Private Simulation Interface/)
-  assert.match(source, /label="SETUP"/)
-  assert.match(source, /label="PERFORMANCE"/)
-  assert.match(source, /label="ORDERS"/)
+  assert.match(source, /Backtest · Agent 01/)
+  assert.match(source, /Strategy simulation\./)
+  assert.match(source, /같은 전략을 과거의 시장 위에서 다시 실행합니다\./)
+  assert.match(source, /SYSTEM READY/)
+  assert.match(source, /label="입력설정"/)
+  assert.match(source, /label="현황"/)
+  assert.match(source, /label="주문계획"/)
 })
 
-test('mobile setup keeps all setting fields in two columns', async () => {
+test('editable backtest workspace carries the latest range tools without a duplicate header', async () => {
   const source = await readSource('src/components/backtest/BacktestPage.vue')
+
+  assert.match(source, /chart-range-card/)
+  assert.match(source, /chart-range-presets/)
+  assert.match(source, /chart-range-slider/)
+  assert.doesNotMatch(source, /class="[^"]*sticky-header/)
+  assert.doesNotMatch(source, /inject\('toggleMenu'\)/)
+})
+
+test('editable backtest workspace keeps the comparison page logic in sync', async () => {
+  const comparisonSource = await readSource('src/pages/index/BacktestPage.vue')
+  const editableSource = await readSource(
+    'src/components/backtest/BacktestPage.vue'
+  )
+  const extractScript = source =>
+    source.match(/<script setup>([\s\S]*?)<\/script>/)?.[1]
+  const normalizeScript = script => script?.replace(/[\s(),]/g, '')
+  const expectedScript = extractScript(comparisonSource)
+    ?.replace('computed, inject, reactive, ref', 'computed, reactive, ref')
+    .replace("\nconst toggleMenu = inject('toggleMenu')", '')
+
+  assert.equal(
+    normalizeScript(extractScript(editableSource)),
+    normalizeScript(expectedScript)
+  )
+})
+
+test('mobile setup balances compact and long-form settings', async () => {
+  const source = await readSource('src/components/backtest/BacktestPage.vue')
+  const mobileStyles = source.match(
+    /@media \(max-width: 599px\) \{[\s\S]*\n\}/
+  )?.[0]
+
+  assert.ok(mobileStyles)
+  assert.match(
+    mobileStyles,
+    /\.settings-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/
+  )
+  assert.match(
+    mobileStyles,
+    /\.basic-settings-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/
+  )
+})
+
+test('performance cards adapt to available width instead of fixed column counts', async () => {
+  const source = await readSource('src/components/backtest/BacktestPage.vue')
+  const tabletStyles = source.slice(
+    source.indexOf('@media (max-width: 900px)'),
+    source.indexOf('@media (max-width: 767px)')
+  )
 
   assert.match(
     source,
-    /@media \(max-width: 767px\)[\s\S]*?\.settings-grid,[\s\S]*?\.basic-settings-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/
+    /\.summary-grid \{[\s\S]*?--summary-card-min: 220px;[\s\S]*?grid-template-columns:\s*repeat\(\s*auto-fit,\s*minmax\(min\(100%, var\(--summary-card-min\)\), 1fr\)\s*\);/
   )
+  assert.match(
+    source,
+    /@media \(max-width: 599px\)[\s\S]*?\.summary-grid \{[\s\S]*?--summary-card-min: 150px;/
+  )
+  assert.doesNotMatch(tabletStyles, /\.summary-grid/)
+})
+
+test('daily history uses dense desktop rows and touch-safe mobile rows', async () => {
+  const source = await readSource('src/components/backtest/BacktestPage.vue')
+
+  assert.match(source, /\.daily-history \{[\s\S]*?gap: 2px;/)
+  assert.match(
+    source,
+    /:deep\(\.daily-item-header\) \{[\s\S]*?min-height: 38px;[\s\S]*?padding: 3px 12px;/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 599px\)[\s\S]*?:deep\(\.daily-item-header\) \{[\s\S]*?min-height: 48px;[\s\S]*?padding: 8px 12px;/
+  )
+})
+
+test('daily order details show buy price instead of canceled quantity', async () => {
+  const source = await readSource('src/components/backtest/BacktestPage.vue')
+  const orderDetail = source.slice(
+    source.indexOf('<div class="detail-title">주문 및 체결</div>'),
+    source.indexOf('<div class="detail-title">현금 흐름</div>')
+  )
+
+  assert.match(orderDetail, /주문수량[\s\S]*매수가[\s\S]*체결가[\s\S]*체결수량/)
+  assert.match(orderDetail, /formatPrice\(row\.buyPrice\)/)
+  assert.doesNotMatch(orderDetail, /취소수량|canceledQuantity/)
 })
 
 test('comparison BacktestPage remains byte-for-byte unchanged', async () => {
@@ -137,6 +221,6 @@ test('comparison BacktestPage remains byte-for-byte unchanged', async () => {
 
   assert.equal(
     digest,
-    'c9b6f907b674b112eb634fc8b7b5a6f63eba435c02d75697276bc4e24ef90f19'
+    '00dec4ad7fb38b314ec2a58db013c9f8f5de8a3398c30ccf4ba63b593f78e4b4'
   )
 })

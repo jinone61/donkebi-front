@@ -3,13 +3,16 @@
     <main>
       <section class="hero dk-container" aria-labelledby="hero-title">
         <div class="hero__copy dk-reveal">
-          <p class="dk-eyebrow">AI Agent Trading System</p>
-          <h1 id="hero-title" class="dk-serif"> 돈 나와라 와라,<br />뚝딱. </h1>
+          <p class="dk-eyebrow">AI Trading Agent</p>
+          <h1 id="hero-title" class="dk-serif">돈 나와라 와라,<br />뚝딱.</h1>
           <p class="hero__intro">
-            전략을 검증하고, 시장의 시간에 맞춰 움직입니다. Donkebi는 반복
-            가능한 원칙을 실제 행동으로 전환하는 AI Trading Agent입니다.
+            시간은 흐르고, 시장은 변합니다. <br />
+            Donkebi는 그 흐름에 맞춰 스스로 생각하고 행동합니다.
           </p>
-          <DkTextLink label="Discover the system" to="#system" />
+          <!-- <DkTextLink label="Discover the system" to="#system" /> -->
+          <router-link class="section-link" to="/backtest">
+            Donkebi Simulation <span aria-hidden="true">→</span>
+          </router-link>
         </div>
 
         <div class="agent-figure dk-reveal" aria-label="Donkebi agent status">
@@ -73,7 +76,7 @@
             ref="simulationPlate"
             class="simulation-plate"
             :class="{
-              'simulation-plate--revealed': isSimulationPlateRevealed
+              'simulation-plate--revealed': isSimulationPlateRevealed,
             }"
             aria-hidden="true"
           >
@@ -125,7 +128,8 @@
           <div class="principle__note">
             <span>01 / 01</span>
             <p>
-              우리는 시장을 안다고 말하지 않습니다. <br />대신 하나의 원칙 아래 시장을 끊임없이 관찰하고, 행동에 앞서 전략을 검증합니다.
+              우리는 시장을 안다고 말하지 않습니다. <br />대신 하나의 원칙 아래
+              시장을 끊임없이 관찰하고, 행동에 앞서 전략을 검증합니다.
             </p>
           </div>
         </div>
@@ -141,9 +145,8 @@
             <p class="dk-eyebrow">Origin · Claude Shannon</p>
             <h2 class="dk-serif">Donkebi.<br />From Shannon’s Devil.</h2>
             <p>
-               정보이론의 아버지, Claude Shannon.
-               그는 불확실성을 다루는 규칙을 탐구했습니다.
-               오늘, Donkebi가 이어갑니다
+              정보이론의 아버지, Claude Shannon. 그는 불확실성을 다루는 규칙을
+              탐구했습니다. 오늘, Donkebi가 이어갑니다
             </p>
           </div>
         </div>
@@ -169,64 +172,64 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
-import DkTextLink from '@/components/DkTextLink.vue'
+import DkTextLink from "@/components/DkTextLink.vue";
 
-const simulationPlate = ref(null)
-const isSimulationPlateRevealed = ref(false)
-let simulationPlateObserver
+const simulationPlate = ref(null);
+const isSimulationPlateRevealed = ref(false);
+let simulationPlateObserver;
 
 onMounted(() => {
   const prefersReducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)'
-  ).matches
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
 
-  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
-    isSimulationPlateRevealed.value = true
-    return
+  if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+    isSimulationPlateRevealed.value = true;
+    return;
   }
 
   simulationPlateObserver = new IntersectionObserver(
     ([entry]) => {
-      if (!entry?.isIntersecting) return
+      if (!entry?.isIntersecting) return;
 
-      isSimulationPlateRevealed.value = true
-      simulationPlateObserver?.disconnect()
-      simulationPlateObserver = undefined
+      isSimulationPlateRevealed.value = true;
+      simulationPlateObserver?.disconnect();
+      simulationPlateObserver = undefined;
     },
-    { threshold: 0.35 }
-  )
+    { threshold: 0.35 },
+  );
 
   if (simulationPlate.value) {
-    simulationPlateObserver.observe(simulationPlate.value)
+    simulationPlateObserver.observe(simulationPlate.value);
   } else {
-    isSimulationPlateRevealed.value = true
+    isSimulationPlateRevealed.value = true;
   }
-})
+});
 
 onBeforeUnmount(() => {
-  simulationPlateObserver?.disconnect()
-})
+  simulationPlateObserver?.disconnect();
+});
 
 const agentSteps = [
   {
-    name: 'Observe',
-    description: '시장 데이터와 전략의 조건을 끊임없이 관찰합니다.'
+    name: "Observe",
+    description: "시장 데이터와 전략의 조건을 끊임없이 관찰합니다.",
   },
   {
-    name: 'Validate',
-    description: '현재 상태가 행동할 수 있는 규칙과 일치하는지 평가합니다.'
+    name: "Validate",
+    description: "현재 상태가 행동할 수 있는 규칙과 일치하는지 평가합니다.",
   },
   {
-    name: 'Simulate',
-    description: '같은 원칙을 과거에 적용해 결과와 위험을 다시 확인합니다.'
+    name: "Simulate",
+    description: "같은 원칙을 과거에 적용해 결과와 위험을 다시 확인합니다.",
   },
   {
-    name: 'Execute',
-    description: '정해진 시간에 실행 가능한 주문으로 전략을 전환합니다.'
-  }
-]
+    name: "Execute",
+    description: "정해진 시간에 실행 가능한 주문으로 전략을 전환합니다.",
+  },
+];
 </script>
 
 <style scoped lang="scss">
