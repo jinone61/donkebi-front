@@ -612,9 +612,13 @@ test('agent page covers current status charts and operation history', async () =
     /const summaryMetrics = computed[\s\S]*?label: 'TOTAL'[\s\S]*?label: 'ATH'[\s\S]*?label: 'CASH'[\s\S]*?label: 'HOLDING'[\s\S]*?label: 'PROFIT'[\s\S]*?label: 'RETURN'[\s\S]*?label: 'DD'[\s\S]*?label: 'MDD'/
   )
   assert.doesNotMatch(source, /metric\.caption/)
+  assert.doesNotMatch(
+    source,
+    /label: '(?:PROFIT|RETURN|DD|MDD)'[\s\S]*?valueClass:/
+  )
   assert.match(
     source,
-    /label: 'DD'[\s\S]*?valueClass: drawdownClass[\s\S]*?function drawdownClass[\s\S]*?Math\.abs\(number\) <= 5 \? 'value-positive' : 'value-negative'/
+    /const performanceDrawdownMin = computed[\s\S]*?Math\.min\(-40, \.\.\.drawdowns\)[\s\S]*?drawdown: \{[\s\S]*?min: performanceDrawdownMin\.value/
   )
   assert.match(
     source,
@@ -681,10 +685,7 @@ test('agent summary cards use the compact readable backtest treatment', async ()
   assert.match(summaryStyles, /font-size: 18px;/)
   assert.match(summaryStyles, /font-weight: 650;/)
   assert.match(summaryStyles, /text-align: center;/)
-  assert.match(
-    summaryStyles,
-    /strong\.value-positive[\s\S]*?color: #3f7257;[\s\S]*?strong\.value-negative[\s\S]*?color: #865a52;/
-  )
+  assert.doesNotMatch(summaryStyles, /strong\.value-(?:positive|negative)/)
   assert.doesNotMatch(summaryStyles, /min-height: 130px/)
   assert.doesNotMatch(summaryStyles, /font-family: var\(--dk-font-serif\)/)
 })

@@ -2187,23 +2187,19 @@ const summaryMetrics = computed(() => [
   },
   {
     label: 'PROFIT',
-    value: formatMoney(agentMetrics.value.totalProfit),
-    valueClass: profitClass(agentMetrics.value.totalProfit)
+    value: formatMoney(agentMetrics.value.totalProfit)
   },
   {
     label: 'RETURN',
-    value: formatPct(agentMetrics.value.totalReturnPct),
-    valueClass: profitClass(agentMetrics.value.totalReturnPct)
+    value: formatPct(agentMetrics.value.totalReturnPct)
   },
   {
     label: 'DD',
-    value: formatPct(agentMetrics.value.currentDrawdownPct),
-    valueClass: drawdownClass(agentMetrics.value.currentDrawdownPct)
+    value: formatPct(agentMetrics.value.currentDrawdownPct)
   },
   {
     label: 'MDD',
-    value: formatPct(agentMetrics.value.maximumDrawdownPct),
-    valueClass: profitClass(agentMetrics.value.maximumDrawdownPct)
+    value: formatPct(agentMetrics.value.maximumDrawdownPct)
   }
 ])
 
@@ -2211,6 +2207,12 @@ const chartRangeMax = computed(() => Math.max(dailyRows.value.length - 1, 0))
 const visibleChartRows = computed(() =>
   dailyRows.value.slice(chartRange.value.min, chartRange.value.max + 1)
 )
+const performanceDrawdownMin = computed(() => {
+  const drawdowns = visibleChartRows.value
+    .map(day => finiteNumber(day.drawdownPct))
+    .filter(value => value !== null)
+  return Math.min(-40, ...drawdowns)
+})
 const chartStartDate = computed(
   () => dailyRows.value[chartRange.value.min]?.sessionDate || '-'
 )
@@ -2555,6 +2557,7 @@ const performanceChartOptions = computed(() => {
       drawdown: {
         type: 'linear',
         position: 'right',
+        min: performanceDrawdownMin.value,
         suggestedMax: 0,
         afterFit(scale) {
           scale.width = axisLayout.right
@@ -2687,12 +2690,6 @@ function profitClass(value) {
   const number = finiteNumber(value)
   if (number === null || number === 0) return ''
   return number > 0 ? 'value-positive' : 'value-negative'
-}
-
-function drawdownClass(value) {
-  const number = finiteNumber(value)
-  if (number === null) return ''
-  return Math.abs(number) <= 5 ? 'value-positive' : 'value-negative'
 }
 
 function modeColor(mode) {
@@ -3053,14 +3050,6 @@ function shortTypeLabel(value) {
     font-weight: 650;
     line-height: 1.25;
     overflow-wrap: anywhere;
-  }
-
-  strong.value-positive {
-    color: #3f7257;
-  }
-
-  strong.value-negative {
-    color: #865a52;
   }
 }
 
