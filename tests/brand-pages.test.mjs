@@ -603,6 +603,28 @@ test('agent page covers current status charts and operation history', async () =
   assert.match(source, /v-for="tier in currentTiers"/)
   assert.match(source, /평균 매수가/)
   assert.match(source, /<dt>수익률<\/dt>/)
+  assert.match(
+    source,
+    /const totalInvestment = finiteNumber\(agentResult\.value\?\.totalInvestment\)[\s\S]*?totalProfit: finiteNumber\(agentResult\.value\?\.totalProfitLoss\)[\s\S]*?totalReturnPct: finiteNumber\(agentResult\.value\?\.totalReturnPct\)[\s\S]*?maximumDrawdownPct: finiteNumber\(agentResult\.value\?\.maximumDrawdownPct\)/
+  )
+  assert.match(
+    source,
+    /const summaryMetrics = computed[\s\S]*?label: 'TOTAL'[\s\S]*?label: 'ATH'[\s\S]*?label: 'CASH'[\s\S]*?label: 'HOLDING'[\s\S]*?label: 'PROFIT'[\s\S]*?label: 'RETURN'[\s\S]*?label: 'DD'[\s\S]*?label: 'MDD'/
+  )
+  assert.doesNotMatch(source, /metric\.caption/)
+  assert.match(
+    source,
+    /label: 'DD'[\s\S]*?valueClass: drawdownClass[\s\S]*?function drawdownClass[\s\S]*?Math\.abs\(number\) <= 5 \? 'value-positive' : 'value-negative'/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.summary-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\.metric-card \{[\s\S]*?font-size: 18px/
+  )
+  assert.doesNotMatch(source, /reportedTotalProfit|reportedTotalReturnPct/)
+  assert.match(
+    source,
+    /const performanceChartData[\s\S]*?agentResult\.value\?\.totalInvestment[\s\S]*?label: '초기자산'[\s\S]*?rows\.map\(\(\) => totalInvestment\)/
+  )
   assert.match(source, /일별 운영 내역/)
   assert.match(source, /class="daily-header desktop-only"/)
   assert.match(source, /class="daily-row daily-desktop-summary"/)
@@ -659,6 +681,10 @@ test('agent summary cards use the compact readable backtest treatment', async ()
   assert.match(summaryStyles, /font-size: 18px;/)
   assert.match(summaryStyles, /font-weight: 650;/)
   assert.match(summaryStyles, /text-align: center;/)
+  assert.match(
+    summaryStyles,
+    /strong\.value-positive[\s\S]*?color: #3f7257;[\s\S]*?strong\.value-negative[\s\S]*?color: #865a52;/
+  )
   assert.doesNotMatch(summaryStyles, /min-height: 130px/)
   assert.doesNotMatch(summaryStyles, /font-family: var\(--dk-font-serif\)/)
 })

@@ -207,9 +207,7 @@
                             <span>{{ slide.index }}</span>
                             <div>
                               <strong>실행 준비 중입니다.</strong>
-                              <p
-                                >예정 시간까지 조금만 기다려 주세요 🤖</p
-                              >
+                              <p>예정 시간까지 조금만 기다려 주세요 🤖</p>
                             </div>
                           </div>
 
@@ -987,7 +985,6 @@
                     <strong :class="metric.valueClass">{{
                       metric.value
                     }}</strong>
-                    <small v-if="metric.caption">{{ metric.caption }}</small>
                   </article>
                 </div>
 
@@ -2156,55 +2153,57 @@ const currentTiers = computed(() => finalPortfolio.value.tiers || [])
 
 const latestDay = computed(() => dailyRows.value.at(-1) || null)
 const agentMetrics = computed(() => {
-  const initialCash = finiteNumber(agentResult.value?.initialAvailableCash) || 0
-  const currentAsset = finiteNumber(finalPortfolio.value.totalAsset) || 0
-  const totalProfit = currentAsset - initialCash
+  const totalInvestment = finiteNumber(agentResult.value?.totalInvestment)
 
   return {
-    currentAsset,
-    availableCash: finiteNumber(finalPortfolio.value.availableCash) || 0,
-    holdingsMarketValue:
-      finiteNumber(finalPortfolio.value.holdingsMarketValue) || 0,
-    totalProfit,
-    totalReturnPct: initialCash ? (totalProfit / initialCash) * 100 : 0,
-    currentDrawdownPct: finiteNumber(latestDay.value?.drawdownPct) || 0,
-    maximumDrawdownPct:
-      finiteNumber(agentResult.value?.maximumDrawdownPct) || 0,
+    currentAsset: finiteNumber(finalPortfolio.value.totalAsset),
+    totalInvestment,
+    availableCash: finiteNumber(finalPortfolio.value.availableCash),
+    holdingsMarketValue: finiteNumber(finalPortfolio.value.holdingsMarketValue),
+    totalProfit: finiteNumber(agentResult.value?.totalProfitLoss),
+    totalReturnPct: finiteNumber(agentResult.value?.totalReturnPct),
+    currentDrawdownPct: finiteNumber(latestDay.value?.drawdownPct),
+    maximumDrawdownPct: finiteNumber(agentResult.value?.maximumDrawdownPct),
     allTimeHigh: agentResult.value?.allTimeHigh || null
   }
 })
 
 const summaryMetrics = computed(() => [
-  { label: '현재 자산', value: formatMoney(agentMetrics.value.currentAsset) },
-  { label: '가용 현금', value: formatMoney(agentMetrics.value.availableCash) },
   {
-    label: '보유 평가액',
+    label: 'TOTAL',
+    value: formatMoney(agentMetrics.value.currentAsset)
+  },
+  {
+    label: 'ATH',
+    value: formatMoney(agentMetrics.value.allTimeHigh?.totalAsset)
+  },
+  {
+    label: 'CASH',
+    value: formatMoney(agentMetrics.value.availableCash)
+  },
+  {
+    label: 'HOLDING',
     value: formatMoney(agentMetrics.value.holdingsMarketValue)
   },
   {
-    label: '총손익',
+    label: 'PROFIT',
     value: formatMoney(agentMetrics.value.totalProfit),
     valueClass: profitClass(agentMetrics.value.totalProfit)
   },
   {
-    label: '총수익률',
+    label: 'RETURN',
     value: formatPct(agentMetrics.value.totalReturnPct),
     valueClass: profitClass(agentMetrics.value.totalReturnPct)
   },
   {
-    label: '현재 DD',
+    label: 'DD',
     value: formatPct(agentMetrics.value.currentDrawdownPct),
-    valueClass: profitClass(agentMetrics.value.currentDrawdownPct)
+    valueClass: drawdownClass(agentMetrics.value.currentDrawdownPct)
   },
   {
     label: 'MDD',
     value: formatPct(agentMetrics.value.maximumDrawdownPct),
     valueClass: profitClass(agentMetrics.value.maximumDrawdownPct)
-  },
-  {
-    label: 'ATH',
-    value: formatMoney(agentMetrics.value.allTimeHigh?.totalAsset),
-    caption: agentMetrics.value.allTimeHigh?.sessionDate || '-'
   }
 ])
 
@@ -2337,7 +2336,7 @@ const priceChartData = computed(() => {
 
 const performanceChartData = computed(() => {
   const rows = visibleChartRows.value
-  const initialCash = finiteNumber(agentResult.value?.initialAvailableCash)
+  const totalInvestment = finiteNumber(agentResult.value?.totalInvestment)
   const ath = agentResult.value?.allTimeHigh
   const athPoint =
     ath && isDateWithinRows(ath.sessionDate, rows)
@@ -2368,7 +2367,7 @@ const performanceChartData = computed(() => {
       {
         type: 'line',
         label: '초기자산',
-        data: rows.map(() => initialCash),
+        data: rows.map(() => totalInvestment),
         yAxisID: 'asset',
         borderColor: '#9e9e9e',
         borderDash: [6, 5],
@@ -2688,6 +2687,12 @@ function profitClass(value) {
   const number = finiteNumber(value)
   if (number === null || number === 0) return ''
   return number > 0 ? 'value-positive' : 'value-negative'
+}
+
+function drawdownClass(value) {
+  const number = finiteNumber(value)
+  if (number === null) return ''
+  return Math.abs(number) <= 5 ? 'value-positive' : 'value-negative'
 }
 
 function modeColor(mode) {
@@ -3050,11 +3055,12 @@ function shortTypeLabel(value) {
     overflow-wrap: anywhere;
   }
 
-  small {
-    display: block;
-    margin-top: 3px;
-    color: var(--dk-muted);
-    font-size: 11px;
+  strong.value-positive {
+    color: #3f7257;
+  }
+
+  strong.value-negative {
+    color: #865a52;
   }
 }
 
@@ -3878,7 +3884,7 @@ function shortTypeLabel(value) {
     padding: 10px 14px;
 
     strong {
-      font-size: 16px;
+      font-size: 18px;
     }
   }
 
