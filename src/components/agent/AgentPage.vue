@@ -261,13 +261,12 @@
                                   }}</strong></div
                                 >
                                 <div
-                                  ><span>체결</span
-                                  ><strong
-                                    >{{
-                                      (slide.job.details?.executions || [])
-                                        .length
-                                    }}건</strong
-                                  ></div
+                                  ><span>종가</span
+                                  ><strong>{{
+                                    formatClosePrice(
+                                      slide.job.details?.closePrice
+                                    )
+                                  }}</strong></div
                                 >
                                 <div
                                   ><span>일간 변화</span

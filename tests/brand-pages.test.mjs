@@ -372,7 +372,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /계획 기준일[\s\S]*?slide\.job\.details\?\.calculatedThroughDate[\s\S]*?주문 대상일[\s\S]*?slide\.targetDate[\s\S]*?완료 세션[\s\S]*?slide\.job\.details\?\.completedSessionCount/
+    /계획 기준일[\s\S]*?slide\.job\.details\?\.calculatedThroughDate[\s\S]*?주문 대상일[\s\S]*?slide\.targetDate[\s\S]*?완료 세션[\s\S]*?slide\.job\.details\?\.completedSessionCount[\s\S]*?종가[\s\S]*?slide\.job\.details\?\.closePrice/
   )
   assert.match(
     source,
