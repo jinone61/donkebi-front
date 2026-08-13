@@ -2,7 +2,7 @@
   "name": "donkebi",
   "version": "0.0.1",
   "private": true,
-  "description": "Quiet AI agent trading system for strategy simulation and execution",
+  "description": "Quiet AI agent trading system for strategy backtesting and execution",
   "keywords": [
     "quasar",
     "quasar-app",

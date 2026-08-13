@@ -4,7 +4,7 @@
       <div class="auth-shell dk-container">
         <div class="auth-intro dk-reveal">
           <p class="dk-eyebrow">Private Access Only</p>
-          <h1 class="dk-serif">Donkebi<br />Simulation.</h1>
+          <h1 class="dk-serif">Donkebi<br />Backtest.</h1>
           <p>승인된 사용자만 접근 가능합니다.</p>
           <div class="auth-intro__meta" aria-hidden="true">
             <span>AGENT / 01</span>
@@ -41,7 +41,7 @@
       <section class="workspace-intro dk-container">
         <div class="workspace-intro__identity">
           <p class="dk-eyebrow">Backtest · Agent 01</p>
-          <h1 class="dk-serif">Strategy simulation.</h1>
+          <h1 class="dk-serif">Strategy backtest.</h1>
         </div>
         <div class="workspace-intro__note">
           <span class="workspace-intro__status"><i></i> SYSTEM READY</span>
@@ -384,7 +384,7 @@
               <q-card-section class="section-heading">
                 <div class="text-h6 text-grey-9">최종 포트폴리오</div>
                 <div class="text-caption text-grey-6">
-                  {{ finalPortfolio.date || "-" }} 기준
+                  {{ finalPortfolio.date || '-' }} 기준
                 </div>
               </q-card-section>
               <q-separator />
@@ -583,7 +583,7 @@
                         draftChartRange,
                         'min',
                         -1,
-                        chartRangeMax,
+                        chartRangeMax
                       )
                     "
                     @click="adjustChartRangeBoundary('min', -1)"
@@ -600,7 +600,7 @@
                         draftChartRange,
                         'min',
                         1,
-                        chartRangeMax,
+                        chartRangeMax
                       )
                     "
                     @click="adjustChartRangeBoundary('min', 1)"
@@ -617,7 +617,7 @@
                         draftChartRange,
                         'max',
                         -1,
-                        chartRangeMax,
+                        chartRangeMax
                       )
                     "
                     @click="adjustChartRangeBoundary('max', -1)"
@@ -634,7 +634,7 @@
                         draftChartRange,
                         'max',
                         1,
-                        chartRangeMax,
+                        chartRangeMax
                       )
                     "
                     @click="adjustChartRangeBoundary('max', 1)"
@@ -822,8 +822,8 @@
                       <div class="detail-section">
                         <div class="detail-title">당일 계획</div>
                         <div class="detail-summary">
-                          <span>목표일 {{ day.plan?.targetDate || "-" }}</span>
-                          <span>모드 {{ day.plan?.mode || "-" }}</span>
+                          <span>목표일 {{ day.plan?.targetDate || '-' }}</span>
+                          <span>모드 {{ day.plan?.mode || '-' }}</span>
                           <span
                             >기준 매수가
                             {{ formatPrice(day.plan?.buyPrice) }}</span
@@ -925,7 +925,7 @@
                                 :key="`${day.sessionDate}-cash-${index}`"
                               >
                                 <td>{{ transaction.type }}</td>
-                                <td>{{ transaction.tier || "-" }}</td>
+                                <td>{{ transaction.tier || '-' }}</td>
                                 <td
                                   class="text-right"
                                   :class="profitClass(transaction.changeAmount)"
@@ -1231,9 +1231,9 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
-import { api } from "@/boot/axios";
-import { useQuasar } from "quasar";
+import { computed, reactive, ref } from 'vue'
+import { api } from '@/boot/axios'
+import { useQuasar } from 'quasar'
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -1244,57 +1244,57 @@ import {
   LineElement,
   PointElement,
   ScatterController,
-  Tooltip,
-} from "chart.js";
-import { Chart } from "vue-chartjs";
+  Tooltip
+} from 'chart.js'
+import { Chart } from 'vue-chartjs'
 
-let chartHoverGuideVisible = true;
-let isSyncingChartTooltips = false;
-let synchronizedChartTooltipDate = null;
+let chartHoverGuideVisible = true
+let isSyncingChartTooltips = false
+let synchronizedChartTooltipDate = null
 
 const chartRangeGuidePlugin = {
-  id: "chartRangeGuide",
+  id: 'chartRangeGuide',
   afterDatasetsDraw(chart, _args, options) {
-    const xScale = chart.scales.x;
-    const labels = chart.data.labels || [];
+    const xScale = chart.scales.x
+    const labels = chart.data.labels || []
     const rangeIndexes = options?.display
       ? getChartRangeGuideIndexes(labels, options.startDate, options.endDate)
-      : [];
+      : []
     const hoverIndexes = chartHoverGuideVisible
       ? getChartRangeGuideIndexes(
           labels,
           options?.hoverDate,
-          options?.hoverDate,
+          options?.hoverDate
         )
-      : [];
-    const indexes = [...new Set([...rangeIndexes, ...hoverIndexes])];
-    if (!indexes.length) return;
+      : []
+    const indexes = [...new Set([...rangeIndexes, ...hoverIndexes])]
+    if (!indexes.length) return
 
-    const { ctx, chartArea } = chart;
+    const { ctx, chartArea } = chart
 
-    ctx.save();
-    ctx.strokeStyle = "rgba(117, 117, 117, 0.8)";
-    ctx.lineWidth = 1;
-    indexes.forEach((index) => {
-      const x = xScale.getPixelForValue(index);
-      ctx.beginPath();
-      ctx.moveTo(x, chartArea.top);
-      ctx.lineTo(x, chartArea.bottom);
-      ctx.stroke();
-    });
-    ctx.restore();
+    ctx.save()
+    ctx.strokeStyle = 'rgba(117, 117, 117, 0.8)'
+    ctx.lineWidth = 1
+    indexes.forEach(index => {
+      const x = xScale.getPixelForValue(index)
+      ctx.beginPath()
+      ctx.moveTo(x, chartArea.top)
+      ctx.lineTo(x, chartArea.bottom)
+      ctx.stroke()
+    })
+    ctx.restore()
   },
   afterEvent(chart, args) {
     const isBacktestChart = [
       priceChartComponent.value,
-      performanceChartComponent.value,
-    ].some((component) => getChartInstance(component) === chart);
-    const eventType = args.event?.type;
+      performanceChartComponent.value
+    ].some(component => getChartInstance(component) === chart)
+    const eventType = args.event?.type
     const isPointerOutsidePlot =
       !args.inChartArea &&
-      ["mousemove", "touchmove", "click"].includes(eventType);
+      ['mousemove', 'touchmove', 'click'].includes(eventType)
     const hasSynchronizedHover =
-      chartHoverDate.value !== null || synchronizedChartTooltipDate !== null;
+      chartHoverDate.value !== null || synchronizedChartTooltipDate !== null
 
     if (
       !isBacktestChart ||
@@ -1302,10 +1302,10 @@ const chartRangeGuidePlugin = {
       !isPointerOutsidePlot ||
       !hasSynchronizedHover
     )
-      return;
-    clearChartHover();
-  },
-};
+      return
+    clearChartHover()
+  }
+}
 
 ChartJS.register(
   CategoryScale,
@@ -1317,215 +1317,212 @@ ChartJS.register(
   Filler,
   Tooltip,
   Legend,
-  chartRangeGuidePlugin,
-);
+  chartRangeGuidePlugin
+)
 
 function finiteNumber(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  if (value === null || value === undefined || value === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }
 
 function mergeOrdersWithExecutions(orders = [], executions = []) {
-  return orders.map((order) => {
+  return orders.map(order => {
     const execution = executions.find(
-      (candidate) =>
-        candidate.tradeSide === order.tradeSide &&
-        candidate.tier === order.tier,
-    );
+      candidate =>
+        candidate.tradeSide === order.tradeSide && candidate.tier === order.tier
+    )
 
     return {
       ...order,
       executionPrice: execution?.price ?? null,
-      executedQuantity: execution?.quantity ?? 0,
-    };
-  });
+      executedQuantity: execution?.quantity ?? 0
+    }
+  })
 }
 
 function calculateCashRatioPct(closingCash, totalAsset) {
-  const cash = finiteNumber(closingCash);
-  const assets = finiteNumber(totalAsset);
-  if (cash === null || assets === null || assets === 0) return null;
-  return (cash / assets) * 100;
+  const cash = finiteNumber(closingCash)
+  const assets = finiteNumber(totalAsset)
+  if (cash === null || assets === null || assets === 0) return null
+  return (cash / assets) * 100
 }
 
 function formatMonthTickLabel(currentLabel, previousLabel) {
-  const currentMonth = String(currentLabel || "").slice(0, 7);
-  if (!currentMonth) return undefined;
-  const previousMonth = String(previousLabel || "").slice(0, 7);
-  return currentMonth === previousMonth ? undefined : currentMonth;
+  const currentMonth = String(currentLabel || '').slice(0, 7)
+  if (!currentMonth) return undefined
+  const previousMonth = String(previousLabel || '').slice(0, 7)
+  return currentMonth === previousMonth ? undefined : currentMonth
 }
 
 function subtractCalendarMonths(dateString, months) {
-  const [year, month, day] = dateString.split("-").map(Number);
-  const targetMonthIndex = year * 12 + (month - 1) - months;
-  const targetYear = Math.floor(targetMonthIndex / 12);
-  const targetMonthIndexInYear = ((targetMonthIndex % 12) + 12) % 12;
+  const [year, month, day] = dateString.split('-').map(Number)
+  const targetMonthIndex = year * 12 + (month - 1) - months
+  const targetYear = Math.floor(targetMonthIndex / 12)
+  const targetMonthIndexInYear = ((targetMonthIndex % 12) + 12) % 12
   const lastDayOfTargetMonth = new Date(
-    Date.UTC(targetYear, targetMonthIndexInYear + 1, 0),
-  ).getUTCDate();
-  const targetDay = Math.min(day, lastDayOfTargetMonth);
+    Date.UTC(targetYear, targetMonthIndexInYear + 1, 0)
+  ).getUTCDate()
+  const targetDay = Math.min(day, lastDayOfTargetMonth)
 
-  return `${targetYear}-${String(targetMonthIndexInYear + 1).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+  return `${targetYear}-${String(targetMonthIndexInYear + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`
 }
 
 function buildChartRange(rows = [], months) {
-  if (!rows.length) return { min: 0, max: 0 };
+  if (!rows.length) return { min: 0, max: 0 }
 
-  const max = rows.length - 1;
-  if (!months) return { min: 0, max };
+  const max = rows.length - 1
+  if (!months) return { min: 0, max }
 
-  const cutoffDate = subtractCalendarMonths(rows[max].sessionDate, months);
-  const firstVisibleIndex = rows.findIndex(
-    (row) => row.sessionDate >= cutoffDate,
-  );
+  const cutoffDate = subtractCalendarMonths(rows[max].sessionDate, months)
+  const firstVisibleIndex = rows.findIndex(row => row.sessionDate >= cutoffDate)
 
-  return { min: firstVisibleIndex >= 0 ? firstVisibleIndex : 0, max };
+  return { min: firstVisibleIndex >= 0 ? firstVisibleIndex : 0, max }
 }
 
 function moveChartRangeBoundary(range, boundary, direction, maxIndex) {
-  const nextRange = { ...range };
-  const lowerBound = boundary === "min" ? 0 : range.min;
-  const upperBound = boundary === "min" ? range.max : maxIndex;
+  const nextRange = { ...range }
+  const lowerBound = boundary === 'min' ? 0 : range.min
+  const upperBound = boundary === 'min' ? range.max : maxIndex
   nextRange[boundary] = Math.min(
     upperBound,
-    Math.max(lowerBound, range[boundary] + direction),
-  );
-  return nextRange;
+    Math.max(lowerBound, range[boundary] + direction)
+  )
+  return nextRange
 }
 
 function canMoveChartRangeBoundary(range, boundary, direction, maxIndex) {
   return (
     moveChartRangeBoundary(range, boundary, direction, maxIndex)[boundary] !==
     range[boundary]
-  );
+  )
 }
 
 function buildChartPreviewRange(appliedRange, draftRange, isDragging) {
-  if (!isDragging) return appliedRange;
+  if (!isDragging) return appliedRange
   return {
     min: Math.min(appliedRange.min, draftRange.min),
-    max: Math.max(appliedRange.max, draftRange.max),
-  };
+    max: Math.max(appliedRange.max, draftRange.max)
+  }
 }
 
 function sliceChartRows(rows = [], range = { min: 0, max: 0 }) {
-  return rows.slice(range.min, range.max + 1);
+  return rows.slice(range.min, range.max + 1)
 }
 
 function isDateWithinRows(sessionDate, rows = []) {
-  if (!sessionDate || !rows.length) return false;
+  if (!sessionDate || !rows.length) return false
   return (
     sessionDate >= rows[0].sessionDate &&
     sessionDate <= rows[rows.length - 1].sessionDate
-  );
+  )
 }
 
 function getChartRangeGuideIndexes(labels = [], startDate, endDate) {
   return [...new Set([startDate, endDate])]
-    .map((date) => labels.indexOf(date))
-    .filter((index) => index >= 0);
+    .map(date => labels.indexOf(date))
+    .filter(index => index >= 0)
 }
 
 function getChartHoverDate(labels = [], rawIndex) {
-  const index = Math.round(Number(rawIndex));
+  const index = Math.round(Number(rawIndex))
   return Number.isInteger(index) && index >= 0 && index < labels.length
     ? labels[index]
-    : null;
+    : null
 }
 
 function getChartAxisLayout(isMobile) {
-  return isMobile ? { left: 60, right: 42 } : { left: 72, right: 48 };
+  return isMobile ? { left: 60, right: 42 } : { left: 72, right: 48 }
 }
 
 function getChartInstance(component) {
-  const exposedChart = component?.chart;
-  return exposedChart?.value || exposedChart || null;
+  const exposedChart = component?.chart
+  return exposedChart?.value || exposedChart || null
 }
 
 function getChartTooltipActiveElements(chart, sessionDate) {
-  const labelIndex = (chart?.data?.labels || []).indexOf(sessionDate);
-  if (labelIndex < 0) return [];
+  const labelIndex = (chart?.data?.labels || []).indexOf(sessionDate)
+  if (labelIndex < 0) return []
 
   return (chart.data.datasets || []).flatMap((dataset, datasetIndex) => {
-    if (!chart.isDatasetVisible(datasetIndex)) return [];
+    if (!chart.isDatasetVisible(datasetIndex)) return []
 
     const dataIndex =
-      dataset.type === "scatter"
-        ? (dataset.data || []).findIndex((point) => point?.x === sessionDate)
-        : labelIndex;
-    if (dataIndex < 0 || dataset.data?.[dataIndex] == null) return [];
-    if (!chart.getDatasetMeta(datasetIndex)?.data?.[dataIndex]) return [];
+      dataset.type === 'scatter'
+        ? (dataset.data || []).findIndex(point => point?.x === sessionDate)
+        : labelIndex
+    if (dataIndex < 0 || dataset.data?.[dataIndex] == null) return []
+    if (!chart.getDatasetMeta(datasetIndex)?.data?.[dataIndex]) return []
 
-    return [{ datasetIndex, index: dataIndex }];
-  });
+    return [{ datasetIndex, index: dataIndex }]
+  })
 }
 
 function deactivateOtherChartInteractions(sourceChart, chartComponents = []) {
-  chartComponents.forEach((component) => {
-    const chart = getChartInstance(component);
-    if (!chart || chart === sourceChart) return;
+  chartComponents.forEach(component => {
+    const chart = getChartInstance(component)
+    if (!chart || chart === sourceChart) return
 
-    const hasActiveElements = chart.getActiveElements?.().length > 0;
-    const hasActiveTooltip = chart.tooltip?.getActiveElements?.().length > 0;
-    if (!hasActiveElements && !hasActiveTooltip) return;
+    const hasActiveElements = chart.getActiveElements?.().length > 0
+    const hasActiveTooltip = chart.tooltip?.getActiveElements?.().length > 0
+    if (!hasActiveElements && !hasActiveTooltip) return
 
-    chart.setActiveElements([]);
-    chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
-    chart.draw();
-  });
+    chart.setActiveElements([])
+    chart.tooltip?.setActiveElements([], { x: 0, y: 0 })
+    chart.draw()
+  })
 }
 
 function drawChartComponents(chartComponents = []) {
-  chartComponents.forEach((component) => {
-    getChartInstance(component)?.draw();
-  });
+  chartComponents.forEach(component => {
+    getChartInstance(component)?.draw()
+  })
 }
 
 function syncChartTooltips(sessionDate, chartComponents = []) {
-  if (isSyncingChartTooltips) return;
+  if (isSyncingChartTooltips) return
 
-  isSyncingChartTooltips = true;
+  isSyncingChartTooltips = true
   try {
-    chartComponents.forEach((component) => {
-      const chart = getChartInstance(component);
-      if (!chart) return;
+    chartComponents.forEach(component => {
+      const chart = getChartInstance(component)
+      if (!chart) return
 
-      const activeElements = getChartTooltipActiveElements(chart, sessionDate);
+      const activeElements = getChartTooltipActiveElements(chart, sessionDate)
       if (!activeElements.length) {
-        chart.setActiveElements([]);
-        chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
-        chart.draw();
-        return;
+        chart.setActiveElements([])
+        chart.tooltip?.setActiveElements([], { x: 0, y: 0 })
+        chart.draw()
+        return
       }
 
-      const labelIndex = chart.data.labels.indexOf(sessionDate);
+      const labelIndex = chart.data.labels.indexOf(sessionDate)
       const position = {
         x: chart.scales.x.getPixelForValue(labelIndex),
-        y: (chart.chartArea.top + chart.chartArea.bottom) / 2,
-      };
-      chart.setActiveElements(activeElements);
-      chart.tooltip?.setActiveElements(activeElements, position);
-      chart.draw();
-    });
+        y: (chart.chartArea.top + chart.chartArea.bottom) / 2
+      }
+      chart.setActiveElements(activeElements)
+      chart.tooltip?.setActiveElements(activeElements, position)
+      chart.draw()
+    })
   } finally {
-    isSyncingChartTooltips = false;
+    isSyncingChartTooltips = false
   }
 }
 
-const $q = useQuasar();
+const $q = useQuasar()
 
-const BACKTEST_URL = "/api/dualsniper/backtest";
-const PAGE_PASSWORD = "1q2w3e!!";
-const CUSTOM_PRESET = "Custom";
-const DAILY_HISTORY_PAGE_SIZE = 30;
+const BACKTEST_URL = '/api/dualsniper/backtest'
+const PAGE_PASSWORD = '1q2w3e!!'
+const CUSTOM_PRESET = 'Custom'
+const DAILY_HISTORY_PAGE_SIZE = 30
 const CHART_RANGE_PRESET_OPTIONS = [
-  { label: "전체", value: "all" },
-  { label: "1개월", value: 1 },
-  { label: "3개월", value: 3 },
-  { label: "6개월", value: 6 },
-  { label: "1년", value: 12 },
-];
+  { label: '전체', value: 'all' },
+  { label: '1개월', value: 1 },
+  { label: '3개월', value: 3 },
+  { label: '6개월', value: 6 },
+  { label: '1년', value: 12 }
+]
 
 const COMMON_DEFENSE_MODE = {
   splitCount: 5,
@@ -1534,479 +1531,479 @@ const COMMON_DEFENSE_MODE = {
   buyCondition2ClosePct: 5.5,
   sellConditionMaPct: 0.7,
   maWindow: 3,
-  tierBuyRatiosPct: [6, 13, 20, 27, 34],
-};
+  tierBuyRatiosPct: [6, 13, 20, 27, 34]
+}
 
 const PRESETS = {
-  "Preset 1": {
+  'Preset 1': {
     attackMode: {
       splitCount: 6,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: -0.1,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
-  "Preset 2": {
+  'Preset 2': {
     attackMode: {
       splitCount: 6,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 0.5,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
-  "Preset 3": {
+  'Preset 3': {
     attackMode: {
       splitCount: 5,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 0.5,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
-  "Preset 4": {
+  'Preset 4': {
     attackMode: {
       splitCount: 7,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 8,
-      sellConditionAlpha: 0.4,
-    },
+      sellConditionAlpha: 0.4
+    }
   },
-  "Preset 5": {
+  'Preset 5': {
     attackMode: {
       splitCount: 6,
       holdingPeriodAlpha: 2,
       buyConditionClosePct: 8,
-      sellConditionAlpha: 0.4,
-    },
-  },
-};
+      sellConditionAlpha: 0.4
+    }
+  }
+}
 
-const presetOptions = [...Object.keys(PRESETS), CUSTOM_PRESET];
+const presetOptions = [...Object.keys(PRESETS), CUSTOM_PRESET]
 const attackFields = [
-  { key: "splitCount", label: "공격 분할 수", step: 1 },
-  { key: "holdingPeriodAlpha", label: "보유기간 계수", step: 0.1 },
+  { key: 'splitCount', label: '공격 분할 수', step: 1 },
+  { key: 'holdingPeriodAlpha', label: '보유기간 계수', step: 0.1 },
   {
-    key: "buyConditionClosePct",
-    label: "종가 매수조건",
-    suffix: "%",
-    step: 0.1,
+    key: 'buyConditionClosePct',
+    label: '종가 매수조건',
+    suffix: '%',
+    step: 0.1
   },
-  { key: "sellConditionAlpha", label: "매도조건 계수", step: 0.1 },
-];
+  { key: 'sellConditionAlpha', label: '매도조건 계수', step: 0.1 }
+]
 const defenseFields = [
-  { key: "splitCount", label: "방어 분할 수", step: 1 },
-  { key: "holdingPeriod", label: "최대 보유기간", suffix: "일", step: 1 },
-  { key: "buyCondition1MaPct", label: "MA 매수조건", suffix: "%", step: 0.1 },
+  { key: 'splitCount', label: '방어 분할 수', step: 1 },
+  { key: 'holdingPeriod', label: '최대 보유기간', suffix: '일', step: 1 },
+  { key: 'buyCondition1MaPct', label: 'MA 매수조건', suffix: '%', step: 0.1 },
   {
-    key: "buyCondition2ClosePct",
-    label: "종가 매수조건",
-    suffix: "%",
-    step: 0.1,
+    key: 'buyCondition2ClosePct',
+    label: '종가 매수조건',
+    suffix: '%',
+    step: 0.1
   },
-  { key: "sellConditionMaPct", label: "MA 매도조건", suffix: "%", step: 0.1 },
-  { key: "maWindow", label: "MA 기간", suffix: "일", step: 1 },
-];
+  { key: 'sellConditionMaPct', label: 'MA 매도조건', suffix: '%', step: 0.1 },
+  { key: 'maWindow', label: 'MA 기간', suffix: '일', step: 1 }
+]
 
-const isAuthenticated = ref(false);
-const inputPassword = ref("");
-const passwordError = ref(false);
-const startDateDialog = ref(false);
-const targetDateDialog = ref(false);
-const activeTab = ref("settings");
-const selectedPreset = ref("Preset 5");
-const isLoading = ref(false);
-const submitError = ref("");
-const showValidation = ref(false);
-const backtestResult = ref(null);
-const visibleDailyCount = ref(DAILY_HISTORY_PAGE_SIZE);
-const draftChartRange = ref({ min: 0, max: 0 });
-const appliedChartRange = ref({ min: 0, max: 0 });
-const isChartRangeDragging = ref(false);
-const chartRangePreset = ref("all");
-const chartHoverDate = ref(null);
-const priceChartComponent = ref(null);
-const performanceChartComponent = ref(null);
+const isAuthenticated = ref(false)
+const inputPassword = ref('')
+const passwordError = ref(false)
+const startDateDialog = ref(false)
+const targetDateDialog = ref(false)
+const activeTab = ref('settings')
+const selectedPreset = ref('Preset 5')
+const isLoading = ref(false)
+const submitError = ref('')
+const showValidation = ref(false)
+const backtestResult = ref(null)
+const visibleDailyCount = ref(DAILY_HISTORY_PAGE_SIZE)
+const draftChartRange = ref({ min: 0, max: 0 })
+const appliedChartRange = ref({ min: 0, max: 0 })
+const isChartRangeDragging = ref(false)
+const chartRangePreset = ref('all')
+const chartHoverDate = ref(null)
+const priceChartComponent = ref(null)
+const performanceChartComponent = ref(null)
 
 const form = reactive({
-  symbol: "SOXL",
-  startDate: "2026-06-14",
+  symbol: 'SOXL',
+  startDate: '2026-06-14',
   targetDate: getKstToday(),
   initialAvailableCash: 120000,
   commissionRatePct: 0.04,
-  attackMode: cloneAttackMode(PRESETS["Preset 5"].attackMode),
-  defenseMode: cloneDefenseMode(COMMON_DEFENSE_MODE),
-});
+  attackMode: cloneAttackMode(PRESETS['Preset 5'].attackMode),
+  defenseMode: cloneDefenseMode(COMMON_DEFENSE_MODE)
+})
 
-const isCustomPreset = computed(() => selectedPreset.value === CUSTOM_PRESET);
-const hasResult = computed(() => Boolean(backtestResult.value));
+const isCustomPreset = computed(() => selectedPreset.value === CUSTOM_PRESET)
+const hasResult = computed(() => Boolean(backtestResult.value))
 const finalPortfolio = computed(
-  () => backtestResult.value?.finalPortfolio || {},
-);
-const finalTiers = computed(() => finalPortfolio.value.tiers || []);
-const nextPlan = computed(() => backtestResult.value?.nextPlan || {});
-const nextSellOrders = computed(() => nextPlan.value.sellOrders || []);
+  () => backtestResult.value?.finalPortfolio || {}
+)
+const finalTiers = computed(() => finalPortfolio.value.tiers || [])
+const nextPlan = computed(() => backtestResult.value?.nextPlan || {})
+const nextSellOrders = computed(() => nextPlan.value.sellOrders || [])
 const nextOrders = computed(() =>
   (backtestResult.value?.nextOrders || []).map((order, index) => ({
     ...order,
-    rowKey: `${order.tradeSide}-${order.tier}-${index}`,
-  })),
-);
+    rowKey: `${order.tradeSide}-${order.tier}-${index}`
+  }))
+)
 const nextBuyOrders = computed(() => {
-  if (!nextPlan.value.buyOrder) return [];
+  if (!nextPlan.value.buyOrder) return []
 
   const matchingOrder = nextOrders.value.find(
-    (order) =>
-      order.tradeSide === "BUY" && order.tier === nextPlan.value.buyOrder.tier,
-  );
+    order =>
+      order.tradeSide === 'BUY' && order.tier === nextPlan.value.buyOrder.tier
+  )
 
   return [
     {
       ...nextPlan.value.buyOrder,
-      orderType: matchingOrder?.orderType || "LOC",
-    },
-  ];
-});
+      orderType: matchingOrder?.orderType || 'LOC'
+    }
+  ]
+})
 const startDateWasAdjusted = computed(
   () =>
     backtestResult.value?.requestedStartDate &&
     backtestResult.value.requestedStartDate !==
-      backtestResult.value.actualStartDate,
-);
+      backtestResult.value.actualStartDate
+)
 const resultKey = computed(
   () =>
-    `${backtestResult.value?.symbol || ""}-${backtestResult.value?.actualStartDate || ""}-${backtestResult.value?.backtestedThroughDate || ""}`,
-);
+    `${backtestResult.value?.symbol || ''}-${backtestResult.value?.actualStartDate || ''}-${backtestResult.value?.backtestedThroughDate || ''}`
+)
 
 const tierRatioTotal = computed(() =>
   form.defenseMode.tierBuyRatiosPct.reduce(
     (sum, value) => sum + (toNumber(value) || 0),
-    0,
-  ),
-);
+    0
+  )
+)
 
 const validationErrors = computed(() => {
-  const errors = [];
-  if (!form.symbol.trim()) errors.push("종목을 입력해 주세요.");
+  const errors = []
+  if (!form.symbol.trim()) errors.push('종목을 입력해 주세요.')
   if (!form.startDate || !form.targetDate)
-    errors.push("시작일과 목표일을 입력해 주세요.");
+    errors.push('시작일과 목표일을 입력해 주세요.')
   if (form.startDate && form.targetDate && form.startDate > form.targetDate) {
-    errors.push("시작일은 목표일보다 늦을 수 없습니다.");
+    errors.push('시작일은 목표일보다 늦을 수 없습니다.')
   }
   if (!isPositiveNumber(form.initialAvailableCash))
-    errors.push("초기 현금은 0보다 커야 합니다.");
+    errors.push('초기 현금은 0보다 커야 합니다.')
   if (!isNonNegativeNumber(form.commissionRatePct))
-    errors.push("수수료율은 0 이상이어야 합니다.");
+    errors.push('수수료율은 0 이상이어야 합니다.')
   if (!isPositiveInteger(form.attackMode.splitCount))
-    errors.push("공격 분할 수는 양의 정수여야 합니다.");
+    errors.push('공격 분할 수는 양의 정수여야 합니다.')
   if (!isPositiveNumber(form.attackMode.holdingPeriodAlpha))
-    errors.push("공격 보유기간 계수는 0보다 커야 합니다.");
+    errors.push('공격 보유기간 계수는 0보다 커야 합니다.')
   if (!isFiniteNumber(form.attackMode.buyConditionClosePct))
-    errors.push("공격 종가 매수조건을 확인해 주세요.");
+    errors.push('공격 종가 매수조건을 확인해 주세요.')
   if (!isFiniteNumber(form.attackMode.sellConditionAlpha))
-    errors.push("공격 매도조건 계수를 확인해 주세요.");
+    errors.push('공격 매도조건 계수를 확인해 주세요.')
   if (!isPositiveInteger(form.defenseMode.splitCount))
-    errors.push("방어 분할 수는 양의 정수여야 합니다.");
+    errors.push('방어 분할 수는 양의 정수여야 합니다.')
   if (!isPositiveInteger(form.defenseMode.holdingPeriod))
-    errors.push("방어 보유기간은 양의 정수여야 합니다.");
+    errors.push('방어 보유기간은 양의 정수여야 합니다.')
   if (!isFiniteNumber(form.defenseMode.buyCondition1MaPct))
-    errors.push("방어 MA 매수조건을 확인해 주세요.");
+    errors.push('방어 MA 매수조건을 확인해 주세요.')
   if (!isFiniteNumber(form.defenseMode.buyCondition2ClosePct))
-    errors.push("방어 종가 매수조건을 확인해 주세요.");
+    errors.push('방어 종가 매수조건을 확인해 주세요.')
   if (!isFiniteNumber(form.defenseMode.sellConditionMaPct))
-    errors.push("방어 MA 매도조건을 확인해 주세요.");
+    errors.push('방어 MA 매도조건을 확인해 주세요.')
   if (!isPositiveInteger(form.defenseMode.maWindow))
-    errors.push("MA 기간은 양의 정수여야 합니다.");
+    errors.push('MA 기간은 양의 정수여야 합니다.')
   if (
     form.defenseMode.tierBuyRatiosPct.length !==
     Number(form.defenseMode.splitCount)
   ) {
-    errors.push("티어별 매수 비율 개수는 방어 분할 수와 같아야 합니다.");
+    errors.push('티어별 매수 비율 개수는 방어 분할 수와 같아야 합니다.')
   }
   if (
-    form.defenseMode.tierBuyRatiosPct.some((value) => !isPositiveNumber(value))
+    form.defenseMode.tierBuyRatiosPct.some(value => !isPositiveNumber(value))
   ) {
-    errors.push("각 티어 매수 비율은 0보다 커야 합니다.");
+    errors.push('각 티어 매수 비율은 0보다 커야 합니다.')
   }
   if (Math.abs(tierRatioTotal.value - 100) > 0.0001) {
-    errors.push("티어별 매수 비율 합계는 100%여야 합니다.");
+    errors.push('티어별 매수 비율 합계는 100%여야 합니다.')
   }
-  return errors;
-});
+  return errors
+})
 
 const dailyRows = computed(() =>
-  (backtestResult.value?.dailyResults || []).map((day) => {
-    const orders = day.orders || [];
-    const executions = day.executions || [];
-    const totalAsset = day.portfolio?.totalAsset;
-    const closingCash = day.cash?.closingCash;
+  (backtestResult.value?.dailyResults || []).map(day => {
+    const orders = day.orders || []
+    const executions = day.executions || []
+    const totalAsset = day.portfolio?.totalAsset
+    const closingCash = day.cash?.closingCash
 
     return {
       ...day,
-      mode: day.plan?.mode || "-",
+      mode: day.plan?.mode || '-',
       orders,
       executions,
       orderExecutionRows: mergeOrdersWithExecutions(orders, executions),
       transactions: day.cash?.transactions || [],
       totalAsset,
       closingCash,
-      cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
-    };
-  }),
-);
-const chartRangeMax = computed(() => Math.max(dailyRows.value.length - 1, 0));
+      cashRatioPct: calculateCashRatioPct(closingCash, totalAsset)
+    }
+  })
+)
+const chartRangeMax = computed(() => Math.max(dailyRows.value.length - 1, 0))
 const previewChartRange = computed(() =>
   buildChartPreviewRange(
     appliedChartRange.value,
     draftChartRange.value,
-    isChartRangeDragging.value,
-  ),
-);
+    isChartRangeDragging.value
+  )
+)
 const visibleChartRows = computed(() =>
-  sliceChartRows(dailyRows.value, previewChartRange.value),
-);
+  sliceChartRows(dailyRows.value, previewChartRange.value)
+)
 const chartRangeStartDate = computed(
-  () => dailyRows.value[draftChartRange.value.min]?.sessionDate || "-",
-);
+  () => dailyRows.value[draftChartRange.value.min]?.sessionDate || '-'
+)
 const chartRangeEndDate = computed(
-  () => dailyRows.value[draftChartRange.value.max]?.sessionDate || "-",
-);
+  () => dailyRows.value[draftChartRange.value.max]?.sessionDate || '-'
+)
 
 const dailyHistoryRows = computed(() =>
   [...dailyRows.value].sort((left, right) =>
-    right.sessionDate.localeCompare(left.sessionDate),
-  ),
-);
+    right.sessionDate.localeCompare(left.sessionDate)
+  )
+)
 const visibleDailyRows = computed(() =>
-  dailyHistoryRows.value.slice(0, visibleDailyCount.value),
-);
+  dailyHistoryRows.value.slice(0, visibleDailyCount.value)
+)
 const hasMoreDailyRows = computed(
-  () => visibleDailyCount.value < dailyHistoryRows.value.length,
-);
-const latestDailyRow = computed(() => dailyHistoryRows.value[0] || null);
+  () => visibleDailyCount.value < dailyHistoryRows.value.length
+)
+const latestDailyRow = computed(() => dailyHistoryRows.value[0] || null)
 
 const summaryCards = computed(() => {
-  const initialCash = toNumber(backtestResult.value?.initialAvailableCash) || 0;
-  const initialDate = backtestResult.value?.actualStartDate || "-";
-  const totalAsset = toNumber(finalPortfolio.value.totalAsset) || 0;
-  const totalProfit = totalAsset - initialCash;
-  const totalReturnPct = initialCash ? (totalProfit / initialCash) * 100 : 0;
-  const ath = backtestResult.value?.allTimeHigh || {};
+  const initialCash = toNumber(backtestResult.value?.initialAvailableCash) || 0
+  const initialDate = backtestResult.value?.actualStartDate || '-'
+  const totalAsset = toNumber(finalPortfolio.value.totalAsset) || 0
+  const totalProfit = totalAsset - initialCash
+  const totalReturnPct = initialCash ? (totalProfit / initialCash) * 100 : 0
+  const ath = backtestResult.value?.allTimeHigh || {}
 
   return [
-    { label: "현재", value: formatWholeMoney(totalAsset) },
+    { label: '현재', value: formatWholeMoney(totalAsset) },
     {
-      label: "최고",
+      label: '최고',
       value: formatWholeMoney(ath.totalAsset),
-      caption: ath.sessionDate || "-",
+      caption: ath.sessionDate || '-'
     },
     {
-      label: "원금",
+      label: '원금',
       value: formatWholeMoney(initialCash),
-      caption: initialDate || "-",
+      caption: initialDate || '-'
     },
     {
-      label: "투자기간",
+      label: '투자기간',
       value:
         Math.ceil(
-          Math.abs(new Date() - new Date(initialDate)) / (1000 * 60 * 60 * 24),
-        ) + "일",
-      caption: `${initialDate} ~ ${new Date().toISOString().split("T")[0]}`,
+          Math.abs(new Date() - new Date(initialDate)) / (1000 * 60 * 60 * 24)
+        ) + '일',
+      caption: `${initialDate} ~ ${new Date().toISOString().split('T')[0]}`
     },
     {
-      label: "총손익",
+      label: '총손익',
       value: formatWholeMoney(totalProfit),
-      valueClass: profitClass(totalProfit),
+      valueClass: profitClass(totalProfit)
     },
     {
-      label: "총수익률",
+      label: '총수익률',
       value: formatPct(totalReturnPct),
-      valueClass: profitClass(totalReturnPct),
+      valueClass: profitClass(totalReturnPct)
     },
     {
-      label: "MDD",
+      label: 'MDD',
       value: formatPct(backtestResult.value?.maximumDrawdownPct, false),
-      valueClass: profitClass(backtestResult.value?.maximumDrawdownPct),
+      valueClass: profitClass(backtestResult.value?.maximumDrawdownPct)
     },
     {
-      label: "DD",
+      label: 'DD',
       value: formatPct(latestDailyRow.value?.drawdownPct, false),
-      valueClass: profitClass(latestDailyRow.value?.drawdownPct),
-    },
-  ];
-});
+      valueClass: profitClass(latestDailyRow.value?.drawdownPct)
+    }
+  ]
+})
 
 const priceChartData = computed(() => {
-  const rows = visibleChartRows.value;
-  const buyExecutions = [];
-  const sellExecutions = [];
+  const rows = visibleChartRows.value
+  const buyExecutions = []
+  const sellExecutions = []
 
-  rows.forEach((day) => {
-    day.executions.forEach((execution) => {
+  rows.forEach(day => {
+    day.executions.forEach(execution => {
       const point = {
         x: day.sessionDate,
         y: toNumber(execution.price),
         tier: execution.tier,
         quantity: execution.quantity,
-        tradeSide: execution.tradeSide,
-      };
-      if (execution.tradeSide === "BUY") buyExecutions.push(point);
-      if (execution.tradeSide === "SELL") sellExecutions.push(point);
-    });
-  });
+        tradeSide: execution.tradeSide
+      }
+      if (execution.tradeSide === 'BUY') buyExecutions.push(point)
+      if (execution.tradeSide === 'SELL') sellExecutions.push(point)
+    })
+  })
 
   return {
-    labels: rows.map((day) => day.sessionDate),
+    labels: rows.map(day => day.sessionDate),
     datasets: [
       {
-        type: "line",
-        label: "종가",
-        data: rows.map((day) => toNumber(day.closePrice)),
-        borderColor: "#78909c",
-        backgroundColor: "rgba(38, 166, 154, 0.12)",
+        type: 'line',
+        label: '종가',
+        data: rows.map(day => toNumber(day.closePrice)),
+        borderColor: '#78909c',
+        backgroundColor: 'rgba(38, 166, 154, 0.12)',
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
         tension: 0.15,
-        order: 1,
+        order: 1
       },
       {
-        type: "scatter",
-        label: "매수 체결",
+        type: 'scatter',
+        label: '매수 체결',
         data: buyExecutions,
-        backgroundColor: "#d32f2f",
-        borderColor: "#d32f2f",
-        pointStyle: "triangle",
+        backgroundColor: '#d32f2f',
+        borderColor: '#d32f2f',
+        pointStyle: 'triangle',
         pointRadius: 6,
         pointHoverRadius: 8,
-        order: 0,
+        order: 0
       },
       {
-        type: "scatter",
-        label: "매도 체결",
+        type: 'scatter',
+        label: '매도 체결',
         data: sellExecutions,
-        backgroundColor: "#1976d2",
-        borderColor: "#1976d2",
-        pointStyle: "triangle",
+        backgroundColor: '#1976d2',
+        borderColor: '#1976d2',
+        pointStyle: 'triangle',
         pointRotation: 180,
         pointRadius: 6,
         pointHoverRadius: 8,
-        order: 0,
-      },
-    ],
-  };
-});
+        order: 0
+      }
+    ]
+  }
+})
 
 const performanceChartData = computed(() => {
-  const rows = visibleChartRows.value;
-  const initialCash = toNumber(backtestResult.value?.initialAvailableCash);
-  const ath = backtestResult.value?.allTimeHigh;
+  const rows = visibleChartRows.value
+  const initialCash = toNumber(backtestResult.value?.initialAvailableCash)
+  const ath = backtestResult.value?.allTimeHigh
   const athPoint =
     ath && isDateWithinRows(ath.sessionDate, rows)
       ? [
           {
             x: ath.sessionDate,
             y: toNumber(ath.totalAsset),
-            sessionDate: ath.sessionDate,
-          },
+            sessionDate: ath.sessionDate
+          }
         ]
-      : [];
+      : []
 
   return {
-    labels: rows.map((day) => day.sessionDate),
+    labels: rows.map(day => day.sessionDate),
     datasets: [
       {
-        type: "line",
-        label: "총자산",
-        data: rows.map((day) => toNumber(day.totalAsset)),
-        yAxisID: "asset",
-        borderColor: "#2e7d32",
-        backgroundColor: "rgba(46, 125, 50, 0.1)",
+        type: 'line',
+        label: '총자산',
+        data: rows.map(day => toNumber(day.totalAsset)),
+        yAxisID: 'asset',
+        borderColor: '#2e7d32',
+        backgroundColor: 'rgba(46, 125, 50, 0.1)',
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
-        tension: 0.15,
+        tension: 0.15
       },
       {
-        type: "line",
-        label: "초기자산",
+        type: 'line',
+        label: '초기자산',
         data: rows.map(() => initialCash),
-        yAxisID: "asset",
-        borderColor: "#9e9e9e",
+        yAxisID: 'asset',
+        borderColor: '#9e9e9e',
         borderDash: [6, 5],
         borderWidth: 1,
-        pointRadius: 0,
+        pointRadius: 0
       },
       {
-        type: "scatter",
-        label: "ATH",
+        type: 'scatter',
+        label: 'ATH',
         data: athPoint,
-        yAxisID: "asset",
-        backgroundColor: "#f2c037",
-        borderColor: "#f2c037",
-        pointStyle: "rectRot",
+        yAxisID: 'asset',
+        backgroundColor: '#f2c037',
+        borderColor: '#f2c037',
+        pointStyle: 'rectRot',
         pointRadius: 7,
-        pointHoverRadius: 9,
+        pointHoverRadius: 9
       },
       {
-        type: "line",
-        label: "Drawdown",
-        data: rows.map((day) => toNumber(day.drawdownPct)),
-        yAxisID: "drawdown",
-        borderColor: "#42a5f5",
-        backgroundColor: "rgba(66, 165, 245, 0.15)",
+        type: 'line',
+        label: 'Drawdown',
+        data: rows.map(day => toNumber(day.drawdownPct)),
+        yAxisID: 'drawdown',
+        borderColor: '#42a5f5',
+        backgroundColor: 'rgba(66, 165, 245, 0.15)',
         borderWidth: 1.5,
         pointRadius: 0,
-        fill: "origin",
-        tension: 0.15,
-      },
-    ],
-  };
-});
+        fill: 'origin',
+        tension: 0.15
+      }
+    ]
+  }
+})
 
 const priceChartOptions = computed(() => {
-  const isMobile = $q.screen.lt.sm;
-  const axisLayout = getChartAxisLayout(isMobile);
+  const isMobile = $q.screen.lt.sm
+  const axisLayout = getChartAxisLayout(isMobile)
 
   return {
     responsive: true,
     maintainAspectRatio: false,
     layout: { padding: { right: axisLayout.right } },
-    interaction: { mode: "nearest", axis: "x", intersect: false },
+    interaction: { mode: 'nearest', axis: 'x', intersect: false },
     onHover: updateChartHover,
     plugins: {
       chartRangeGuide: {
         display: isChartRangeDragging.value,
         startDate: chartRangeStartDate.value,
         endDate: chartRangeEndDate.value,
-        hoverDate: chartHoverDate.value,
+        hoverDate: chartHoverDate.value
       },
       legend: {
-        position: "top",
+        position: 'top',
         labels: {
           usePointStyle: true,
           boxWidth: isMobile ? 8 : 10,
           padding: isMobile ? 8 : 10,
-          font: { size: isMobile ? 10 : 12 },
-        },
+          font: { size: isMobile ? 10 : 12 }
+        }
       },
       tooltip: {
         animations: false,
         displayColors: false,
         filter(_tooltipItem, index) {
-          return index === 0;
+          return index === 0
         },
         callbacks: {
           title(items) {
-            return getDailyExecutionTooltipDate(items[0]) || "";
+            return getDailyExecutionTooltipDate(items[0]) || ''
           },
           label(context) {
-            const sessionDate = getDailyExecutionTooltipDate(context);
+            const sessionDate = getDailyExecutionTooltipDate(context)
             return buildDailyExecutionTooltipLines(
               visibleChartRows.value,
-              sessionDate,
-            );
-          },
-        },
-      },
+              sessionDate
+            )
+          }
+        }
+      }
     },
     scales: {
       x: {
@@ -2017,65 +2014,65 @@ const priceChartOptions = computed(() => {
           maxTicksLimit: isMobile ? 5 : undefined,
           font: { size: isMobile ? 10 : 12 },
           callback(value) {
-            const index = Number(value);
-            const currentLabel = this.getLabelForValue(index);
+            const index = Number(value)
+            const currentLabel = this.getLabelForValue(index)
             const previousLabel =
-              index > 0 ? this.getLabelForValue(index - 1) : undefined;
-            return formatMonthTickLabel(currentLabel, previousLabel);
-          },
-        },
+              index > 0 ? this.getLabelForValue(index - 1) : undefined
+            return formatMonthTickLabel(currentLabel, previousLabel)
+          }
+        }
       },
       y: {
         afterFit(scale) {
-          scale.width = axisLayout.left;
+          scale.width = axisLayout.left
         },
         ticks: {
           maxTicksLimit: isMobile ? 6 : undefined,
           font: { size: isMobile ? 10 : 12 },
-          callback: (value) => `$${formatNumber(value, 2)}`,
+          callback: value => `$${formatNumber(value, 2)}`
         },
-        grid: { color: "rgba(0, 0, 0, 0.06)" },
-      },
-    },
-  };
-});
+        grid: { color: 'rgba(0, 0, 0, 0.06)' }
+      }
+    }
+  }
+})
 
 const performanceChartOptions = computed(() => {
-  const isMobile = $q.screen.lt.sm;
-  const axisLayout = getChartAxisLayout(isMobile);
+  const isMobile = $q.screen.lt.sm
+  const axisLayout = getChartAxisLayout(isMobile)
 
   return {
     responsive: true,
     maintainAspectRatio: false,
-    interaction: { mode: "index", intersect: false },
+    interaction: { mode: 'index', intersect: false },
     onHover: updateChartHover,
     plugins: {
       chartRangeGuide: {
         display: isChartRangeDragging.value,
         startDate: chartRangeStartDate.value,
         endDate: chartRangeEndDate.value,
-        hoverDate: chartHoverDate.value,
+        hoverDate: chartHoverDate.value
       },
       legend: {
-        position: "top",
+        position: 'top',
         labels: {
           usePointStyle: true,
           boxWidth: isMobile ? 8 : 10,
           padding: isMobile ? 8 : 10,
-          font: { size: isMobile ? 10 : 12 },
-        },
+          font: { size: isMobile ? 10 : 12 }
+        }
       },
       tooltip: {
         animations: false,
         callbacks: {
           label(context) {
-            if (context.dataset.yAxisID === "drawdown") {
-              return `Drawdown ${formatPct(context.parsed.y, false)}`;
+            if (context.dataset.yAxisID === 'drawdown') {
+              return `Drawdown ${formatPct(context.parsed.y, false)}`
             }
-            return `${context.dataset.label} ${formatMoney(context.parsed.y)}`;
-          },
-        },
-      },
+            return `${context.dataset.label} ${formatMoney(context.parsed.y)}`
+          }
+        }
+      }
     },
     scales: {
       x: {
@@ -2086,190 +2083,190 @@ const performanceChartOptions = computed(() => {
           maxTicksLimit: isMobile ? 5 : undefined,
           font: { size: isMobile ? 10 : 12 },
           callback(value) {
-            const index = Number(value);
-            const currentLabel = this.getLabelForValue(index);
+            const index = Number(value)
+            const currentLabel = this.getLabelForValue(index)
             const previousLabel =
-              index > 0 ? this.getLabelForValue(index - 1) : undefined;
-            return formatMonthTickLabel(currentLabel, previousLabel);
-          },
-        },
+              index > 0 ? this.getLabelForValue(index - 1) : undefined
+            return formatMonthTickLabel(currentLabel, previousLabel)
+          }
+        }
       },
       asset: {
-        type: "linear",
-        position: "left",
+        type: 'linear',
+        position: 'left',
         afterFit(scale) {
-          scale.width = axisLayout.left;
+          scale.width = axisLayout.left
         },
         ticks: {
           maxTicksLimit: isMobile ? 6 : undefined,
           font: { size: isMobile ? 10 : 12 },
-          callback: (value) => `$${formatCompactNumber(value)}`,
+          callback: value => `$${formatCompactNumber(value)}`
         },
-        grid: { color: "rgba(0, 0, 0, 0.06)" },
+        grid: { color: 'rgba(0, 0, 0, 0.06)' }
       },
       drawdown: {
-        type: "linear",
-        position: "right",
+        type: 'linear',
+        position: 'right',
         suggestedMax: 0,
         afterFit(scale) {
-          scale.width = axisLayout.right;
+          scale.width = axisLayout.right
         },
         ticks: {
           maxTicksLimit: isMobile ? 6 : undefined,
           font: { size: isMobile ? 10 : 12 },
-          callback: (value) => `${value}%`,
+          callback: value => `${value}%`
         },
-        grid: { drawOnChartArea: false },
-      },
-    },
-  };
-});
+        grid: { drawOnChartArea: false }
+      }
+    }
+  }
+})
 
 const buyPlanColumns = [
-  { name: "tier", label: "티어", field: "tier", align: "left" },
+  { name: 'tier', label: '티어', field: 'tier', align: 'left' },
   {
-    name: "orderType",
-    label: "주문 방식",
-    field: "orderType",
-    align: "center",
+    name: 'orderType',
+    label: '주문 방식',
+    field: 'orderType',
+    align: 'center'
   },
   {
-    name: "allocationAmount",
-    label: "배정금액",
-    field: "allocationAmount",
-    align: "right",
+    name: 'allocationAmount',
+    label: '배정금액',
+    field: 'allocationAmount',
+    align: 'right'
   },
-  { name: "orderPrice", label: "주문가", field: "orderPrice", align: "right" },
-  { name: "quantity", label: "수량", field: "quantity", align: "right" },
-];
+  { name: 'orderPrice', label: '주문가', field: 'orderPrice', align: 'right' },
+  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' }
+]
 
 const sellPlanColumns = [
-  { name: "tier", label: "티어", field: "tier", align: "left" },
-  { name: "quantity", label: "수량", field: "quantity", align: "right" },
-  { name: "orderPrice", label: "주문가", field: "orderPrice", align: "right" },
+  { name: 'tier', label: '티어', field: 'tier', align: 'left' },
+  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' },
+  { name: 'orderPrice', label: '주문가', field: 'orderPrice', align: 'right' },
   {
-    name: "buySessionDate",
-    label: "매수일",
-    field: "buySessionDate",
-    align: "center",
+    name: 'buySessionDate',
+    label: '매수일',
+    field: 'buySessionDate',
+    align: 'center'
   },
   {
-    name: "holding",
-    label: "보유/최대",
-    field: (row) => `${row.heldSessionCount}/${row.maxHoldDays}일`,
-    align: "center",
+    name: 'holding',
+    label: '보유/최대',
+    field: row => `${row.heldSessionCount}/${row.maxHoldDays}일`,
+    align: 'center'
   },
-  { name: "planType", label: "계획 유형", field: "planType", align: "center" },
-];
+  { name: 'planType', label: '계획 유형', field: 'planType', align: 'center' }
+]
 
 const nextOrderColumns = [
-  { name: "tradeSide", label: "구분", field: "tradeSide", align: "left" },
-  { name: "tier", label: "티어", field: "tier", align: "left" },
+  { name: 'tradeSide', label: '구분', field: 'tradeSide', align: 'left' },
+  { name: 'tier', label: '티어', field: 'tier', align: 'left' },
   {
-    name: "orderType",
-    label: "주문 방식",
-    field: "orderType",
-    align: "center",
+    name: 'orderType',
+    label: '주문 방식',
+    field: 'orderType',
+    align: 'center'
   },
   {
-    name: "allocationAmount",
-    label: "배정금액",
-    field: "allocationAmount",
-    align: "right",
+    name: 'allocationAmount',
+    label: '배정금액',
+    field: 'allocationAmount',
+    align: 'right'
   },
-  { name: "orderPrice", label: "주문가", field: "orderPrice", align: "right" },
-  { name: "quantity", label: "수량", field: "quantity", align: "right" },
-];
+  { name: 'orderPrice', label: '주문가', field: 'orderPrice', align: 'right' },
+  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' }
+]
 
 const tierColumns = [
-  { name: "mode", label: "모드", field: "mode", align: "left" },
-  { name: "tier", label: "티어", field: "tier", align: "left" },
-  { name: "quantity", label: "수량", field: "quantity", align: "right" },
+  { name: 'mode', label: '모드', field: 'mode', align: 'left' },
+  { name: 'tier', label: '티어', field: 'tier', align: 'left' },
+  { name: 'quantity', label: '수량', field: 'quantity', align: 'right' },
   {
-    name: "averageBuyPrice",
-    label: "평균 매수가",
-    field: "averageBuyPrice",
-    align: "right",
+    name: 'averageBuyPrice',
+    label: '평균 매수가',
+    field: 'averageBuyPrice',
+    align: 'right'
   },
   {
-    name: "marketValue",
-    label: "평가액",
-    field: "marketValue",
-    align: "right",
+    name: 'marketValue',
+    label: '평가액',
+    field: 'marketValue',
+    align: 'right'
   },
   {
-    name: "unrealizedProfit",
-    label: "미실현 손익",
-    field: "unrealizedProfit",
-    align: "right",
+    name: 'unrealizedProfit',
+    label: '미실현 손익',
+    field: 'unrealizedProfit',
+    align: 'right'
   },
   {
-    name: "unrealizedReturnPct",
-    label: "미실현 수익률",
-    field: "unrealizedReturnPct",
-    align: "right",
-  },
-];
+    name: 'unrealizedReturnPct',
+    label: '미실현 수익률',
+    field: 'unrealizedReturnPct',
+    align: 'right'
+  }
+]
 
 function getKstToday() {
-  const dateParts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
+  const dateParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date())
   const values = Object.fromEntries(
-    dateParts.map(({ type, value }) => [type, value]),
-  );
+    dateParts.map(({ type, value }) => [type, value])
+  )
 
-  return `${values.year}-${values.month}-${values.day}`;
+  return `${values.year}-${values.month}-${values.day}`
 }
 
 function cloneAttackMode(mode) {
-  return { ...mode };
+  return { ...mode }
 }
 
 function cloneDefenseMode(mode) {
-  return { ...mode, tierBuyRatiosPct: [...mode.tierBuyRatiosPct] };
+  return { ...mode, tierBuyRatiosPct: [...mode.tierBuyRatiosPct] }
 }
 
 function checkPassword() {
   if (inputPassword.value === PAGE_PASSWORD) {
-    isAuthenticated.value = true;
-    passwordError.value = false;
-    inputPassword.value = "";
-    return;
+    isAuthenticated.value = true
+    passwordError.value = false
+    inputPassword.value = ''
+    return
   }
-  passwordError.value = true;
+  passwordError.value = true
 }
 
 function normalizeSymbol() {
-  form.symbol = form.symbol.trim().toUpperCase();
+  form.symbol = form.symbol.trim().toUpperCase()
 }
 
 function applyPreset(name) {
-  if (!PRESETS[name]) return;
-  form.attackMode = cloneAttackMode(PRESETS[name].attackMode);
-  form.defenseMode = cloneDefenseMode(COMMON_DEFENSE_MODE);
-  selectedPreset.value = name;
+  if (!PRESETS[name]) return
+  form.attackMode = cloneAttackMode(PRESETS[name].attackMode)
+  form.defenseMode = cloneDefenseMode(COMMON_DEFENSE_MODE)
+  selectedPreset.value = name
 }
 
 function markCustom() {
   if (selectedPreset.value !== CUSTOM_PRESET)
-    selectedPreset.value = CUSTOM_PRESET;
+    selectedPreset.value = CUSTOM_PRESET
 }
 
 function handleDefenseSplitCount() {
-  const count = Number(form.defenseMode.splitCount);
+  const count = Number(form.defenseMode.splitCount)
   if (Number.isInteger(count) && count > 0) {
     while (form.defenseMode.tierBuyRatiosPct.length < count) {
-      form.defenseMode.tierBuyRatiosPct.push(0);
+      form.defenseMode.tierBuyRatiosPct.push(0)
     }
     if (form.defenseMode.tierBuyRatiosPct.length > count) {
-      form.defenseMode.tierBuyRatiosPct.splice(count);
+      form.defenseMode.tierBuyRatiosPct.splice(count)
     }
   }
-  markCustom();
+  markCustom()
 }
 
 function buildPayload() {
@@ -2284,38 +2281,38 @@ function buildPayload() {
         split_count: Number(form.attackMode.splitCount),
         holding_period_alpha: Number(form.attackMode.holdingPeriodAlpha),
         buy_condition_close_pct: Number(form.attackMode.buyConditionClosePct),
-        sell_condition_alpha: Number(form.attackMode.sellConditionAlpha),
+        sell_condition_alpha: Number(form.attackMode.sellConditionAlpha)
       },
       defense_mode: {
         split_count: Number(form.defenseMode.splitCount),
         holding_period: Number(form.defenseMode.holdingPeriod),
         buy_condition_1_ma_pct: Number(form.defenseMode.buyCondition1MaPct),
         buy_condition_2_close_pct: Number(
-          form.defenseMode.buyCondition2ClosePct,
+          form.defenseMode.buyCondition2ClosePct
         ),
         sell_condition_ma_pct: Number(form.defenseMode.sellConditionMaPct),
         ma_window: Number(form.defenseMode.maWindow),
-        tier_buy_ratios_pct: form.defenseMode.tierBuyRatiosPct.map(Number),
-      },
-    },
-  };
+        tier_buy_ratios_pct: form.defenseMode.tierBuyRatiosPct.map(Number)
+      }
+    }
+  }
 }
 
 function loadMoreDailyRows() {
-  visibleDailyCount.value += DAILY_HISTORY_PAGE_SIZE;
+  visibleDailyCount.value += DAILY_HISTORY_PAGE_SIZE
 }
 
 function applyChartRangePreset(preset) {
   const nextRange = buildChartRange(
     dailyRows.value,
-    preset === "all" ? undefined : Number(preset),
-  );
+    preset === 'all' ? undefined : Number(preset)
+  )
 
-  chartRangePreset.value = preset;
-  draftChartRange.value = { ...nextRange };
-  appliedChartRange.value = { ...nextRange };
-  isChartRangeDragging.value = false;
-  clearChartHover();
+  chartRangePreset.value = preset
+  draftChartRange.value = { ...nextRange }
+  appliedChartRange.value = { ...nextRange }
+  isChartRangeDragging.value = false
+  clearChartHover()
 }
 
 function adjustChartRangeBoundary(boundary, direction) {
@@ -2323,31 +2320,31 @@ function adjustChartRangeBoundary(boundary, direction) {
     draftChartRange.value,
     boundary,
     direction,
-    chartRangeMax.value,
-  );
+    chartRangeMax.value
+  )
 
-  draftChartRange.value = { ...nextRange };
-  appliedChartRange.value = { ...nextRange };
-  isChartRangeDragging.value = false;
-  chartRangePreset.value = null;
-  clearChartHover();
+  draftChartRange.value = { ...nextRange }
+  appliedChartRange.value = { ...nextRange }
+  isChartRangeDragging.value = false
+  chartRangePreset.value = null
+  clearChartHover()
 }
 
 function handleChartRangePan(phase) {
-  isChartRangeDragging.value = phase === "start";
-  if (phase === "start") clearChartHover();
+  isChartRangeDragging.value = phase === 'start'
+  if (phase === 'start') clearChartHover()
 }
 
 function commitChartRange(range) {
-  draftChartRange.value = { ...range };
-  appliedChartRange.value = { ...range };
-  isChartRangeDragging.value = false;
-  chartRangePreset.value = null;
-  clearChartHover();
+  draftChartRange.value = { ...range }
+  appliedChartRange.value = { ...range }
+  isChartRangeDragging.value = false
+  chartRangePreset.value = null
+  clearChartHover()
 }
 
 function updateChartHover(event, _elements, chart) {
-  const { chartArea } = chart;
+  const { chartArea } = chart
   const isInsideChartArea =
     !isChartRangeDragging.value &&
     event.x !== null &&
@@ -2355,213 +2352,213 @@ function updateChartHover(event, _elements, chart) {
     event.x >= chartArea.left &&
     event.x <= chartArea.right &&
     event.y >= chartArea.top &&
-    event.y <= chartArea.bottom;
+    event.y <= chartArea.bottom
   const nextDate = isInsideChartArea
     ? getChartHoverDate(
         chart.data.labels || [],
-        chart.scales.x.getValueForPixel(event.x),
+        chart.scales.x.getValueForPixel(event.x)
       )
-    : null;
+    : null
 
   if (nextDate === null) {
-    clearChartHover();
-    return;
+    clearChartHover()
+    return
   }
 
   const chartComponents = [
     priceChartComponent.value,
-    performanceChartComponent.value,
-  ];
-  chartHoverGuideVisible = true;
-  if (chartHoverDate.value !== nextDate) chartHoverDate.value = nextDate;
+    performanceChartComponent.value
+  ]
+  chartHoverGuideVisible = true
+  if (chartHoverDate.value !== nextDate) chartHoverDate.value = nextDate
   if (synchronizedChartTooltipDate !== nextDate) {
     deactivateOtherChartInteractions(chart, [
       priceChartComponent.value,
-      performanceChartComponent.value,
-    ]);
-    syncChartTooltips(nextDate, chartComponents);
-    synchronizedChartTooltipDate = nextDate;
+      performanceChartComponent.value
+    ])
+    syncChartTooltips(nextDate, chartComponents)
+    synchronizedChartTooltipDate = nextDate
   }
 }
 
 function clearChartHover() {
   const chartComponents = [
     priceChartComponent.value,
-    performanceChartComponent.value,
-  ];
-  synchronizedChartTooltipDate = null;
-  chartHoverGuideVisible = false;
-  deactivateOtherChartInteractions(null, chartComponents);
-  if (chartHoverDate.value !== null) chartHoverDate.value = null;
-  drawChartComponents(chartComponents);
+    performanceChartComponent.value
+  ]
+  synchronizedChartTooltipDate = null
+  chartHoverGuideVisible = false
+  deactivateOtherChartInteractions(null, chartComponents)
+  if (chartHoverDate.value !== null) chartHoverDate.value = null
+  drawChartComponents(chartComponents)
 }
 
 function handleBacktestPageClick(event) {
-  if (!event.target?.closest?.(".section-heading")) return;
+  if (!event.target?.closest?.('.section-heading')) return
 
-  clearChartHover();
+  clearChartHover()
 }
 
 function resetChartRange() {
-  applyChartRangePreset("all");
+  applyChartRangePreset('all')
 }
 
 async function runBacktest() {
-  normalizeSymbol();
-  showValidation.value = true;
-  submitError.value = "";
-  if (validationErrors.value.length) return;
+  normalizeSymbol()
+  showValidation.value = true
+  submitError.value = ''
+  if (validationErrors.value.length) return
 
-  isLoading.value = true;
+  isLoading.value = true
   try {
-    const { data } = await api.post(BACKTEST_URL, buildPayload());
-    backtestResult.value = data;
-    resetChartRange();
-    visibleDailyCount.value = DAILY_HISTORY_PAGE_SIZE;
-    showValidation.value = false;
-    activeTab.value = "status";
+    const { data } = await api.post(BACKTEST_URL, buildPayload())
+    backtestResult.value = data
+    resetChartRange()
+    visibleDailyCount.value = DAILY_HISTORY_PAGE_SIZE
+    showValidation.value = false
+    activeTab.value = 'status'
     $q.notify({
-      type: "positive",
-      message: "백테스트가 완료되었습니다.",
-      position: "top",
-    });
+      type: 'positive',
+      message: '백테스트가 완료되었습니다.',
+      position: 'top'
+    })
   } catch (error) {
     const responseMessage =
-      error.response?.data?.message || error.response?.data?.error;
-    console.log(error.response);
+      error.response?.data?.message || error.response?.data?.error
+    console.log(error.response)
     submitError.value =
-      responseMessage || `백테스트 호출에 실패했습니다: ${error.message}`;
-    activeTab.value = "settings";
+      responseMessage || `백테스트 호출에 실패했습니다: ${error.message}`
+    activeTab.value = 'settings'
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 function isFiniteNumber(value) {
-  return Number.isFinite(Number(value));
+  return Number.isFinite(Number(value))
 }
 
 function isPositiveNumber(value) {
-  return isFiniteNumber(value) && Number(value) > 0;
+  return isFiniteNumber(value) && Number(value) > 0
 }
 
 function isNonNegativeNumber(value) {
-  return isFiniteNumber(value) && Number(value) >= 0;
+  return isFiniteNumber(value) && Number(value) >= 0
 }
 
 function isPositiveInteger(value) {
-  return Number.isInteger(Number(value)) && Number(value) > 0;
+  return Number.isInteger(Number(value)) && Number(value) > 0
 }
 
 function toNumber(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : null;
+  if (value === null || value === undefined || value === '') return null
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue) ? numericValue : null
 }
 
 function formatNumber(value, maximumFractionDigits = 2) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits }).format(
-    numericValue,
-  );
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(
+    numericValue
+  )
 }
 
 function formatCompactNumber(value) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  return new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(numericValue);
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1
+  }).format(numericValue)
 }
 
 function formatMoney(value) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  const currency = finalPortfolio.value.currency || "USD";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  const currency = finalPortfolio.value.currency || 'USD'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency,
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(numericValue);
+    maximumFractionDigits: 2
+  }).format(numericValue)
 }
 
 function formatWholeMoney(value) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  const currency = finalPortfolio.value.currency || "USD";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  const currency = finalPortfolio.value.currency || 'USD'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(numericValue);
+    maximumFractionDigits: 0
+  }).format(numericValue)
 }
 
 function formatPrice(value) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  return `$${new Intl.NumberFormat("en-US", {
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  return `$${new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(numericValue)}`;
+    maximumFractionDigits: 2
+  }).format(numericValue)}`
 }
 
 function formatInteger(value) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
-    numericValue,
-  );
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
+    numericValue
+  )
 }
 
 function buildDailyExecutionTooltipLines(rows = [], sessionDate) {
-  const day = rows.find((row) => row.sessionDate === sessionDate);
-  if (!day) return [];
+  const day = rows.find(row => row.sessionDate === sessionDate)
+  if (!day) return []
 
   return [
     `종가 ${formatPrice(day.closePrice)}`,
     ...(day.executions || []).map(
-      (execution) =>
-        `${execution.tradeSide} ${execution.tier} · ${formatPrice(execution.price)} · ${formatInteger(execution.quantity)}주`,
-    ),
-  ];
+      execution =>
+        `${execution.tradeSide} ${execution.tier} · ${formatPrice(execution.price)} · ${formatInteger(execution.quantity)}주`
+    )
+  ]
 }
 
 function getDailyExecutionTooltipDate(tooltipItem) {
-  if (!tooltipItem) return null;
+  if (!tooltipItem) return null
   const rawDate =
-    tooltipItem.raw && typeof tooltipItem.raw === "object"
+    tooltipItem.raw && typeof tooltipItem.raw === 'object'
       ? tooltipItem.raw.x
-      : null;
+      : null
   return (
     rawDate || tooltipItem.chart?.data?.labels?.[tooltipItem.dataIndex] || null
-  );
+  )
 }
 
 function formatPct(value, showSign = true) {
-  const numericValue = toNumber(value);
-  if (numericValue === null) return "-";
-  const sign = showSign && numericValue > 0 ? "+" : "";
-  return `${sign}${formatNumber(numericValue, 2)}%`;
+  const numericValue = toNumber(value)
+  if (numericValue === null) return '-'
+  const sign = showSign && numericValue > 0 ? '+' : ''
+  return `${sign}${formatNumber(numericValue, 2)}%`
 }
 
 function profitClass(value) {
-  const numericValue = toNumber(value);
-  if (numericValue === null || numericValue === 0) return "text-grey-8";
-  return numericValue > 0 ? "text-red-7" : "text-blue-7";
+  const numericValue = toNumber(value)
+  if (numericValue === null || numericValue === 0) return 'text-grey-8'
+  return numericValue > 0 ? 'text-red-7' : 'text-blue-7'
 }
 
 function modeColor(mode) {
-  if (mode === "공격") return "amber-8";
-  if (mode === "방어") return "green-6";
-  return "grey-6";
+  if (mode === '공격') return 'amber-8'
+  if (mode === '방어') return 'green-6'
+  return 'grey-6'
 }
 
 function sideColor(side) {
-  return side === "BUY" ? "red-7" : "blue-7";
+  return side === 'BUY' ? 'red-7' : 'blue-7'
 }
 </script>
 

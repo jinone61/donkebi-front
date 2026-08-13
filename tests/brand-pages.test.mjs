@@ -14,13 +14,13 @@ test('public navigation reflects the Donkebi agent story', async () => {
 
   assert.deepEqual(
     navigationItems.map(item => item.label),
-    ['SYSTEM', 'PRINCIPLE', 'ORIGIN', 'AGENT', 'SIMULATION']
+    ['SYSTEM', 'PRINCIPLE', 'ORIGIN', 'AGENT', 'BACKTEST']
   )
   assert.deepEqual(
     navigationItems.filter(item => item.to),
     [
       { label: 'AGENT', to: '/agent' },
-      { label: 'SIMULATION', to: '/simulation' }
+      { label: 'BACKTEST', to: '/backtest' }
     ]
   )
 })
@@ -30,7 +30,7 @@ test('package metadata describes the AI agent trading product', async () => {
 
   assert.equal(
     packageJson.description,
-    'Quiet AI agent trading system for strategy simulation and execution'
+    'Quiet AI agent trading system for strategy backtesting and execution'
   )
   assert.equal(
     packageJson.scripts.deploy,
@@ -55,13 +55,13 @@ test('home presents the quiet AI trading agent narrative', async () => {
   }
 })
 
-test('home simulation links target the registered simulation route', async () => {
+test('home backtest links target the registered backtest route', async () => {
   const source = await readSource('src/pages/index/(home).vue')
   const routeTargets = [
     ...source.matchAll(/<router-link[^>]*to="([^"]+)"/g)
   ].map(match => match[1])
 
-  assert.deepEqual(routeTargets, ['/simulation', '/simulation', '/simulation'])
+  assert.deepEqual(routeTargets, ['/backtest', '/backtest', '/backtest'])
 })
 
 test('mobile system descriptions use the available content width', async () => {
@@ -92,20 +92,20 @@ test('home backtest story contrasts the market with Donkebi', async () => {
     normalizedSource,
     /AI\. 기술과 경험의 정점에서,\s*<br\s*\/?>시장의 불확실성을 자산으로 바꾸는 현대의 마법을 경험하세요\./
   )
-  assert.match(source, /simulation-plate__line--market/)
-  assert.match(source, /simulation-plate__line--donkebi/)
+  assert.match(source, /backtest-plate__line--market/)
+  assert.match(source, /backtest-plate__line--donkebi/)
   assert.match(source, />MARKET<\/span/)
   assert.match(source, />ASSET<\/span/)
   assert.match(
     source,
-    /simulation-plate__line--market"[\s\S]*?d="M0 188[\s\S]*?620 125"/
+    /backtest-plate__line--market"[\s\S]*?d="M0 188[\s\S]*?620 125"/
   )
   assert.match(
     source,
-    /simulation-plate__line--donkebi"[\s\S]*?d="M0 188[\s\S]*?620 28"/
+    /backtest-plate__line--donkebi"[\s\S]*?d="M0 188[\s\S]*?620 28"/
   )
-  assert.match(source, /simulation-plate__marker--asset/)
-  assert.match(source, /simulation-plate__marker--market/)
+  assert.match(source, /backtest-plate__marker--asset/)
+  assert.match(source, /backtest-plate__marker--market/)
   assert.match(
     source,
     /&--asset \{[\s\S]*?top: calc\(11\.2% - 3\.5px\);[\s\S]*?right: -3\.5px;/
@@ -124,8 +124,8 @@ test('home backtest story contrasts the market with Donkebi', async () => {
   )
 })
 
-test('simulation route renders the editable workspace component', async () => {
-  const source = await readSource('src/pages/index/simulation.vue')
+test('backtest route renders the editable workspace component', async () => {
+  const source = await readSource('src/pages/index/backtest.vue')
 
   assert.match(
     source,
@@ -148,9 +148,9 @@ test('editable backtest workspace combines Donkebi branding with Korean task lab
   const source = await readSource('src/components/backtest/BacktestPage.vue')
 
   assert.match(source, /Private Access Only/)
-  assert.match(source, /Donkebi<br \/>Simulation\./)
+  assert.match(source, /Donkebi<br \/>Backtest\./)
   assert.match(source, /Backtest · Agent 01/)
-  assert.match(source, /Strategy simulation\./)
+  assert.match(source, /Strategy backtest\./)
   assert.match(source, /같은 전략을 과거의 시장 위에서 다시 실행합니다\./)
   assert.match(source, /SYSTEM READY/)
   assert.match(source, /label="입력설정"/)
@@ -369,7 +369,7 @@ test('agent operation avoids nested and mobile horizontal scrolling', async () =
   )
 })
 
-test('agent tabs use the simulation navigation treatment', async () => {
+test('agent tabs use the backtest navigation treatment', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
   assert.match(
@@ -441,7 +441,7 @@ test('agent page covers current status charts and operation history', async () =
   )
 })
 
-test('agent summary cards use the compact readable simulation treatment', async () => {
+test('agent summary cards use the compact readable backtest treatment', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
   const summaryStyles = source.slice(
     source.indexOf('.summary-grid {'),
@@ -500,7 +500,7 @@ test('agent loads and refreshes operation and performance independently', async 
   assert.match(source, /@click="refreshActiveTab"/)
 })
 
-test('agent data workspace follows the simulation layout system', async () => {
+test('agent data workspace follows the backtest layout system', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
   assert.match(
@@ -545,7 +545,7 @@ test('agent data workspace follows the simulation layout system', async () => {
   )
 })
 
-test('agent charts share the simulation hover guide experience', async () => {
+test('agent charts share the backtest hover guide experience', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
   assert.match(source, /id: 'agentChartRangeGuide'/)
@@ -558,7 +558,7 @@ test('agent charts share the simulation hover guide experience', async () => {
   assert.equal((source.match(/@mouseleave="clearChartHover"/g) || []).length, 2)
 })
 
-test('agent charts match the simulation card and color system', async () => {
+test('agent charts match the backtest card and color system', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
   assert.match(source, /class="section-card chart-range-card"/)

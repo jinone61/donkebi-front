@@ -10,8 +10,8 @@
             Donkebi는 그 흐름에 맞춰 스스로 생각하고 행동합니다.
           </p>
           <!-- <DkTextLink label="Discover the system" to="#system" /> -->
-          <router-link class="section-link" to="/simulation">
-            Donkebi Simulation <span aria-hidden="true">→</span>
+          <router-link class="section-link" to="/backtest">
+            Donkebi Backtest <span aria-hidden="true">→</span>
           </router-link>
         </div>
 
@@ -61,56 +61,54 @@
       <section id="backtest" class="backtest-section dk-section">
         <div class="backtest-section__inner dk-container">
           <div class="backtest-section__copy">
-            <p class="dk-eyebrow">Private Simulation Interface</p>
+            <p class="dk-eyebrow">Private Backtest Interface</p>
             <h2 class="dk-serif">AI driven,<br />Real-world magic.</h2>
             <p>
               AI. 기술과 경험의 정점에서, <br />시장의 불확실성을 자산으로
               바꾸는 현대의 마법을 경험하세요.
             </p>
-            <router-link class="section-link" to="/simulation">
+            <router-link class="section-link" to="/backtest">
               Enter Backtest <span aria-hidden="true">→</span>
             </router-link>
           </div>
 
           <div
-            ref="simulationPlate"
-            class="simulation-plate"
+            ref="backtestPlate"
+            class="backtest-plate"
             :class="{
-              'simulation-plate--revealed': isSimulationPlateRevealed,
+              'backtest-plate--revealed': isBacktestPlateRevealed
             }"
             aria-hidden="true"
           >
-            <div class="simulation-plate__head">
-              <span>SIMULATION / 01</span>
+            <div class="backtest-plate__head">
+              <span>BACKTEST / 01</span>
               <span>READY</span>
             </div>
-            <div class="simulation-plate__graph">
+            <div class="backtest-plate__graph">
               <svg viewBox="0 0 620 250" preserveAspectRatio="none">
                 <path
-                  class="simulation-plate__line simulation-plate__line--market"
+                  class="backtest-plate__line backtest-plate__line--market"
                   d="M0 188 C38 180 64 195 96 176 C124 160 149 171 180 142 C212 115 235 129 267 92 C285 71 298 51 316 44 C339 52 354 80 381 72 C411 64 432 94 459 87 C487 80 508 113 537 105 C565 98 589 130 620 125"
                 />
                 <path
-                  class="simulation-plate__line simulation-plate__line--donkebi"
+                  class="backtest-plate__line backtest-plate__line--donkebi"
                   d="M0 188 C55 182 75 166 120 170 S181 132 228 145 S290 96 337 110 S407 63 452 78 S531 34 620 28"
                 />
               </svg>
               <span
-                class="simulation-plate__marker simulation-plate__marker--asset"
+                class="backtest-plate__marker backtest-plate__marker--asset"
               ></span>
               <span
-                class="simulation-plate__marker simulation-plate__marker--market"
+                class="backtest-plate__marker backtest-plate__marker--market"
               ></span>
-              <span
-                class="simulation-plate__label simulation-plate__label--donkebi"
+              <span class="backtest-plate__label backtest-plate__label--donkebi"
                 >ASSET</span
               >
-              <span
-                class="simulation-plate__label simulation-plate__label--market"
+              <span class="backtest-plate__label backtest-plate__label--market"
                 >MARKET</span
               >
             </div>
-            <div class="simulation-plate__meta">
+            <div class="backtest-plate__meta">
               <span>STRATEGY</span>
               <span>PERFORMANCE</span>
               <span>ORDERS</span>
@@ -159,7 +157,7 @@
           <p class="dk-eyebrow">DONKEBI</p>
           <h2 class="dk-serif">Quietly observing.<br />Ready to act.</h2>
         </div>
-        <router-link class="site-footer__access" to="/simulation">
+        <router-link class="site-footer__access" to="/backtest">
           Private Access <span aria-hidden="true">↗</span>
         </router-link>
         <div class="site-footer__bottom">
@@ -172,64 +170,64 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-import DkTextLink from "@/components/DkTextLink.vue";
+import DkTextLink from '@/components/DkTextLink.vue'
 
-const simulationPlate = ref(null);
-const isSimulationPlateRevealed = ref(false);
-let simulationPlateObserver;
+const backtestPlate = ref(null)
+const isBacktestPlateRevealed = ref(false)
+let backtestPlateObserver
 
 onMounted(() => {
   const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
+    '(prefers-reduced-motion: reduce)'
+  ).matches
 
-  if (prefersReducedMotion || !("IntersectionObserver" in window)) {
-    isSimulationPlateRevealed.value = true;
-    return;
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    isBacktestPlateRevealed.value = true
+    return
   }
 
-  simulationPlateObserver = new IntersectionObserver(
+  backtestPlateObserver = new IntersectionObserver(
     ([entry]) => {
-      if (!entry?.isIntersecting) return;
+      if (!entry?.isIntersecting) return
 
-      isSimulationPlateRevealed.value = true;
-      simulationPlateObserver?.disconnect();
-      simulationPlateObserver = undefined;
+      isBacktestPlateRevealed.value = true
+      backtestPlateObserver?.disconnect()
+      backtestPlateObserver = undefined
     },
-    { threshold: 0.35 },
-  );
+    { threshold: 0.35 }
+  )
 
-  if (simulationPlate.value) {
-    simulationPlateObserver.observe(simulationPlate.value);
+  if (backtestPlate.value) {
+    backtestPlateObserver.observe(backtestPlate.value)
   } else {
-    isSimulationPlateRevealed.value = true;
+    isBacktestPlateRevealed.value = true
   }
-});
+})
 
 onBeforeUnmount(() => {
-  simulationPlateObserver?.disconnect();
-});
+  backtestPlateObserver?.disconnect()
+})
 
 const agentSteps = [
   {
-    name: "Observe",
-    description: "시장 데이터와 전략의 조건을 끊임없이 관찰합니다.",
+    name: 'Observe',
+    description: '시장 데이터와 전략의 조건을 끊임없이 관찰합니다.'
   },
   {
-    name: "Validate",
-    description: "현재 상태가 행동할 수 있는 규칙과 일치하는지 평가합니다.",
+    name: 'Validate',
+    description: '현재 상태가 행동할 수 있는 규칙과 일치하는지 평가합니다.'
   },
   {
-    name: "Simulate",
-    description: "같은 원칙을 과거에 적용해 결과와 위험을 다시 확인합니다.",
+    name: 'Backtest',
+    description: '같은 원칙을 과거에 적용해 결과와 위험을 다시 확인합니다.'
   },
   {
-    name: "Execute",
-    description: "정해진 시간에 실행 가능한 주문으로 전략을 전환합니다.",
-  },
-];
+    name: 'Execute',
+    description: '정해진 시간에 실행 가능한 주문으로 전략을 전환합니다.'
+  }
+]
 </script>
 
 <style scoped lang="scss">
@@ -499,7 +497,7 @@ const agentSteps = [
   }
 }
 
-.simulation-plate {
+.backtest-plate {
   grid-column: 7 / 13;
   min-height: 520px;
   padding: 24px;
@@ -599,35 +597,35 @@ const agentSteps = [
   }
 
   &--revealed {
-    .simulation-plate__graph svg {
-      animation: simulation-chart-reveal 1.4s cubic-bezier(0.22, 1, 0.36, 1)
+    .backtest-plate__graph svg {
+      animation: backtest-chart-reveal 1.4s cubic-bezier(0.22, 1, 0.36, 1)
         forwards;
     }
 
-    .simulation-plate__marker {
-      animation: simulation-marker-reveal 360ms ease-out 1.05s forwards;
+    .backtest-plate__marker {
+      animation: backtest-marker-reveal 360ms ease-out 1.05s forwards;
     }
 
-    .simulation-plate__label {
-      animation: simulation-label-reveal 380ms ease-out 1.08s forwards;
+    .backtest-plate__label {
+      animation: backtest-label-reveal 380ms ease-out 1.08s forwards;
     }
   }
 }
 
-@keyframes simulation-chart-reveal {
+@keyframes backtest-chart-reveal {
   to {
     clip-path: inset(0 0 0 0);
   }
 }
 
-@keyframes simulation-marker-reveal {
+@keyframes backtest-marker-reveal {
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
 
-@keyframes simulation-label-reveal {
+@keyframes backtest-label-reveal {
   to {
     opacity: 1;
     transform: translateX(0);
@@ -766,7 +764,7 @@ const agentSteps = [
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .simulation-plate {
+  .backtest-plate {
     &__graph svg {
       clip-path: none;
     }
@@ -867,7 +865,7 @@ const agentSteps = [
     align-items: stretch;
   }
 
-  .simulation-plate {
+  .backtest-plate {
     min-height: 390px;
     padding: 18px;
 
