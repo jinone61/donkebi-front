@@ -249,7 +249,9 @@
                                 <div
                                   ><span>종가</span
                                   ><strong>{{
-                                    formatPrice(slide.job.details?.closePrice)
+                                    formatClosePrice(
+                                      slide.job.details?.closePrice
+                                    )
                                   }}</strong></div
                                 >
                                 <div
@@ -325,7 +327,9 @@
                                 <div
                                   ><span>종가</span
                                   ><strong>{{
-                                    formatPrice(slide.job.details?.closePrice)
+                                    formatClosePrice(
+                                      slide.job.details?.closePrice
+                                    )
                                   }}</strong></div
                                 >
                                 <div
@@ -978,7 +982,7 @@
                       :options="chartPresets"
                       color="grey-3"
                       text-color="grey-8"
-                      toggle-color="green-6"
+                      toggle-color="grey-7"
                       unelevated
                       dense
                       no-caps
@@ -993,8 +997,8 @@
                       :step="1"
                       :left-label-value="chartStartDate"
                       :right-label-value="chartEndDate"
-                      color="green-6"
-                      label-color="green-7"
+                      color="grey-6"
+                      label-color="grey-7"
                       label
                       label-always
                       class="chart-range-slider"
@@ -1137,6 +1141,7 @@
                       expand-separator
                       class="daily-history-item"
                       header-class="daily-item-header"
+                      expand-icon-class="daily-expand-section"
                     >
                       <template #header>
                         <div class="daily-row daily-desktop-summary">
@@ -1148,7 +1153,7 @@
                             />
                           </div>
                           <div class="daily-cell">{{
-                            formatPrice(day.closePrice)
+                            formatClosePrice(day.closePrice)
                           }}</div>
                           <div class="daily-cell">{{
                             formatMoney(day.totalAsset)
@@ -1159,7 +1164,9 @@
                           >
                             {{ formatPct(day.drawdownPct, false) }}
                           </div>
-                          <div class="daily-cell">{{ day.orders.length }}</div>
+                          <div class="daily-cell">{{
+                            day.submittedOrderCount
+                          }}</div>
                           <div class="daily-cell">{{
                             day.executions.length
                           }}</div>
@@ -1177,10 +1184,9 @@
                               day.sessionDate
                             }}</span>
                             <span class="daily-mobile-summary__meta">
-                              종가 {{ formatPrice(day.closePrice) }} ·
                               <q-badge
-                                :color="modeColor(day.mode)"
-                                :label="day.mode"
+                                class="daily-close-badge"
+                                :label="formatClosePrice(day.closePrice)"
                               />
                             </span>
                           </div>
@@ -1204,13 +1210,14 @@
                           <div class="daily-mobile-summary__meta">
                             <span>
                               <span>현금</span>
-                              {{ formatMoney(day.closingCash) }} ({{
-                                formatPct(day.cashRatioPct, false)
-                              }})
+                              <span class="daily-mobile-summary__cash">{{
+                                formatMoney(day.closingCash)
+                              }}</span>
+                              ({{ formatPct(day.cashRatioPct, false) }})
                             </span>
                             <span></span>
                             <span>
-                              주문 {{ day.orders.length }} · 체결
+                              주문 {{ day.submittedOrderCount }} · 체결
                               {{ day.executions.length }}
                             </span>
                           </div>
@@ -1219,25 +1226,44 @@
 
                       <div class="daily-detail bg-grey-1">
                         <div class="detail-section">
-                          <div class="detail-title">당일 계획</div>
-                          <div class="detail-summary">
-                            <span>기준일 {{ day.plan?.basisDate || '-' }}</span>
-                            <span
-                              >목표일
-                              {{
-                                day.plan?.targetDate || day.sessionDate
-                              }}</span
-                            >
-                            <span>모드 {{ day.mode }}</span>
-                            <span
-                              >기준 매수가
-                              {{ formatPrice(day.plan?.buyPrice) }}</span
-                            >
-                            <span
-                              >{{ day.plan?.completionStatus || '-' }} ·
-                              {{ day.plan?.completionSource || '-' }}</span
-                            >
-                          </div>
+                          <div class="detail-title">계획</div>
+                          <q-markup-table
+                            flat
+                            bordered
+                            dense
+                            class="plan-summary-table"
+                          >
+                            <thead>
+                              <tr>
+                                <th class="text-left">주문 실행일</th>
+                                <th class="text-left">생성 기준일</th>
+                                <th class="text-left">모드</th>
+                                <th class="text-right">매수가</th>
+                                <th class="text-right">결과 반영</th>
+                                <th class="text-right">Broker</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td class="text-left">{{
+                                  day.plan?.targetDate || day.sessionDate
+                                }}</td>
+                                <td class="text-left">{{
+                                  day.plan?.basisDate || '-'
+                                }}</td>
+                                <td class="text-left">{{ day.mode }}</td>
+                                <td class="text-right">{{
+                                  formatPrice(day.plan?.buyPrice)
+                                }}</td>
+                                <td class="text-right">{{
+                                  day.plan?.completionStatus || '-'
+                                }}</td>
+                                <td class="text-right">{{
+                                  day.submissionMode
+                                }}</td>
+                              </tr>
+                            </tbody>
+                          </q-markup-table>
                         </div>
 
                         <div class="detail-section">
@@ -1246,9 +1272,13 @@
                             <q-markup-table flat bordered dense>
                               <thead>
                                 <tr>
-                                  <th>구분</th><th>티어</th><th>유형</th
+                                  <th class="text-left">구분</th
+                                  ><th class="text-left">티어</th
+                                  ><th class="text-left">유형</th
                                   ><th class="text-right">수량</th
-                                  ><th>제출 상태</th><th>Broker ID</th>
+                                  ><th class="text-left daily-submission-status"
+                                    >제출 상태</th
+                                  ><th class="text-left">Broker ID</th>
                                   <th class="text-right">주문가</th>
                                   <th class="text-right">체결가</th
                                   ><th class="text-right">체결수량</th>
@@ -1268,7 +1298,7 @@
                                   <td class="text-right">{{
                                     formatInteger(order.quantity)
                                   }}</td>
-                                  <td>
+                                  <td class="daily-submission-status">
                                     {{ order.submission?.status || '미제출' }}
                                     <small v-if="order.submission?.mode">{{
                                       order.submission.mode
@@ -1475,6 +1505,8 @@ ChartJS.register(
 const STRATEGY_ID = 1
 const AGENT_RESULT_URL = '/api/dualsniper/strategies/results'
 const OPERATION_STATUS_URL = '/api/dualsniper/operations/status'
+const AGENT_ACCENT = '#357a55'
+const AGENT_ACCENT_FILL = 'rgba(53, 122, 85, 0.1)'
 const PAGE_PASSWORD = '1q2w3e!!'
 const DAILY_HISTORY_PAGE_SIZE = 30
 const OPERATION_PHASES = [
@@ -1641,7 +1673,7 @@ function operationSummary(slide) {
   if (slide.isMissing) return '아직 실행 기록이 없습니다.'
   const details = slide.job?.details || {}
   if (slide.jobType === 'PREPARE') {
-    return `${details.mode || '-'} → ${details.nextMode || '-'} · ${formatPrice(details.closePrice)}`
+    return `${details.mode || '-'} → ${details.nextMode || '-'} · ${formatClosePrice(details.closePrice)}`
   }
   if (slide.jobType === 'APPLY') {
     return `체결 ${(details.executions || []).length}건 · ${formatMoney(details.totalAsset)}`
@@ -1826,6 +1858,11 @@ function normalizeStrategyResult(result = {}) {
     dailyRows: (result.dailyResults || [])
       .map(day => {
         const orders = (day.plan?.orders || []).map(normalizeOrder)
+        const submissionMode = [
+          ...new Set(
+            orders.map(order => order.submission?.mode).filter(Boolean)
+          )
+        ].join(', ')
         const totalAsset = day.portfolio?.totalAsset ?? null
         const closingCash = day.cash?.closingCash ?? null
 
@@ -1837,6 +1874,8 @@ function normalizeStrategyResult(result = {}) {
           closingCash,
           cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
           orders,
+          submissionMode: submissionMode || day.plan?.completionSource || '-',
+          submittedOrderCount: orders.filter(order => order.submission).length,
           executions: orders.flatMap(order =>
             order.execution ? [order.execution] : []
           ),
@@ -2169,8 +2208,8 @@ const performanceChartData = computed(() => {
         label: '총자산',
         data: rows.map(day => finiteNumber(day.totalAsset)),
         yAxisID: 'asset',
-        borderColor: '#2e7d32',
-        backgroundColor: 'rgba(46, 125, 50, 0.1)',
+        borderColor: AGENT_ACCENT,
+        backgroundColor: AGENT_ACCENT_FILL,
         borderWidth: 2,
         pointRadius: rows.length > 50 ? 0 : 2,
         pointHoverRadius: 5,
@@ -2232,10 +2271,13 @@ const priceChartOptions = computed(() => {
       },
       legend: {
         position: 'top',
+        align: 'center',
+        fullSize: false,
         labels: {
           usePointStyle: true,
-          boxWidth: isMobile ? 8 : 10,
-          padding: isMobile ? 8 : 10,
+          boxWidth: 8,
+          boxHeight: 6,
+          padding: isMobile ? 14 : 18,
           font: { size: isMobile ? 10 : 12 }
         }
       },
@@ -2309,10 +2351,13 @@ const performanceChartOptions = computed(() => {
       },
       legend: {
         position: 'top',
+        align: 'center',
+        fullSize: false,
         labels: {
           usePointStyle: true,
-          boxWidth: isMobile ? 8 : 10,
-          padding: isMobile ? 8 : 10,
+          boxWidth: 8,
+          boxHeight: 6,
+          padding: isMobile ? 14 : 18,
           font: { size: isMobile ? 10 : 12 }
         }
       },
@@ -2400,12 +2445,21 @@ function formatPrice(value) {
   return `$${formatNumber(number, 2)}`
 }
 
+function formatClosePrice(value) {
+  const number = finiteNumber(value)
+  if (number === null) return '-'
+  return `$${new Intl.NumberFormat('ko-KR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number)}`
+}
+
 function buildDailyExecutionTooltipLines(rows = [], sessionDate) {
   const day = rows.find(row => row.sessionDate === sessionDate)
   if (!day) return []
 
   return [
-    `종가 ${formatPrice(day.closePrice)}`,
+    `종가 ${formatClosePrice(day.closePrice)}`,
     ...(day.executions || []).map(
       execution =>
         `${execution.tradeSide} ${execution.tier} · ${formatPrice(execution.price)} · ${formatInteger(execution.quantity)}주`
@@ -2477,6 +2531,10 @@ function shortTypeLabel(value) {
 
 <style scoped lang="scss">
 .agent-page {
+  --agent-accent: #357a55;
+  --agent-accent-soft: rgba(53, 122, 85, 0.1);
+  --agent-accent-border: rgba(53, 122, 85, 0.45);
+
   min-height: calc(100vh - 82px);
   background: var(--dk-paper);
   color: var(--dk-ink);
@@ -2616,8 +2674,8 @@ function shortTypeLabel(value) {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #526d59;
-    box-shadow: 0 0 0 4px rgba(82, 109, 89, 0.12);
+    background: var(--agent-accent);
+    box-shadow: 0 0 0 4px var(--agent-accent-soft);
   }
 }
 
@@ -2651,14 +2709,14 @@ function shortTypeLabel(value) {
 :deep(.text-green-6),
 :deep(.text-green-7),
 :deep(.text-green-8) {
-  color: var(--dk-ink) !important;
+  color: var(--agent-accent) !important;
 }
 
 :deep(.bg-green-5),
 :deep(.bg-green-6),
 :deep(.bg-green-7),
 :deep(.bg-green-8) {
-  background: var(--dk-ink) !important;
+  background: var(--agent-accent) !important;
 }
 
 .content-container {
@@ -2975,8 +3033,8 @@ function shortTypeLabel(value) {
 }
 
 .operation-node--success {
-  border-color: #526d59;
-  background: #526d59;
+  border-color: var(--agent-accent);
+  background: var(--agent-accent);
 }
 
 .operation-node--failed {
@@ -3082,9 +3140,9 @@ function shortTypeLabel(value) {
 }
 
 .operation-status--success {
-  border-color: rgba(82, 109, 89, 0.42);
-  background: rgba(82, 109, 89, 0.08);
-  color: #45634d;
+  border-color: var(--agent-accent-border);
+  background: var(--agent-accent-soft);
+  color: var(--agent-accent);
 }
 
 .operation-status--failed {
@@ -3281,7 +3339,23 @@ function shortTypeLabel(value) {
 }
 
 .chart-range-presets {
-  justify-self: start;
+  display: grid;
+  width: min(100%, 520px);
+  margin-bottom: 8px;
+  border: 1px solid var(--dk-line);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-self: center;
+
+  :deep(.q-btn) {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    border-radius: 0;
+  }
+
+  :deep(.q-btn + .q-btn) {
+    border-left: 1px solid var(--dk-line);
+  }
 }
 
 .chart-range-slider {
@@ -3391,6 +3465,20 @@ function shortTypeLabel(value) {
   padding: 3px 12px;
 }
 
+.daily-history-item :deep(.daily-expand-section) {
+  width: 22px;
+  min-width: 22px;
+  padding-top: 7px;
+  padding-left: 6px;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--dk-muted);
+}
+
+.daily-history-item :deep(.daily-expand-section .q-icon) {
+  font-size: 18px;
+}
+
 .daily-detail {
   padding: 16px;
   background: var(--dk-surface) !important;
@@ -3413,6 +3501,17 @@ function shortTypeLabel(value) {
   gap: 8px 20px;
   color: var(--dk-muted);
   font-size: 13px;
+}
+
+:deep(.plan-summary-table table) {
+  width: 100%;
+  table-layout: auto;
+}
+
+:deep(.plan-summary-table th),
+:deep(.plan-summary-table td) {
+  padding: 5px 8px;
+  white-space: nowrap;
 }
 
 .detail-note {
@@ -3466,7 +3565,7 @@ function shortTypeLabel(value) {
 }
 
 .value-positive {
-  color: #45634d;
+  color: var(--agent-accent);
 }
 
 .value-negative {
@@ -3747,6 +3846,24 @@ function shortTypeLabel(value) {
     white-space: nowrap;
   }
 
+  .daily-mobile-summary__cash {
+    padding-left: 6px;
+    color: var(--dk-ink);
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .daily-close-badge {
+    padding: 3px 7px;
+    border: 1px solid var(--dk-line);
+    background: rgba(23, 23, 23, 0.045) !important;
+    color: var(--dk-muted) !important;
+    font-size: 0.62rem;
+    font-weight: 600;
+  }
+
   .daily-mobile-summary__meta {
     margin-top: 4px;
     color: var(--dk-muted);
@@ -3760,6 +3877,15 @@ function shortTypeLabel(value) {
 
   .daily-detail {
     padding: 12px;
+  }
+
+  :deep(.plan-summary-table th),
+  :deep(.plan-summary-table td) {
+    padding: 4px 2px;
+  }
+
+  :deep(.daily-submission-status) {
+    display: none;
   }
 }
 
@@ -3776,13 +3902,11 @@ function shortTypeLabel(value) {
   }
 
   .chart-range-presets {
-    display: flex;
     width: 100%;
-    flex-wrap: wrap;
   }
 
   .chart-range-presets :deep(.q-btn) {
-    flex: 1 1 auto;
+    padding-inline: 4px;
   }
 
   .chart-range-adjustments {

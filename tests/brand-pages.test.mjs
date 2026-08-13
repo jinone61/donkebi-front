@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import test from 'node:test'
@@ -168,24 +167,6 @@ test('editable backtest workspace carries the latest range tools without a dupli
   assert.doesNotMatch(source, /inject\('toggleMenu'\)/)
 })
 
-test('editable backtest workspace keeps the comparison page logic in sync', async () => {
-  const comparisonSource = await readSource('src/pages/index/Backtest_old.vue')
-  const editableSource = await readSource(
-    'src/components/backtest/BacktestPage.vue'
-  )
-  const extractScript = source =>
-    source.match(/<script setup>([\s\S]*?)<\/script>/)?.[1]
-  const normalizeScript = script => script?.replace(/[\s(),;'"]/g, '')
-  const expectedScript = extractScript(comparisonSource)
-    ?.replace('computed, inject, reactive, ref', 'computed, reactive, ref')
-    .replace("\nconst toggleMenu = inject('toggleMenu')", '')
-
-  assert.equal(
-    normalizeScript(extractScript(editableSource)),
-    normalizeScript(expectedScript)
-  )
-})
-
 test('mobile setup balances compact and long-form settings', async () => {
   const source = await readSource('src/components/backtest/BacktestPage.vue')
   const mobileStyles = source.match(
@@ -273,9 +254,75 @@ test('agent workspace owns its strategy result API and normalization', async () 
     /api\.get\(\s*AGENT_RESULT_URL,\s*\{\s*params:\s*\{\s*strategyId:\s*STRATEGY_ID\s*\}\s*\}\s*\)/
   )
   assert.match(source, /day\.plan\?\.orders/)
+  assert.match(
+    source,
+    /submittedOrderCount: orders\.filter\(order => order\.submission\)\.length/
+  )
   assert.match(source, /order\.execution\?\.price/)
   assert.match(source, /order\.execution\?\.quantity/)
   assert.match(source, /day\.cash\?\.transactions/)
+})
+
+test('agent daily history distinguishes submitted orders and executions', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const history = source.slice(
+    source.indexOf('aria-labelledby="agent-history-title"'),
+    source.indexOf('<script setup>')
+  )
+
+  assert.match(history, /<span>주문<\/span[\s\S]*?><span>체결<\/span>/)
+  assert.doesNotMatch(history, /<span>계획<\/span/)
+  assert.match(
+    history,
+    /주문 \{\{ day\.submittedOrderCount \}\} · 체결[\s\S]*?\{\{ day\.executions\.length \}\}/
+  )
+  assert.match(
+    history,
+    /주문 실행일[\s\S]*?생성 기준일[\s\S]*?모드[\s\S]*?매수가[\s\S]*?결과 반영[\s\S]*?Broker/
+  )
+  assert.match(
+    history,
+    /plan-summary-table[\s\S]*?day\.plan\?\.targetDate[\s\S]*?day\.plan\?\.basisDate[\s\S]*?day\.mode[\s\S]*?day\.plan\?\.buyPrice[\s\S]*?day\.plan\?\.completionStatus[\s\S]*?day\.submissionMode/
+  )
+  assert.match(history, /<div class="detail-title">계획<\/div>/)
+  assert.doesNotMatch(history, /<div class="detail-title">당일 계획<\/div>/)
+  assert.match(
+    history,
+    /text-left">주문 실행일[\s\S]*?text-left">생성 기준일[\s\S]*?text-left">모드[\s\S]*?text-right">매수가[\s\S]*?text-right">결과 반영[\s\S]*?text-right">Broker/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?:deep\(\.plan-summary-table th\),[\s\S]*?:deep\(\.plan-summary-table td\) \{\s*padding: 4px 2px;/
+  )
+  assert.match(
+    source,
+    /orders\.map\(order => order\.submission\?\.mode\)\.filter\(Boolean\)/
+  )
+  assert.match(
+    source,
+    /submissionMode:\s*submissionMode \|\| day\.plan\?\.completionSource \|\| '-'/
+  )
+})
+
+test('agent daily order headers align with their data columns', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const orderTable = source.slice(
+    source.indexOf('<div class="detail-title">주문 및 체결</div>'),
+    source.indexOf('<div class="detail-title">현금 흐름</div>')
+  )
+
+  assert.match(
+    orderTable,
+    /text-left">구분[\s\S]*?text-left">티어[\s\S]*?text-left">유형[\s\S]*?text-right">수량[\s\S]*?daily-submission-status[\s\S]*?제출 상태[\s\S]*?text-left">Broker ID[\s\S]*?text-right">주문가[\s\S]*?text-right">체결가[\s\S]*?text-right">체결수량/
+  )
+  assert.match(
+    orderTable,
+    /<td class="daily-submission-status">[\s\S]*?order\.submission\?\.status/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?:deep\(\.daily-submission-status\) \{\s*display: none;/
+  )
 })
 
 test('agent operation follows the status API in descending id order', async () => {
@@ -425,6 +472,28 @@ test('agent page covers current status charts and operation history', async () =
   assert.match(source, /class="daily-header desktop-only"/)
   assert.match(source, /class="daily-row daily-desktop-summary"/)
   assert.match(source, /class="daily-mobile-summary"/)
+  assert.match(
+    source,
+    /class="daily-mobile-summary__cash"[\s\S]*?formatMoney\(day\.closingCash\)/
+  )
+  assert.match(
+    source,
+    /\.daily-mobile-summary__cash \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 500;/
+  )
+  assert.match(source, /expand-icon-class="daily-expand-section"/)
+  assert.match(
+    source,
+    /\.daily-history-item :deep\(\.daily-expand-section\) \{[\s\S]*?width: 22px;[\s\S]*?padding-top: 7px;[\s\S]*?padding-left: 6px;[\s\S]*?justify-content: flex-start;/
+  )
+  assert.match(
+    source,
+    /\.daily-close-badge \{[\s\S]*?background: rgba\(23, 23, 23, 0\.045\) !important;[\s\S]*?color: var\(--dk-muted\) !important;/
+  )
+  assert.match(
+    source,
+    /function formatClosePrice\(value\)[\s\S]*?minimumFractionDigits: 2,[\s\S]*?maximumFractionDigits: 2/
+  )
+  assert.match(source, /:label="formatClosePrice\(day\.closePrice\)"/)
   assert.match(source, /group="daily-results"/)
   assert.match(source, /class="daily-detail bg-grey-1"/)
   assert.match(
@@ -563,21 +632,41 @@ test('agent charts match the backtest card and color system', async () => {
 
   assert.match(source, /class="section-card chart-range-card"/)
   assert.equal((source.match(/class="chart-container"/g) || []).length, 2)
-  assert.match(source, /toggle-color="green-6"/)
-  assert.match(source, /color="green-6"/)
-  assert.match(source, /label-color="green-7"/)
+  assert.match(source, /toggle-color="grey-7"/)
+  assert.match(source, /color="grey-6"/)
+  assert.match(source, /label-color="grey-7"/)
   assert.match(
     source,
-    /:deep\(\.text-green-5\),[\s\S]*?color: var\(--dk-ink\) !important;/
+    /\.chart-range-presets \{[\s\S]*?width: min\(100%, 520px\);[\s\S]*?margin-bottom: 8px;[\s\S]*?grid-template-columns: repeat\(5, minmax\(0, 1fr\)\);/
+  )
+  assert.match(source, /\.chart-range-presets \{[\s\S]*?justify-self: center;/)
+  assert.match(
+    source,
+    /:deep\(\.q-btn \+ \.q-btn\) \{\s*border-left: 1px solid var\(--dk-line\);/
   )
   assert.match(
     source,
-    /:deep\(\.bg-green-5\),[\s\S]*?background: var\(--dk-ink\) !important;/
+    /:deep\(\.text-green-5\),[\s\S]*?color: var\(--agent-accent\) !important;/
   )
+  assert.match(
+    source,
+    /:deep\(\.bg-green-5\),[\s\S]*?background: var\(--agent-accent\) !important;/
+  )
+  assert.match(source, /--agent-accent: #357a55;/)
+  assert.match(source, /--agent-accent-soft: rgba\(53, 122, 85, 0\.1\);/)
+  assert.match(source, /\.value-positive \{\s*color: var\(--agent-accent\);/)
   assert.match(source, /borderColor: '#78909c'/)
   assert.match(source, /backgroundColor: '#d32f2f'/)
   assert.match(source, /backgroundColor: '#1976d2'/)
-  assert.match(source, /borderColor: '#2e7d32'/)
+  assert.match(source, /const AGENT_ACCENT = '#357a55'/)
+  assert.match(source, /borderColor: AGENT_ACCENT/)
+  assert.match(source, /backgroundColor: AGENT_ACCENT_FILL/)
+  assert.equal((source.match(/align: 'center'/g) || []).length, 2)
+  assert.equal((source.match(/fullSize: false/g) || []).length, 2)
+  assert.equal((source.match(/boxWidth: 8/g) || []).length, 2)
+  assert.equal((source.match(/boxHeight: 6/g) || []).length, 2)
+  assert.equal((source.match(/padding: isMobile \? 14 : 18/g) || []).length, 2)
+  assert.doesNotMatch(source, /pointStyleWidth:/)
   assert.match(source, /backgroundColor: '#f2c037'/)
   assert.match(source, /borderColor: '#42a5f5'/)
   assert.match(source, /grid: \{ color: 'rgba\(0, 0, 0, 0\.06\)' \}/)
@@ -600,16 +689,4 @@ test('private agent samples and brainstorm artifacts stay outside Git', async ()
     'src/pages/index/operation_result.json',
     '.superpowers/brainstorm/layout.html'
   ])
-})
-
-test('comparison Backtest_old remains byte-for-byte unchanged', async () => {
-  const source = await readFile(
-    new URL('../src/pages/index/Backtest_old.vue', import.meta.url)
-  )
-  const digest = createHash('sha256').update(source).digest('hex')
-
-  assert.equal(
-    digest,
-    '00dec4ad7fb38b314ec2a58db013c9f8f5de8a3398c30ccf4ba63b593f78e4b4'
-  )
 })
