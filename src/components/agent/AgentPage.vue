@@ -206,9 +206,9 @@
                           <div v-if="slide.isMissing" class="operation-empty">
                             <span>{{ slide.index }}</span>
                             <div>
-                              <strong>아직 도착하지 않은 단계입니다.</strong>
+                              <strong>실행 준비 중입니다.</strong>
                               <p
-                                >다음 실행 기록이 생성되면 이곳에 표시됩니다.</p
+                                >예정 시간까지 조금만 기다려 주세요 🤖</p
                               >
                             </div>
                           </div>
@@ -1711,38 +1711,31 @@ function operationTimeMinute(value) {
   return String(value).match(/T(\d{2}:\d{2})/)?.[1] || null
 }
 
-function getMostFrequentOperationTime(jobs, jobType) {
-  const counts = new Map()
-
-  jobs
-    .filter(job => job.jobType === jobType)
-    .forEach(job => {
-      const time = operationTimeMinute(job.startedAt)
-      if (time) counts.set(time, (counts.get(time) || 0) + 1)
-    })
+function getPreviousOperationTime(jobs, targetDate, jobType) {
+  if (!targetDate) return null
 
   return (
-    [...counts.entries()].sort(
-      ([leftTime, leftCount], [rightTime, rightCount]) =>
-        rightCount - leftCount || leftTime.localeCompare(rightTime)
-    )[0]?.[0] || null
+    jobs
+      .filter(job => job.targetDate === targetDate && job.jobType === jobType)
+      .sort(
+        (left, right) =>
+          (finiteNumber(right.id) ?? -Infinity) -
+          (finiteNumber(left.id) ?? -Infinity)
+      )
+      .map(job => operationTimeMinute(job.startedAt))
+      .find(Boolean) || null
   )
 }
 
 function normalizeOperationResult(result = {}) {
   const jobs = Array.isArray(result.jobs) ? result.jobs : []
-  const estimatedTimes = Object.fromEntries(
-    OPERATION_PHASES.map(phase => [
-      phase.jobType,
-      getMostFrequentOperationTime(jobs, phase.jobType)
-    ])
-  )
   const dates = [
     ...new Set(jobs.map(job => job.targetDate).filter(Boolean))
   ].sort((left, right) => right.localeCompare(left))
 
-  const slides = dates.flatMap(targetDate => {
+  const slides = dates.flatMap((targetDate, dateIndex) => {
     const dateJobs = jobs.filter(job => job.targetDate === targetDate)
+    const previousTargetDate = dates[dateIndex + 1] || null
 
     const dateSlides = OPERATION_PHASES.map((phase, phaseIndex) => {
       const attempts = dateJobs
@@ -1760,7 +1753,9 @@ function normalizeOperationResult(result = {}) {
         targetDate,
         phaseIndex,
         isMissing: !job,
-        estimatedTime: !job ? estimatedTimes[phase.jobType] : null,
+        estimatedTime: !job
+          ? getPreviousOperationTime(jobs, previousTargetDate, phase.jobType)
+          : null,
         attemptCount: attempts.length,
         job
       }

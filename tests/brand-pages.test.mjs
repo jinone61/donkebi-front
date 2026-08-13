@@ -344,12 +344,13 @@ test('agent operation follows the status API in descending id order', async () =
   assert.match(source, /isMissing: !job/)
   assert.match(
     source,
-    /function getMostFrequentOperationTime\(jobs, jobType\)[\s\S]*?job\.jobType === jobType[\s\S]*?operationTimeMinute\(job\.startedAt\)[\s\S]*?rightCount - leftCount/
+    /function getPreviousOperationTime\(jobs, targetDate, jobType\)[\s\S]*?job\.targetDate === targetDate && job\.jobType === jobType[\s\S]*?finiteNumber\(right\.id\)[\s\S]*?operationTimeMinute\(job\.startedAt\)/
   )
   assert.match(
     source,
-    /estimatedTime: !job \? estimatedTimes\[phase\.jobType\] : null/
+    /const previousTargetDate = dates\[dateIndex \+ 1\] \|\| null[\s\S]*?estimatedTime: !job[\s\S]*?getPreviousOperationTime\([\s\S]*?jobs,[\s\S]*?previousTargetDate,[\s\S]*?phase\.jobType/
   )
+  assert.doesNotMatch(source, /getMostFrequentOperationTime|estimatedTimes/)
   assert.match(
     source,
     /slide\.estimatedTime[\s\S]*?`\$\{slide\.estimatedTime\} 예정`[\s\S]*?'아직 기록 없음'/
