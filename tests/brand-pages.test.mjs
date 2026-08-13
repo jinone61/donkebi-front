@@ -342,6 +342,130 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(source, /function normalizeOperationResult\(result = \{\}\)/)
   assert.match(source, /isMissing: !job/)
+  assert.match(
+    source,
+    /function getMostFrequentOperationTime\(jobs, jobType\)[\s\S]*?job\.jobType === jobType[\s\S]*?operationTimeMinute\(job\.startedAt\)[\s\S]*?rightCount - leftCount/
+  )
+  assert.match(
+    source,
+    /estimatedTime: !job \? estimatedTimes\[phase\.jobType\] : null/
+  )
+  assert.match(
+    source,
+    /slide\.estimatedTime[\s\S]*?`\$\{slide\.estimatedTime\} 예정`[\s\S]*?'아직 기록 없음'/
+  )
+  assert.match(
+    source,
+    /if \(slide\.jobType === 'PREPARE'\) \{\s*return `세션 \$\{formatInteger\(details\.completedSessionCount\)\} · 종가 \$\{formatClosePrice\(details\.closePrice\)\}`/
+  )
+  assert.match(
+    source,
+    /if \(slide\.jobType === 'PLAN'\) \{[\s\S]*?regularPlanCount\(orders\)[\s\S]*?return `계획 \$\{orders\.length\}건 · 대상 \$\{targetCount\}건`/
+  )
+  assert.match(
+    source,
+    /slide\.jobType === 'PLAN'[\s\S]*?계획 기준일[\s\S]*?details\?\.basisDate[\s\S]*?주문 대상일[\s\S]*?slide\.targetDate[\s\S]*?모드[\s\S]*?details\?\.mode[\s\S]*?주문 계획[\s\S]*?orders[\s\S]*?대상[\s\S]*?regularPlanCount[\s\S]*?매수가[\s\S]*?details\?\.buyPrice/
+  )
+  assert.match(
+    source,
+    /function regularPlanCount\(orders = \[\]\)[\s\S]*?order\.planType[\s\S]*?=== 'REGULAR'/
+  )
+  assert.match(
+    source,
+    /계획 기준일[\s\S]*?slide\.job\.details\?\.calculatedThroughDate[\s\S]*?주문 대상일[\s\S]*?slide\.targetDate[\s\S]*?완료 세션[\s\S]*?slide\.job\.details\?\.completedSessionCount/
+  )
+  assert.match(
+    source,
+    /MA 3[\s\S]*?MA 5[\s\S]*?MA Spread[\s\S]*?formatMaTrend\(slide\.job\.details\)/
+  )
+  assert.match(
+    source,
+    /slide\.jobType === 'APPLY'[\s\S]*?적용 거래일[\s\S]*?체결[\s\S]*?executions[\s\S]*?종가[\s\S]*?details\?\.closePrice[\s\S]*?총자산[\s\S]*?현금[\s\S]*?details\?\.availableCash[\s\S]*?formatCashRatio\(slide\.job\.details\)[\s\S]*?보유 수량[\s\S]*?details\?\.managedQuantity/
+  )
+  assert.match(source, /slide\.jobType === 'APPLY'[\s\S]*?<h4>체결 내역<\/h4>/)
+  assert.match(
+    source,
+    /slide\.jobType === 'APPLY'[\s\S]*?text-left">구분[\s\S]*?text-left">티어[\s\S]*?text-left">주문 유형[\s\S]*?text-right">주문가[\s\S]*?text-right">체결가[\s\S]*?text-right">수량[\s\S]*?text-right"[\s\S]*?>Broker ID/
+  )
+  assert.match(
+    source,
+    /function formatCashRatio\(details = \{\}\)[\s\S]*?availableCash \/ totalAsset[\s\S]*?formatPct[\s\S]*?false/
+  )
+  assert.match(
+    source,
+    /\.operation-cash-value[\s\S]*?small \{[\s\S]*?color: var\(--dk-muted\)[\s\S]*?font-weight: 500/
+  )
+  assert.match(
+    source,
+    /class="operation-side"[\s\S]*?:class="[\s\S]*?sideClass\(execution\.tradeSide\)[\s\S]*?"[\s\S]*?sideLabel\(execution\.tradeSide\)/
+  )
+  assert.match(
+    source,
+    /`mobile-\$\{execution\.executionId\}`[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?execution\.tier[\s\S]*?수량[\s\S]*?execution\.quantity[\s\S]*?주문 유형[\s\S]*?execution\.orderType[\s\S]*?주문가[\s\S]*?execution\.orderPrice[\s\S]*?체결가[\s\S]*?execution\.fillPrice[\s\S]*?Broker ID[\s\S]*?execution\.brokerOrderId/
+  )
+  assert.match(
+    source,
+    /operation-mobile-rows operation-mobile-rows--three-columns[\s\S]*?\.operation-mobile-rows--three-columns[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/
+  )
+  assert.match(
+    source,
+    /function sideClass\(side\)[\s\S]*?operation-side--buy[\s\S]*?operation-side--sell/
+  )
+  assert.match(
+    source,
+    /slide\.jobType === 'PLAN'[\s\S]*?<h4>주문 계획<\/h4>[\s\S]*?sideClass\(order\.tradeSide\)[\s\S]*?operation-mobile-rows--three-columns[\s\S]*?`mobile-\$\{order\.orderId\}`[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?order\.tier[\s\S]*?수량[\s\S]*?order\.quantity[\s\S]*?주문 유형[\s\S]*?order\.orderType[\s\S]*?order\.planType/
+  )
+  assert.match(
+    source,
+    /text-left">구분[\s\S]*?text-left">티어[\s\S]*?text-left">주문 유형[\s\S]*?text-left">상태[\s\S]*?text-right">주문가[\s\S]*?text-right">매수가[\s\S]*?text-right">수량[\s\S]*?text-right">배정 금액[\s\S]*?text-right"[\s\S]*?>보유 기간/
+  )
+  assert.match(
+    source,
+    /order\.tier[\s\S]*?<\/td[\s\S]*?order\.orderType[\s\S]*?<\/td[\s\S]*?order\.planType/
+  )
+  assert.match(
+    source,
+    /formatPrice\(order\.orderPrice, 2\)[\s\S]*?order\.tradeSide === 'BUY'[\s\S]*?\? '-'[\s\S]*?: formatPrice\(order\.buyPrice, 2\)/
+  )
+  assert.match(
+    source,
+    /`mobile-\$\{order\.orderId\}`[\s\S]*?주문가[\s\S]*?formatPrice\(order\.orderPrice, 2\)[\s\S]*?매수가[\s\S]*?order\.tradeSide === 'BUY'[\s\S]*?\? '-'[\s\S]*?formatPrice\(order\.buyPrice, 2\)[\s\S]*?보유 기간[\s\S]*?order\.heldSessionCount/
+  )
+  assert.match(
+    source,
+    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2/
+  )
+  assert.match(
+    source,
+    /주문 대상일[\s\S]*?<span>주문<\/span[\s\S]*?totalSubmissionCount\(slide\.job\.details\)[\s\S]*?<span>Broker<\/span[\s\S]*?summarizeSubmissionValues[\s\S]*?'submissionMode'/
+  )
+  assert.match(
+    source,
+    /<h4>제출 내역<\/h4>[\s\S]*?text-left">구분[\s\S]*?text-left">티어[\s\S]*?text-left">주문 유형[\s\S]*?text-left">제출 방식[\s\S]*?text-left">상태[\s\S]*?text-right">주문가[\s\S]*?text-right">수량[\s\S]*?text-right"[\s\S]*?>Broker ID/
+  )
+  assert.match(
+    source,
+    /`mobile-\$\{submission\.submissionId\}`[\s\S]*?sideClass\(submission\.tradeSide\)[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?submission\.tier[\s\S]*?수량[\s\S]*?submission\.quantity[\s\S]*?주문 유형[\s\S]*?submission\.orderType[\s\S]*?주문가[\s\S]*?submission\.orderPrice[\s\S]*?상태[\s\S]*?submission\.status[\s\S]*?Broker ID[\s\S]*?submission\.brokerOrderId/
+  )
+  assert.match(
+    source,
+    /function totalSubmissionCount[\s\S]*?function summarizeSubmissionValues/
+  )
+  assert.doesNotMatch(source, /brokerFinalStatus/)
+  assert.match(source, /return `제출 \$\{totalSubmissionCount\(details\)\}건`/)
+  assert.doesNotMatch(source, /function brokerSubmissionCount/)
+  assert.match(
+    source,
+    /\.operation-side--buy[\s\S]*?var\(--agent-accent-soft\)[\s\S]*?\.operation-side--sell[\s\S]*?rgba\(157, 74, 63, 0\.09\)/
+  )
+  assert.doesNotMatch(
+    source,
+    /slide\.jobType === 'APPLY'[\s\S]{0,2000}?<span>주문 계획<\/span/
+  )
+  assert.match(
+    source,
+    /function maTrendPercent\(details = \{\}\)[\s\S]*?\(ma3 - ma5\) \/ Math\.abs\(ma5\)[\s\S]*?function formatMaTrend\(details\)[\s\S]*?return formatPct\(percent\)/
+  )
   assert.match(source, /function getInitialExpandedOperationIds\(\)/)
   assert.match(
     source,
@@ -353,6 +477,10 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(source, /\.sort\(compareOperationSlidesByIdDesc\)/)
   assert.match(source, /isDateStart: index === 0/)
+  assert.match(
+    source,
+    /\.operation-status \{[\s\S]*?min-width: 68px;[\s\S]*?text-align: center;/
+  )
 })
 
 test('agent workspace separates live operation from performance', async () => {
@@ -374,7 +502,10 @@ test('agent workspace separates live operation from performance', async () => {
   assert.match(source, /<q-tab name="performance" label="PERFORMANCE" \/>/)
   assert.match(operationPanel, /class="operation-list"/)
   assert.match(operationPanel, /<q-slide-transition>/)
-  assert.match(operationPanel, /Market Data부터 Submit까지/)
+  assert.match(
+    operationPanel,
+    /Donkebi Agent가 시장을 관찰하고 행동한 기록을 확인합니다\./
+  )
   assert.match(performancePanel, /class="agent-overview"/)
   assert.match(performancePanel, /class="agent-charts"/)
   assert.match(performancePanel, /class="section-card agent-history"/)
@@ -393,7 +524,10 @@ test('agent operation avoids nested and mobile horizontal scrolling', async () =
     (source.match(/class="operation-desktop-table"/g) || []).length,
     3
   )
-  assert.equal((source.match(/class="operation-mobile-rows"/g) || []).length, 3)
+  assert.equal(
+    (source.match(/class="operation-mobile-rows(?: [^"]+)?"/g) || []).length,
+    3
+  )
   assert.match(
     source,
     /@media \(max-width: 767px\)[\s\S]*?\.operation-table-scroll \{[\s\S]*?overflow: visible;/
@@ -408,7 +542,7 @@ test('agent operation avoids nested and mobile horizontal scrolling', async () =
   )
   assert.match(
     source,
-    /<dt>매수가[\s\S]*?v-if="order\.tradeSide === 'SELL'"[\s\S]*?<dt>매도가/
+    /<dt>매수가[\s\S]*?order\.tradeSide === 'BUY'[\s\S]*?\? '-'[\s\S]*?: formatPrice\(order\.buyPrice, 2\)/
   )
   assert.match(
     source,
@@ -451,8 +585,8 @@ test('agent page covers current status charts and operation history', async () =
   const source = await readSource('src/components/agent/AgentPage.vue')
 
   assert.match(source, /MODE TRANSITION/)
-  assert.match(source, /생성 주문/)
-  assert.match(source, /Broker 제출 내역/)
+  assert.match(source, /주문 계획/)
+  assert.match(source, /제출 내역/)
   assert.match(source, /가격 및 체결/)
   assert.match(source, /포트폴리오 성과/)
   assert.match(source, /chart-range-adjustments/)

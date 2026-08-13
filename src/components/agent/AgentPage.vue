@@ -117,7 +117,7 @@
                     {{ operationResult.symbol }} Operation
                   </h2>
                   <p>
-                    실행 흐름을 따라 Market Data부터 Submit까지 확인합니다.
+                    Donkebi Agent가 시장을 관찰하고 행동한 기록을 확인합니다.
                   </p>
                 </div>
                 <div class="source-tags">
@@ -240,19 +240,34 @@
                               </div>
                               <div class="operation-data-grid">
                                 <div
-                                  ><span>계산 완료일</span
+                                  ><span>계획 기준일</span
                                   ><strong>{{
                                     slide.job.details?.calculatedThroughDate ||
                                     '-'
                                   }}</strong></div
                                 >
                                 <div
-                                  ><span>종가</span
+                                  ><span>주문 대상일</span
                                   ><strong>{{
-                                    formatClosePrice(
-                                      slide.job.details?.closePrice
+                                    slide.targetDate || '-'
+                                  }}</strong></div
+                                >
+                                <div
+                                  ><span>완료 세션</span
+                                  ><strong>{{
+                                    formatInteger(
+                                      slide.job.details?.completedSessionCount
                                     )
                                   }}</strong></div
+                                >
+                                <div
+                                  ><span>체결</span
+                                  ><strong
+                                    >{{
+                                      (slide.job.details?.executions || [])
+                                        .length
+                                    }}건</strong
+                                  ></div
                                 >
                                 <div
                                   ><span>일간 변화</span
@@ -288,6 +303,15 @@
                                   }}</strong></div
                                 >
                                 <div
+                                  ><span>MA Spread</span
+                                  ><strong
+                                    :class="maTrendClass(slide.job.details)"
+                                    >{{
+                                      formatMaTrend(slide.job.details)
+                                    }}</strong
+                                  ></div
+                                >
+                                <div
                                   ><span>Daily RSI</span
                                   ><strong>{{
                                     formatNumber(slide.job.details?.dailyRsi)
@@ -305,14 +329,6 @@
                                     formatBoolean(slide.job.details?.weekClosed)
                                   }}</strong></div
                                 >
-                                <div
-                                  ><span>완료 세션</span
-                                  ><strong>{{
-                                    formatInteger(
-                                      slide.job.details?.completedSessionCount
-                                    )
-                                  }}</strong></div
-                                >
                               </div>
                             </template>
 
@@ -323,6 +339,15 @@
                                   ><strong>{{
                                     slide.job.details?.appliedSessionDate || '-'
                                   }}</strong></div
+                                >
+                                <div
+                                  ><span>체결</span
+                                  ><strong
+                                    >{{
+                                      (slide.job.details?.executions || [])
+                                        .length
+                                    }}건</strong
+                                  ></div
                                 >
                                 <div
                                   ><span>종가</span
@@ -339,38 +364,35 @@
                                   }}</strong></div
                                 >
                                 <div
-                                  ><span>가용 현금</span
-                                  ><strong>{{
-                                    formatMoney(
-                                      slide.job.details?.availableCash
-                                    )
-                                  }}</strong></div
+                                  ><span>현금</span
+                                  ><strong class="operation-cash-value"
+                                    >{{
+                                      formatMoney(
+                                        slide.job.details?.availableCash
+                                      )
+                                    }}
+                                    <small
+                                      v-if="
+                                        formatCashRatio(slide.job.details) !==
+                                        '-'
+                                      "
+                                      >({{
+                                        formatCashRatio(slide.job.details)
+                                      }})</small
+                                    ></strong
+                                  ></div
                                 >
                                 <div
-                                  ><span>운용 수량</span
+                                  ><span>보유 수량</span
                                   ><strong>{{
                                     formatInteger(
                                       slide.job.details?.managedQuantity
                                     )
                                   }}</strong></div
                                 >
-                                <div
-                                  ><span>주문 계획</span
-                                  ><strong>{{
-                                    formatBoolean(
-                                      slide.job.details?.orderPlanFound
-                                    )
-                                  }}</strong></div
-                                >
                               </div>
                               <div class="operation-detail-block">
-                                <h4
-                                  >체결
-                                  {{
-                                    (slide.job.details?.executions || [])
-                                      .length
-                                  }}건</h4
-                                >
+                                <h4>체결 내역</h4>
                                 <div
                                   v-if="slide.job.details?.executions?.length"
                                   class="operation-table-scroll"
@@ -383,12 +405,15 @@
                                   >
                                     <thead
                                       ><tr
-                                        ><th>구분</th><th>티어</th
-                                        ><th>주문 유형</th
+                                        ><th class="text-left">구분</th
+                                        ><th class="text-left">티어</th
+                                        ><th class="text-left">주문 유형</th
                                         ><th class="text-right">주문가</th
                                         ><th class="text-right">체결가</th
                                         ><th class="text-right">수량</th
-                                        ><th>Broker ID</th></tr
+                                        ><th class="text-right"
+                                          >Broker ID</th
+                                        ></tr
                                       ></thead
                                     >
                                     <tbody>
@@ -397,11 +422,20 @@
                                           .executions"
                                         :key="execution.executionId"
                                       >
-                                        <td>{{
-                                          sideLabel(execution.tradeSide)
+                                        <td class="text-left"
+                                          ><span
+                                            class="operation-side"
+                                            :class="
+                                              sideClass(execution.tradeSide)
+                                            "
+                                            >{{
+                                              sideLabel(execution.tradeSide)
+                                            }}</span
+                                          ></td
+                                        ><td class="text-left">{{
+                                          execution.tier || '-'
                                         }}</td
-                                        ><td>{{ execution.tier || '-' }}</td
-                                        ><td>{{
+                                        ><td class="text-left">{{
                                           execution.orderType || '-'
                                         }}</td
                                         ><td class="text-right">{{
@@ -413,13 +447,15 @@
                                         ><td class="text-right">{{
                                           formatInteger(execution.quantity)
                                         }}</td
-                                        ><td>{{
+                                        ><td class="text-right">{{
                                           execution.brokerOrderId || '-'
                                         }}</td>
                                       </tr>
                                     </tbody>
                                   </q-markup-table>
-                                  <div class="operation-mobile-rows">
+                                  <div
+                                    class="operation-mobile-rows operation-mobile-rows--three-columns"
+                                  >
                                     <article
                                       v-for="execution in slide.job.details
                                         .executions"
@@ -427,18 +463,32 @@
                                     >
                                       <div class="operation-mobile-row__head">
                                         <strong
-                                          >{{
-                                            sideLabel(execution.tradeSide)
-                                          }}
-                                          · {{ execution.tier || '-' }}</strong
-                                        >
-                                        <span
-                                          >{{
-                                            formatInteger(execution.quantity)
-                                          }}주</span
+                                          ><span
+                                            class="operation-side"
+                                            :class="
+                                              sideClass(execution.tradeSide)
+                                            "
+                                            >{{
+                                              sideLabel(execution.tradeSide)
+                                            }}</span
+                                          ></strong
                                         >
                                       </div>
                                       <dl>
+                                        <div
+                                          ><dt>Tier</dt
+                                          ><dd>{{
+                                            execution.tier || '-'
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>수량</dt
+                                          ><dd
+                                            >{{
+                                              formatInteger(execution.quantity)
+                                            }}주</dd
+                                          ></div
+                                        >
                                         <div
                                           ><dt>주문 유형</dt
                                           ><dd>{{
@@ -474,19 +524,13 @@
                             <template v-else-if="slide.jobType === 'PLAN'">
                               <div class="operation-data-grid">
                                 <div
-                                  ><span>계획 ID</span
-                                  ><strong>{{
-                                    slide.job.details?.planId || '-'
-                                  }}</strong></div
-                                >
-                                <div
-                                  ><span>기준일</span
+                                  ><span>계획 기준일</span
                                   ><strong>{{
                                     slide.job.details?.basisDate || '-'
                                   }}</strong></div
                                 >
                                 <div
-                                  ><span>대상일</span
+                                  ><span>주문 대상일</span
                                   ><strong>{{ slide.targetDate }}</strong></div
                                 >
                                 <div
@@ -496,22 +540,36 @@
                                   }}</strong></div
                                 >
                                 <div
-                                  ><span>기준 매수가</span
+                                  ><span>주문 계획</span
+                                  ><strong
+                                    >{{
+                                      formatInteger(
+                                        (slide.job.details?.orders || []).length
+                                      )
+                                    }}건</strong
+                                  ></div
+                                >
+                                <div
+                                  ><span>대상</span
+                                  ><strong
+                                    >{{
+                                      formatInteger(
+                                        regularPlanCount(
+                                          slide.job.details?.orders
+                                        )
+                                      )
+                                    }}건</strong
+                                  ></div
+                                >
+                                <div
+                                  ><span>매수가</span
                                   ><strong>{{
                                     formatPrice(slide.job.details?.buyPrice)
                                   }}</strong></div
                                 >
-                                <div
-                                  ><span>주문 수</span
-                                  ><strong>{{
-                                    formatInteger(
-                                      (slide.job.details?.orders || []).length
-                                    )
-                                  }}</strong></div
-                                >
                               </div>
                               <div class="operation-detail-block">
-                                <h4>생성 주문</h4>
+                                <h4>주문 계획</h4>
                                 <div
                                   v-if="slide.job.details?.orders?.length"
                                   class="operation-table-scroll"
@@ -524,13 +582,17 @@
                                   >
                                     <thead
                                       ><tr
-                                        ><th>구분</th><th>티어</th><th>계획</th
-                                        ><th>주문 유형</th
+                                        ><th class="text-left">구분</th
+                                        ><th class="text-left">티어</th
+                                        ><th class="text-left">주문 유형</th
+                                        ><th class="text-left">상태</th
+                                        ><th class="text-right">주문가</th
                                         ><th class="text-right">매수가</th
-                                        ><th class="text-right">매도가</th
                                         ><th class="text-right">수량</th
                                         ><th class="text-right">배정 금액</th
-                                        ><th>보유 기간</th></tr
+                                        ><th class="text-right"
+                                          >보유 기간</th
+                                        ></tr
                                       ></thead
                                     >
                                     <tbody>
@@ -539,21 +601,30 @@
                                           .orders"
                                         :key="order.orderId"
                                       >
-                                        <td>{{ sideLabel(order.tradeSide) }}</td
-                                        ><td>{{ order.tier || '-' }}</td
-                                        ><td>{{ order.planType || '-' }}</td
-                                        ><td>{{ order.orderType || '-' }}</td
-                                        ><td class="text-right">{{
-                                          formatPrice(
-                                            order.tradeSide === 'SELL'
-                                              ? order.buyPrice
-                                              : order.orderPrice
-                                          )
+                                        <td class="text-left"
+                                          ><span
+                                            class="operation-side"
+                                            :class="sideClass(order.tradeSide)"
+                                            >{{
+                                              sideLabel(order.tradeSide)
+                                            }}</span
+                                          ></td
+                                        ><td class="text-left">{{
+                                          order.tier || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          order.orderType || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          order.planType || '-'
                                         }}</td
                                         ><td class="text-right">{{
-                                          order.tradeSide === 'SELL'
-                                            ? formatPrice(order.orderPrice)
-                                            : '-'
+                                          formatPrice(order.orderPrice, 2)
+                                        }}</td
+                                        ><td class="text-right">{{
+                                          order.tradeSide === 'BUY'
+                                            ? '-'
+                                            : formatPrice(order.buyPrice, 2)
                                         }}</td
                                         ><td class="text-right">{{
                                           formatInteger(order.quantity)
@@ -561,7 +632,7 @@
                                         ><td class="text-right">{{
                                           formatMoney(order.allocationAmount)
                                         }}</td
-                                        ><td
+                                        ><td class="text-right"
                                           >{{
                                             formatInteger(
                                               order.heldSessionCount
@@ -575,55 +646,56 @@
                                       </tr>
                                     </tbody>
                                   </q-markup-table>
-                                  <div class="operation-mobile-rows">
+                                  <div
+                                    class="operation-mobile-rows operation-mobile-rows--three-columns"
+                                  >
                                     <article
                                       v-for="order in slide.job.details.orders"
                                       :key="`mobile-${order.orderId}`"
                                     >
                                       <div class="operation-mobile-row__head">
                                         <strong
-                                          >{{ sideLabel(order.tradeSide) }} ·
-                                          {{ order.tier || '-' }}</strong
-                                        >
-                                        <span
-                                          >{{
-                                            formatInteger(order.quantity)
-                                          }}주</span
+                                          ><span
+                                            class="operation-side"
+                                            :class="sideClass(order.tradeSide)"
+                                            >{{
+                                              sideLabel(order.tradeSide)
+                                            }}</span
+                                          ></strong
                                         >
                                       </div>
                                       <dl>
                                         <div
-                                          ><dt>계획</dt
-                                          ><dd>{{
-                                            order.planType || '-'
-                                          }}</dd></div
+                                          ><dt>Tier</dt
+                                          ><dd>{{ order.tier || '-' }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>수량</dt
+                                          ><dd
+                                            >{{
+                                              formatInteger(order.quantity)
+                                            }}주</dd
+                                          ></div
                                         >
                                         <div
                                           ><dt>주문 유형</dt
+                                          ><dd
+                                            >{{ order.orderType || '-' }} ·
+                                            {{ order.planType || '-' }}</dd
+                                          ></div
+                                        >
+                                        <div
+                                          ><dt>주문가</dt
                                           ><dd>{{
-                                            order.orderType || '-'
+                                            formatPrice(order.orderPrice, 2)
                                           }}</dd></div
                                         >
                                         <div
                                           ><dt>매수가</dt
                                           ><dd>{{
-                                            formatPrice(
-                                              order.tradeSide === 'SELL'
-                                                ? order.buyPrice
-                                                : order.orderPrice
-                                            )
-                                          }}</dd></div
-                                        >
-                                        <div v-if="order.tradeSide === 'SELL'"
-                                          ><dt>매도가</dt
-                                          ><dd>{{
-                                            formatPrice(order.orderPrice)
-                                          }}</dd></div
-                                        >
-                                        <div
-                                          ><dt>배정 금액</dt
-                                          ><dd>{{
-                                            formatMoney(order.allocationAmount)
+                                            order.tradeSide === 'BUY'
+                                              ? '-'
+                                              : formatPrice(order.buyPrice, 2)
                                           }}</dd></div
                                         >
                                         <div
@@ -651,28 +723,35 @@
                             </template>
 
                             <template v-else>
-                              <div
-                                class="operation-data-grid operation-data-grid--compact"
-                              >
+                              <div class="operation-data-grid">
                                 <div
-                                  ><span>제출 수</span
+                                  ><span>주문 대상일</span
                                   ><strong>{{
-                                    formatInteger(
-                                      slide.job.details?.submissionCount ??
-                                        (slide.job.details?.submissions || [])
-                                          .length
-                                    )
+                                    slide.targetDate || '-'
                                   }}</strong></div
                                 >
                                 <div
-                                  ><span>완료 시각</span
+                                  ><span>주문</span
+                                  ><strong
+                                    >{{
+                                      formatInteger(
+                                        totalSubmissionCount(slide.job.details)
+                                      )
+                                    }}건</strong
+                                  ></div
+                                >
+                                <div
+                                  ><span>Broker</span
                                   ><strong>{{
-                                    formatOperationTime(slide.job.completedAt)
+                                    summarizeSubmissionValues(
+                                      slide.job.details?.submissions,
+                                      'submissionMode'
+                                    )
                                   }}</strong></div
                                 >
                               </div>
                               <div class="operation-detail-block">
-                                <h4>Broker 제출 내역</h4>
+                                <h4>제출 내역</h4>
                                 <div
                                   v-if="slide.job.details?.submissions?.length"
                                   class="operation-table-scroll"
@@ -685,12 +764,16 @@
                                   >
                                     <thead
                                       ><tr
-                                        ><th>구분</th><th>티어</th><th>제출</th
-                                        ><th>주문 유형</th
+                                        ><th class="text-left">구분</th
+                                        ><th class="text-left">티어</th
+                                        ><th class="text-left">주문 유형</th
+                                        ><th class="text-left">제출 방식</th
+                                        ><th class="text-left">상태</th
                                         ><th class="text-right">주문가</th
                                         ><th class="text-right">수량</th
-                                        ><th>Broker ID</th
-                                        ><th>최종 상태</th></tr
+                                        ><th class="text-right"
+                                          >Broker ID</th
+                                        ></tr
                                       ></thead
                                     >
                                     <tbody>
@@ -699,30 +782,36 @@
                                           .submissions"
                                         :key="submission.submissionId"
                                       >
-                                        <td>{{
-                                          sideLabel(submission.tradeSide)
+                                        <td class="text-left"
+                                          ><span
+                                            class="operation-side"
+                                            :class="
+                                              sideClass(submission.tradeSide)
+                                            "
+                                            >{{
+                                              sideLabel(submission.tradeSide)
+                                            }}</span
+                                          ></td
+                                        ><td class="text-left">{{
+                                          submission.tier || '-'
                                         }}</td
-                                        ><td>{{ submission.tier || '-' }}</td
-                                        ><td
-                                          >{{
-                                            submission.submissionMode || '-'
-                                          }}
-                                          · {{ submission.status || '-' }}</td
-                                        ><td>{{
+                                        ><td class="text-left">{{
                                           submission.orderType || '-'
                                         }}</td
+                                        ><td class="text-left">{{
+                                          submission.submissionMode || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          submission.status || '-'
+                                        }}</td
                                         ><td class="text-right">{{
-                                          formatPrice(submission.orderPrice)
+                                          formatPrice(submission.orderPrice, 2)
                                         }}</td
                                         ><td class="text-right">{{
                                           formatInteger(submission.quantity)
                                         }}</td
-                                        ><td>{{
-                                          submission.brokerOrderId || '-'
-                                        }}</td
-                                        ><td
-                                          >{{
-                                            submission.brokerFinalStatus || '-'
+                                        ><td class="text-right"
+                                          >{{ submission.brokerOrderId || '-'
                                           }}<small
                                             v-if="submission.brokerErrorMessage"
                                             class="text-negative"
@@ -734,7 +823,9 @@
                                       </tr>
                                     </tbody>
                                   </q-markup-table>
-                                  <div class="operation-mobile-rows">
+                                  <div
+                                    class="operation-mobile-rows operation-mobile-rows--three-columns"
+                                  >
                                     <article
                                       v-for="submission in slide.job.details
                                         .submissions"
@@ -742,32 +833,22 @@
                                     >
                                       <div class="operation-mobile-row__head">
                                         <strong
-                                          >{{
-                                            sideLabel(submission.tradeSide)
-                                          }}
-                                          · {{ submission.tier || '-' }}</strong
+                                          ><span
+                                            class="operation-side"
+                                            :class="
+                                              sideClass(submission.tradeSide)
+                                            "
+                                            >{{
+                                              sideLabel(submission.tradeSide)
+                                            }}</span
+                                          ></strong
                                         >
-                                        <span>{{
-                                          submission.status || '-'
-                                        }}</span>
                                       </div>
                                       <dl>
                                         <div
-                                          ><dt>제출 방식</dt
+                                          ><dt>Tier</dt
                                           ><dd>{{
-                                            submission.submissionMode || '-'
-                                          }}</dd></div
-                                        >
-                                        <div
-                                          ><dt>주문 유형</dt
-                                          ><dd>{{
-                                            submission.orderType || '-'
-                                          }}</dd></div
-                                        >
-                                        <div
-                                          ><dt>주문가</dt
-                                          ><dd>{{
-                                            formatPrice(submission.orderPrice)
+                                            submission.tier || '-'
                                           }}</dd></div
                                         >
                                         <div
@@ -781,15 +862,30 @@
                                           ></div
                                         >
                                         <div
-                                          ><dt>Broker ID</dt
+                                          ><dt>주문 유형</dt
                                           ><dd>{{
-                                            submission.brokerOrderId || '-'
+                                            submission.orderType || '-'
                                           }}</dd></div
                                         >
                                         <div
-                                          ><dt>최종 상태</dt
+                                          ><dt>주문가</dt
                                           ><dd>{{
-                                            submission.brokerFinalStatus || '-'
+                                            formatPrice(
+                                              submission.orderPrice,
+                                              2
+                                            )
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>상태</dt
+                                          ><dd>{{
+                                            submission.status || '-'
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>Broker ID</dt
+                                          ><dd>{{
+                                            submission.brokerOrderId || '-'
                                           }}</dd></div
                                         >
                                       </dl>
@@ -1578,7 +1674,11 @@ function operationStatusKind(slide) {
 }
 
 function operationStatusLabel(slide) {
-  if (slide.isMissing) return '아직 기록 없음'
+  if (slide.isMissing) {
+    return slide.estimatedTime
+      ? `${slide.estimatedTime} 예정`
+      : '아직 기록 없음'
+  }
   return slide.job?.status || 'UNKNOWN'
 }
 
@@ -1607,8 +1707,37 @@ function compareOperationSlidesByIdDesc(left, right) {
   return missingComesFirst ? 1 : -1
 }
 
+function operationTimeMinute(value) {
+  if (!value) return null
+  return String(value).match(/T(\d{2}:\d{2})/)?.[1] || null
+}
+
+function getMostFrequentOperationTime(jobs, jobType) {
+  const counts = new Map()
+
+  jobs
+    .filter(job => job.jobType === jobType)
+    .forEach(job => {
+      const time = operationTimeMinute(job.startedAt)
+      if (time) counts.set(time, (counts.get(time) || 0) + 1)
+    })
+
+  return (
+    [...counts.entries()].sort(
+      ([leftTime, leftCount], [rightTime, rightCount]) =>
+        rightCount - leftCount || leftTime.localeCompare(rightTime)
+    )[0]?.[0] || null
+  )
+}
+
 function normalizeOperationResult(result = {}) {
   const jobs = Array.isArray(result.jobs) ? result.jobs : []
+  const estimatedTimes = Object.fromEntries(
+    OPERATION_PHASES.map(phase => [
+      phase.jobType,
+      getMostFrequentOperationTime(jobs, phase.jobType)
+    ])
+  )
   const dates = [
     ...new Set(jobs.map(job => job.targetDate).filter(Boolean))
   ].sort((left, right) => right.localeCompare(left))
@@ -1632,6 +1761,7 @@ function normalizeOperationResult(result = {}) {
         targetDate,
         phaseIndex,
         isMissing: !job,
+        estimatedTime: !job ? estimatedTimes[phase.jobType] : null,
         attemptCount: attempts.length,
         job
       }
@@ -1651,8 +1781,7 @@ function getInitialExpandedOperationIds() {
 
 function formatOperationTime(value) {
   if (!value) return '예정'
-  const time = String(value).split('T')[1]
-  return time ? time.slice(0, 5) : '-'
+  return operationTimeMinute(value) || '-'
 }
 
 function formatOperationDuration(job) {
@@ -1670,18 +1799,45 @@ function formatBoolean(value) {
 }
 
 function operationSummary(slide) {
-  if (slide.isMissing) return '아직 실행 기록이 없습니다.'
+  if (slide.isMissing) return '실행 준비 중'
   const details = slide.job?.details || {}
   if (slide.jobType === 'PREPARE') {
-    return `${details.mode || '-'} → ${details.nextMode || '-'} · ${formatClosePrice(details.closePrice)}`
+    return `세션 ${formatInteger(details.completedSessionCount)} · 종가 ${formatClosePrice(details.closePrice)}`
   }
   if (slide.jobType === 'APPLY') {
     return `체결 ${(details.executions || []).length}건 · ${formatMoney(details.totalAsset)}`
   }
   if (slide.jobType === 'PLAN') {
-    return `주문 ${(details.orders || []).length}건 · ${details.mode || '-'}`
+    const orders = details.orders || []
+    const targetCount = regularPlanCount(orders)
+    return `계획 ${orders.length}건 · 대상 ${targetCount}건`
   }
-  return `제출 ${details.submissionCount ?? (details.submissions || []).length}건`
+  return `제출 ${totalSubmissionCount(details)}건`
+}
+
+function regularPlanCount(orders = []) {
+  return orders.filter(
+    order => String(order.planType || '').toUpperCase() === 'REGULAR'
+  ).length
+}
+
+function totalSubmissionCount(details = {}) {
+  return details.submissionCount ?? (details.submissions || []).length
+}
+
+function summarizeSubmissionValues(submissions = [], primaryKey, fallbackKey) {
+  const values = [
+    ...new Set(
+      submissions
+        .map(
+          submission =>
+            submission?.[primaryKey] ||
+            (fallbackKey ? submission?.[fallbackKey] : null)
+        )
+        .filter(Boolean)
+    )
+  ]
+  return values.length ? values.join(' · ') : '-'
 }
 
 function getChartInstance(component) {
@@ -2439,10 +2595,13 @@ function formatMoney(value) {
   return `${number < 0 ? '-' : ''}$${formatNumber(Math.abs(number), 0)}`
 }
 
-function formatPrice(value) {
+function formatPrice(value, minimumFractionDigits = 0) {
   const number = finiteNumber(value)
   if (number === null) return '-'
-  return `$${formatNumber(number, 2)}`
+  return `$${new Intl.NumberFormat('ko-KR', {
+    minimumFractionDigits,
+    maximumFractionDigits: 2
+  }).format(number)}`
 }
 
 function formatClosePrice(value) {
@@ -2484,6 +2643,32 @@ function formatPct(value, showSign = true) {
   return `${showSign && number > 0 ? '+' : ''}${formatNumber(number, 2)}%`
 }
 
+function formatCashRatio(details = {}) {
+  const availableCash = finiteNumber(details?.availableCash)
+  const totalAsset = finiteNumber(details?.totalAsset)
+  if (availableCash === null || totalAsset === null || totalAsset === 0) {
+    return '-'
+  }
+  return formatPct((availableCash / totalAsset) * 100, false)
+}
+
+function maTrendPercent(details = {}) {
+  const ma3 = finiteNumber(details?.ma3)
+  const ma5 = finiteNumber(details?.ma5)
+  if (ma3 === null || ma5 === null || ma5 === 0) return null
+  return ((ma3 - ma5) / Math.abs(ma5)) * 100
+}
+
+function formatMaTrend(details) {
+  const percent = maTrendPercent(details)
+  if (percent === null) return '-'
+  return formatPct(percent)
+}
+
+function maTrendClass(details) {
+  return profitClass(maTrendPercent(details))
+}
+
 function formatCompactNumber(value) {
   const number = finiteNumber(value)
   if (number === null) return '-'
@@ -2521,6 +2706,12 @@ function sideLabel(side) {
   if (side === 'BUY') return '매수'
   if (side === 'SELL') return '매도'
   return side || '-'
+}
+
+function sideClass(side) {
+  if (side === 'BUY') return 'operation-side--buy'
+  if (side === 'SELL') return 'operation-side--sell'
+  return ''
 }
 
 function shortTypeLabel(value) {
@@ -3131,12 +3322,14 @@ function shortTypeLabel(value) {
 }
 
 .operation-status {
+  min-width: 68px;
   padding: 4px 7px;
   border: 1px solid var(--dk-line-strong);
   color: var(--dk-muted);
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.08em;
+  text-align: center;
 }
 
 .operation-status--success {
@@ -3260,6 +3453,18 @@ function shortTypeLabel(value) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.operation-cash-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+
+  small {
+    color: var(--dk-muted);
+    font-size: 0.6rem;
+    font-weight: 500;
+  }
+}
+
 .operation-detail-block {
   margin-top: 10px;
 
@@ -3295,6 +3500,28 @@ function shortTypeLabel(value) {
 
 .operation-mobile-rows {
   display: none;
+}
+
+.operation-side {
+  display: inline-flex;
+  min-width: 30px;
+  padding: 2px 5px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.operation-side--buy {
+  background: var(--agent-accent-soft);
+  color: var(--agent-accent);
+}
+
+.operation-side--sell {
+  background: rgba(157, 74, 63, 0.09);
+  color: #9d4a3f;
 }
 
 .operation-empty-state {
@@ -3768,6 +3995,27 @@ function shortTypeLabel(value) {
       font-size: 0.66rem;
       font-variant-numeric: tabular-nums;
       overflow-wrap: anywhere;
+    }
+  }
+
+  .operation-mobile-rows--three-columns {
+    dl {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+
+      > div {
+        &:nth-child(even) {
+          border-left: 0;
+        }
+
+        &:nth-child(3n + 2),
+        &:nth-child(3n + 3) {
+          border-left: 1px solid var(--dk-line);
+        }
+
+        &:last-child:nth-child(odd) {
+          grid-column: auto;
+        }
+      }
     }
   }
 
