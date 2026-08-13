@@ -1508,6 +1508,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { api } from '@/boot/axios'
+import { getOperationTargetDates } from '@/utils/operation-schedule'
 import { useQuasar } from 'quasar'
 import {
   CategoryScale,
@@ -1726,9 +1727,10 @@ function getPreviousOperationTime(jobs, targetDate, jobType) {
 
 function normalizeOperationResult(result = {}) {
   const jobs = Array.isArray(result.jobs) ? result.jobs : []
-  const dates = [
-    ...new Set(jobs.map(job => job.targetDate).filter(Boolean))
-  ].sort((left, right) => right.localeCompare(left))
+  const dates = getOperationTargetDates(
+    jobs,
+    OPERATION_PHASES.map(phase => phase.jobType)
+  )
 
   const slides = dates.flatMap((targetDate, dateIndex) => {
     const dateJobs = jobs.filter(job => job.targetDate === targetDate)

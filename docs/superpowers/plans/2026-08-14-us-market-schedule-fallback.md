@@ -21,11 +21,13 @@
 ### Task 1: US Market Calendar Utility
 
 **Files:**
+
 - Create: `src/utils/us-market-calendar.js`
 - Create: `tests/us-market-calendar.test.mjs`
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Produces: `isUsMarketDate(dateString: string): boolean`
 - Produces: `getNextUsMarketDate(dateString: string): string`
 
@@ -49,13 +51,14 @@ test('skips recurring US market holidays', () => {
   assert.equal(getNextUsMarketDate('2026-07-02'), '2026-07-06')
   assert.equal(getNextUsMarketDate('2026-04-02'), '2026-04-06')
   assert.equal(getNextUsMarketDate('2026-11-25'), '2026-11-27')
-  assert.equal(getNextUsMarketDate('2021-12-30'), '2022-01-03')
+  assert.equal(getNextUsMarketDate('2022-12-30'), '2023-01-03')
 })
 
 test('identifies regular market dates', () => {
   assert.equal(isUsMarketDate('2026-08-14'), true)
   assert.equal(isUsMarketDate('2026-08-15'), false)
   assert.equal(isUsMarketDate('2026-12-25'), false)
+  assert.equal(isUsMarketDate('2021-12-31'), true)
 })
 ```
 
@@ -84,7 +87,7 @@ export function getNextUsMarketDate(dateString) {
 }
 ```
 
-The holiday set must cover New Year's Day, MLK Day, Presidents Day, Good Friday, Memorial Day, Juneteenth from 2022, Independence Day, Labor Day, Thanksgiving Day, and Christmas Day. Include the following year's New Year's observance so a Friday, December 31 closure is recognized.
+The holiday set must cover New Year's Day, MLK Day, Presidents Day, Good Friday, Memorial Day, Juneteenth from 2022, Independence Day, Labor Day, Thanksgiving Day, and Christmas Day. Follow the NYSE-specific New Year's rule: Sunday is observed on Monday, while a Saturday New Year's Day does not close the preceding Friday.
 
 - [ ] **Step 4: Run the calendar tests and verify GREEN**
 
@@ -102,11 +105,13 @@ git commit -m "Add US market calendar fallback"
 ### Task 2: Agent Operation Upcoming-Date Fallback
 
 **Files:**
+
 - Create: `src/utils/operation-schedule.js`
 - Create: `tests/operation-schedule.test.mjs`
 - Modify: `src/components/agent/AgentPage.vue:1590-1766`
 
 **Interfaces:**
+
 - Consumes: `getNextUsMarketDate(dateString: string): string`
 - Produces: `getOperationTargetDates(jobs: object[], requiredJobTypes: string[]): string[]`
 
@@ -162,15 +167,14 @@ Create a focused utility that sorts unique recorded dates descending and prepend
 import { getNextUsMarketDate } from './us-market-calendar.js'
 
 export function getOperationTargetDates(jobs = [], requiredJobTypes = []) {
-  const dates = [...new Set(jobs.map(job => job.targetDate).filter(Boolean))]
-    .sort((left, right) => right.localeCompare(left))
+  const dates = [
+    ...new Set(jobs.map(job => job.targetDate).filter(Boolean))
+  ].sort((left, right) => right.localeCompare(left))
   const latestDate = dates[0]
   if (!latestDate) return dates
 
   const latestTypes = new Set(
-    jobs
-      .filter(job => job.targetDate === latestDate)
-      .map(job => job.jobType)
+    jobs.filter(job => job.targetDate === latestDate).map(job => job.jobType)
   )
   const isComplete = requiredJobTypes.every(jobType => latestTypes.has(jobType))
   return isComplete ? [getNextUsMarketDate(latestDate), ...dates] : dates

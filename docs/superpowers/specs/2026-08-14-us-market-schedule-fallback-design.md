@@ -14,7 +14,7 @@ Agent Operation 화면은 API가 제공한 `targetDate`만 표시하므로, 최�
 
 ## 미국 개장일 계산
 
-주말과 미국 주식시장의 반복 정규 휴장일을 제외한다. 대상은 신정(대체휴일 포함), MLK Day, Presidents Day, Good Friday, Memorial Day, Juneteenth(대체휴일 포함), Independence Day(대체휴일 포함), Labor Day, Thanksgiving Day, Christmas Day(대체휴일 포함)이다.
+주말과 미국 주식시장의 반복 정규 휴장일을 제외한다. 대상은 신정(NYSE 대체 규칙 포함), MLK Day, Presidents Day, Good Friday, Memorial Day, Juneteenth(대체휴일 포함), Independence Day(대체휴일 포함), Labor Day, Thanksgiving Day, Christmas Day(대체휴일 포함)이다. 토요일 신정은 직전 금요일에 대체 휴장하지 않는 NYSE 규칙을 따른다.
 
 국가 애도일, 재난 등 비정기 휴장은 프런트 규칙만으로 신뢰성 있게 판별할 수 없으므로 범위에서 제외한다. 이런 일정은 향후 서버가 `nextTargetDate`를 제공하면 서버 값을 우선한다.
 
