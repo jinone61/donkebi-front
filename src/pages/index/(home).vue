@@ -10,8 +10,8 @@
             Donkebi는 그 흐름에 맞춰 스스로 생각하고 행동합니다.
           </p>
           <!-- <DkTextLink label="Discover the system" to="#system" /> -->
-          <router-link class="section-link" to="/backtest">
-            Donkebi Backtest <span aria-hidden="true">→</span>
+          <router-link class="section-link" to="/agent">
+            Donkebi Agent <span aria-hidden="true">→</span>
           </router-link>
         </div>
 

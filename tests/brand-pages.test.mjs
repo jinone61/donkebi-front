@@ -13,13 +13,14 @@ test('public navigation reflects the Donkebi agent story', async () => {
 
   assert.deepEqual(
     navigationItems.map(item => item.label),
-    ['SYSTEM', 'PRINCIPLE', 'ORIGIN', 'AGENT', 'BACKTEST']
+    ['HOME', 'BACKTEST', 'AGENT']
   )
+  assert.deepEqual(navigationItems[0], { label: 'HOME', href: '/' })
   assert.deepEqual(
     navigationItems.filter(item => item.to),
     [
-      { label: 'AGENT', to: '/agent' },
-      { label: 'BACKTEST', to: '/backtest' }
+      { label: 'BACKTEST', to: '/backtest' },
+      { label: 'AGENT', to: '/agent' }
     ]
   )
 })
@@ -54,13 +55,21 @@ test('home presents the quiet AI trading agent narrative', async () => {
   }
 })
 
-test('home backtest links target the registered backtest route', async () => {
+test('home primary action opens Agent while backtest actions stay on Backtest', async () => {
   const source = await readSource('src/pages/index/(home).vue')
+  const hero = source.slice(
+    source.indexOf('<section class="hero'),
+    source.indexOf('</section>', source.indexOf('<section class="hero'))
+  )
   const routeTargets = [
     ...source.matchAll(/<router-link[^>]*to="([^"]+)"/g)
   ].map(match => match[1])
 
-  assert.deepEqual(routeTargets, ['/backtest', '/backtest', '/backtest'])
+  assert.match(
+    hero,
+    /<router-link class="section-link" to="\/agent">[\s\S]*?Donkebi Agent/
+  )
+  assert.deepEqual(routeTargets, ['/agent', '/backtest', '/backtest'])
 })
 
 test('mobile system descriptions use the available content width', async () => {
@@ -344,7 +353,7 @@ test('agent operation follows the status API in descending id order', async () =
   assert.match(source, /isMissing: !job/)
   assert.match(
     source,
-    /function getPreviousOperationTime\(jobs, targetDate, jobType\)[\s\S]*?job\.targetDate === targetDate && job\.jobType === jobType[\s\S]*?finiteNumber\(right\.id\)[\s\S]*?operationTimeMinute\(job\.startedAt\)/
+    /function getPreviousOperationTime\(jobs, targetDate, jobType\)[\s\S]*?job\.targetDate === targetDate && job\.jobType === jobType[\s\S]*?finiteNumber\(right\.id\)[\s\S]*?\.map\(job => job\.startedAt\)/
   )
   assert.match(
     source,
@@ -353,7 +362,7 @@ test('agent operation follows the status API in descending id order', async () =
   assert.doesNotMatch(source, /getMostFrequentOperationTime|estimatedTimes/)
   assert.match(
     source,
-    /slide\.estimatedTime[\s\S]*?`\$\{slide\.estimatedTime\} 예정`[\s\S]*?'아직 기록 없음'/
+    /slide\.estimatedTime[\s\S]*?`\$\{formatOperationTime\(slide\.estimatedTime\)\} 예정`[\s\S]*?'아직 기록 없음'/
   )
   assert.match(
     source,
@@ -582,11 +591,56 @@ test('agent tabs use the backtest navigation treatment', async () => {
   )
 })
 
+test('operation timeline switches displayed times between Seoul and New York', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const operationHeading = source.slice(
+    source.lastIndexOf(
+      'class="section-heading section-heading--split"',
+      source.indexOf('id="agent-operation-title"')
+    ),
+    source.indexOf('class="operation-list"')
+  )
+  const operationTitle = operationHeading.slice(
+    0,
+    operationHeading.indexOf('id="agent-operation-title"')
+  )
+
+  assert.match(source, /const operationTimeZone = ref\('KST'\)/)
+  assert.match(
+    source,
+    /const OPERATION_TIME_ZONES = \{[\s\S]*?KST: 'Asia\/Seoul',[\s\S]*?ET: 'America\/New_York'[\s\S]*?\}/
+  )
+  assert.match(
+    operationHeading,
+    /section-heading__updated section-heading__updated--quiet section-heading__updated--operation[\s\S]*?timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"[\s\S]*?operationTimeZone === 'KST'[\s\S]*?@click="operationTimeZone = 'KST'"[\s\S]*?>SEOUL<[\s\S]*?operationTimeZone === 'ET'[\s\S]*?@click="operationTimeZone = 'ET'"[\s\S]*?>NEW YORK<[\s\S]*?section-heading__updated-time[\s\S]*?formatOperationUpdatedAt\(operationUpdatedAt\)/
+  )
+  assert.doesNotMatch(operationTitle, /timeline-timezone-toggle/)
+  assert.doesNotMatch(
+    operationHeading,
+    />UPDATED ·<|section-heading__updated-label/
+  )
+  assert.match(
+    source,
+    /function formatOperationTime\(value\)[\s\S]*?timeZone:\s*OPERATION_TIME_ZONES\[operationTimeZone\.value\][\s\S]*?hourCycle: 'h23'/
+  )
+  assert.match(
+    source,
+    /function formatOperationUpdatedAt\(value\)[\s\S]*?formatZonedDateTime\([\s\S]*?OPERATION_TIME_ZONES\[operationTimeZone\.value\][\s\S]*?operationTimeZone\.value === 'ET' \? 'AUTO' : 'KST'/
+  )
+  assert.match(
+    source,
+    /\.timeline-timezone-toggle \{[\s\S]*?display: inline-flex;[\s\S]*?&\.is-active \{[\s\S]*?color: var\(--dk-ink\);/
+  )
+})
+
 test('agent cards own their update time and icon-only refresh action', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
   const operationTitleIndex = source.indexOf('id="agent-operation-title"')
   const operationHeading = source.slice(
-    source.lastIndexOf('class="section-heading', operationTitleIndex),
+    source.lastIndexOf(
+      'class="section-heading section-heading--split"',
+      operationTitleIndex
+    ),
     source.indexOf('class="operation-list"')
   )
   const performanceHeading = source.slice(
@@ -596,7 +650,7 @@ test('agent cards own their update time and icon-only refresh action', async () 
 
   assert.match(
     operationHeading,
-    /section-heading section-heading--split[\s\S]*?section-heading__meta section-heading__meta--operation[\s\S]*?source-tags[\s\S]*?section-heading__updated[\s\S]*?formatDateTime\(operationUpdatedAt\)[\s\S]*?aria-label="운영 상태 새로고침"[\s\S]*?:loading="isOperationRefreshing"[\s\S]*?@click="fetchOperationResult"/
+    /section-heading section-heading--split[\s\S]*?section-heading__meta section-heading__meta--operation[\s\S]*?source-tags[\s\S]*?section-heading__updated[\s\S]*?formatOperationUpdatedAt\(operationUpdatedAt\)[\s\S]*?aria-label="운영 상태 새로고침"[\s\S]*?:loading="isOperationRefreshing"[\s\S]*?@click="fetchOperationResult"/
   )
   assert.match(
     performanceHeading,
@@ -604,10 +658,7 @@ test('agent cards own their update time and icon-only refresh action', async () 
   )
   assert.match(operationHeading, /icon="refresh"/)
   assert.match(performanceHeading, /icon="refresh"/)
-  assert.match(
-    operationHeading,
-    /section-heading__updated-label"[\s\S]*?>UPDATED ·<\/span[\s\S]*?>[\s\S]*?color="dark"/
-  )
+  assert.doesNotMatch(operationHeading, /section-heading__updated-label/)
   assert.match(
     operationHeading,
     /section-heading__updated section-heading__updated--quiet/
@@ -616,6 +667,10 @@ test('agent cards own their update time and icon-only refresh action', async () 
   assert.match(
     source,
     /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--quiet \{[\s\S]*?min-height: 16px;[\s\S]*?font-size: 0\.59rem;[\s\S]*?letter-spacing: 0\.02em;[\s\S]*?line-height: 16px;[\s\S]*?\.section-heading__updated-label \{[\s\S]*?display: none;[\s\S]*?\.section-heading__refresh \{[\s\S]*?align-self: center;[\s\S]*?width: 16px;[\s\S]*?min-width: 16px;[\s\S]*?height: 16px;[\s\S]*?min-height: 16px;[\s\S]*?margin-right: -7px;[\s\S]*?color: inherit !important;/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--operation \{[\s\S]*?flex-direction: column;[\s\S]*?align-items: flex-end;/
   )
   assert.match(
     source,

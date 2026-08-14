@@ -128,30 +128,52 @@
                     <span>STRATEGY {{ operationResult.strategyId }}</span>
                   </div>
                   <div
-                    class="section-heading__updated section-heading__updated--quiet"
+                    class="section-heading__updated section-heading__updated--quiet section-heading__updated--operation"
                   >
-                    <span class="section-heading__updated-label"
-                      >UPDATED ·</span
+                    <div
+                      class="timeline-timezone-toggle"
+                      role="group"
+                      aria-label="타임라인 시간대"
                     >
-                    <time
-                      :datetime="
-                        operationUpdatedAt
-                          ? operationUpdatedAt.toISOString()
-                          : undefined
-                      "
-                      >{{ formatDateTime(operationUpdatedAt) }}</time
-                    >
-                    <q-btn
-                      flat
-                      dense
-                      round
-                      icon="refresh"
-                      color="dark"
-                      aria-label="운영 상태 새로고침"
-                      class="section-heading__refresh"
-                      :loading="isOperationRefreshing"
-                      @click="fetchOperationResult"
-                    />
+                      <button
+                        type="button"
+                        :class="{ 'is-active': operationTimeZone === 'KST' }"
+                        :aria-pressed="operationTimeZone === 'KST'"
+                        @click="operationTimeZone = 'KST'"
+                        >SEOUL</button
+                      >
+                      <span aria-hidden="true">|</span>
+                      <button
+                        type="button"
+                        :class="{ 'is-active': operationTimeZone === 'ET' }"
+                        :aria-pressed="operationTimeZone === 'ET'"
+                        @click="operationTimeZone = 'ET'"
+                        >NEW YORK</button
+                      >
+                    </div>
+                    <div class="section-heading__updated-time">
+                      <time
+                        :datetime="
+                          operationUpdatedAt
+                            ? operationUpdatedAt.toISOString()
+                            : undefined
+                        "
+                        >{{
+                          formatOperationUpdatedAt(operationUpdatedAt)
+                        }}</time
+                      >
+                      <q-btn
+                        flat
+                        dense
+                        round
+                        icon="refresh"
+                        color="dark"
+                        aria-label="운영 상태 새로고침"
+                        class="section-heading__refresh"
+                        :loading="isOperationRefreshing"
+                        @click="fetchOperationResult"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1678,6 +1700,10 @@ const OPERATION_PHASES = [
   { jobType: 'SUBMIT', label: 'Submit', index: '04' }
 ]
 const OPERATION_WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+const OPERATION_TIME_ZONES = {
+  KST: 'Asia/Seoul',
+  ET: 'America/New_York'
+}
 const chartPresets = [
   { label: '전체', value: 'all' },
   { label: '1개월', value: 1 },
@@ -1703,6 +1729,7 @@ const operationUpdatedAt = ref(null)
 const expandedOperationIds = ref([])
 const visibleHistoryCount = ref(DAILY_HISTORY_PAGE_SIZE)
 const activeTab = ref('operation')
+const operationTimeZone = ref('KST')
 const chartRange = ref({ min: 0, max: 0 })
 const selectedChartPreset = ref('all')
 const isChartRangeDragging = ref(false)
@@ -1746,7 +1773,7 @@ function operationStatusKind(slide) {
 function operationStatusLabel(slide) {
   if (slide.isMissing) {
     return slide.estimatedTime
-      ? `${slide.estimatedTime} 예정`
+      ? `${formatOperationTime(slide.estimatedTime)} 예정`
       : '아직 기록 없음'
   }
   return slide.job?.status || 'UNKNOWN'
@@ -1777,11 +1804,6 @@ function compareOperationSlidesByIdDesc(left, right) {
   return missingComesFirst ? 1 : -1
 }
 
-function operationTimeMinute(value) {
-  if (!value) return null
-  return String(value).match(/T(\d{2}:\d{2})/)?.[1] || null
-}
-
 function getPreviousOperationTime(jobs, targetDate, jobType) {
   if (!targetDate) return null
 
@@ -1793,7 +1815,7 @@ function getPreviousOperationTime(jobs, targetDate, jobType) {
           (finiteNumber(right.id) ?? -Infinity) -
           (finiteNumber(left.id) ?? -Infinity)
       )
-      .map(job => operationTimeMinute(job.startedAt))
+      .map(job => job.startedAt)
       .find(Boolean) || null
   )
 }
@@ -1848,9 +1870,55 @@ function getInitialExpandedOperationIds() {
   return []
 }
 
+function parseOperationDateTime(value) {
+  if (value instanceof Date) return value
+
+  const stringValue = String(value)
+  if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(stringValue)) {
+    return new Date(stringValue)
+  }
+
+  const parts = stringValue.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?$/
+  )
+  if (!parts) return new Date(stringValue)
+
+  const [, year, month, day, hour, minute, second = '0', fraction = ''] = parts
+  const millisecond = Number(`0.${fraction || '0'}`) * 1000
+
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour) - 9,
+      Number(minute),
+      Number(second),
+      millisecond
+    )
+  )
+}
+
 function formatOperationTime(value) {
   if (!value) return '예정'
-  return operationTimeMinute(value) || '-'
+
+  const date = parseOperationDateTime(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: OPERATION_TIME_ZONES[operationTimeZone.value],
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).format(date)
+}
+
+function formatOperationUpdatedAt(value) {
+  return formatZonedDateTime(
+    value,
+    OPERATION_TIME_ZONES[operationTimeZone.value],
+    operationTimeZone.value === 'ET' ? 'AUTO' : 'KST'
+  )
 }
 
 function formatOperationDate(value) {
@@ -3004,6 +3072,16 @@ function shortTypeLabel(value) {
   white-space: nowrap;
 }
 
+.section-heading__updated--operation {
+  gap: 8px;
+}
+
+.section-heading__updated-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .section-heading__refresh {
   flex: 0 0 auto;
   width: 22px;
@@ -3179,6 +3257,41 @@ function shortTypeLabel(value) {
   font-size: 0.58rem;
   font-weight: 600;
   letter-spacing: 0.1em;
+}
+
+.timeline-timezone-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dk-muted);
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+
+  button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    opacity: 0.42;
+    cursor: pointer;
+
+    &.is-active {
+      color: var(--dk-ink);
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 1px solid currentcolor;
+      outline-offset: 3px;
+    }
+  }
+
+  > span {
+    opacity: 0.3;
+  }
 }
 
 .source-tags {
@@ -4093,6 +4206,16 @@ function shortTypeLabel(value) {
       margin-right: -7px;
       color: inherit !important;
     }
+  }
+
+  .section-heading__updated--operation {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+
+  .section-heading__updated-time {
+    justify-content: flex-end;
   }
 
   .source-tags {
