@@ -733,7 +733,7 @@ test('only the next scheduled operation gets a visible inner glow', async () => 
   )
   assert.match(
     nextNodeStyles,
-    /\.operation-node--next::after \{[\s\S]*?inset: 0;[\s\S]*?background: rgba\(91, 111, 78, 0\.72\);[\s\S]*?animation: operation-next-glow 1\.8s/
+    /\.operation-node--next::after \{[\s\S]*?inset: 0;[\s\S]*?background: #357a557e;[\s\S]*?animation: operation-next-glow 2\.2s/
   )
   assert.doesNotMatch(nextNodeStyles, /top: calc\(50%/)
   assert.doesNotMatch(nextNodeStyles, /width: 16px/)
@@ -749,6 +749,58 @@ test('only the next scheduled operation gets a visible inner glow', async () => 
   assert.match(
     source,
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.operation-node--next::after \{[\s\S]*?animation: none;/
+  )
+})
+
+test('the next operation counts down and refreshes once after a three-second grace period', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const cardHeadStyles = source.slice(
+    source.indexOf('.operation-card__head {'),
+    source.indexOf(
+      '.operation-card__meta',
+      source.indexOf('.operation-card__head {')
+    )
+  )
+
+  assert.match(
+    source,
+    /import \{[\s\S]*?getOperationCountdownState,[\s\S]*?getOperationTargetDates[\s\S]*?\} from '@\/utils\/operation-schedule'/
+  )
+  assert.match(
+    source,
+    /worldClockIntervalId = window\.setInterval\(\(\) => \{[\s\S]*?clockNow\.value = new Date\(\)[\s\S]*?\}, 1_000\)/
+  )
+  assert.match(
+    source,
+    /function operationCountdownLabel\(slide\) \{[\s\S]*?getOperationCountdownState\([\s\S]*?return countdown\.phase === 'countdown' \? countdown\.label : ''/
+  )
+  assert.match(
+    source,
+    /<template v-if="operationCountdownLabel\(slide\)">[\s\S]*?실행까지[\s\S]*?class="operation-countdown-value"[\s\S]*?operationCountdownLabel\(slide\)[\s\S]*?남음/
+  )
+  assert.match(
+    source,
+    /function operationSummary\(slide\) \{[\s\S]*?countdown\.phase === 'checking' \? '실행 확인 중' : '실행 준비 중'/
+  )
+  assert.match(
+    cardHeadStyles,
+    /> div:first-child > span \{[\s\S]*?font-variant-numeric: tabular-nums;/
+  )
+  assert.match(
+    cardHeadStyles,
+    /\.operation-countdown-value \{[\s\S]*?font-weight: 600;/
+  )
+  assert.match(
+    source,
+    /function scheduleOperationAutoRefresh\(slides\)[\s\S]*?targetTime \+ 3_000 - Date\.now\(\)[\s\S]*?window\.setTimeout[\s\S]*?autoRefreshedOperationIds\.add\(slide\.id\)[\s\S]*?fetchOperationResult\(\)/
+  )
+  assert.match(
+    source,
+    /watch\(operationSlides, scheduleOperationAutoRefresh, \{ immediate: true \}\)/
+  )
+  assert.match(
+    source,
+    /onBeforeUnmount\(\(\) => \{[\s\S]*?window\.clearTimeout\(operationAutoRefreshTimeoutId\)/
   )
 })
 
@@ -849,7 +901,7 @@ test('agent header aligns only the New York and Seoul clocks', async () => {
   )
   assert.match(
     source,
-    /onMounted\(\(\) => \{[\s\S]*?setInterval[\s\S]*?60_000[\s\S]*?onBeforeUnmount\(\(\) => \{[\s\S]*?clearInterval/
+    /onMounted\(\(\) => \{[\s\S]*?setInterval[\s\S]*?1_000[\s\S]*?onBeforeUnmount\(\(\) => \{[\s\S]*?clearInterval/
   )
   assert.match(source, /\.workspace-intro__times \{[^}]*gap: 0;/)
   assert.match(source, /\.workspace-intro__time-row \{[^}]*min-height: 22px;/)

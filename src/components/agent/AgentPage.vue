@@ -231,7 +231,18 @@
                       <div>
                         <p>{{ slide.index }} · {{ slide.jobType }}</p>
                         <h3 class="dk-serif">{{ slide.label }}</h3>
-                        <span>{{ operationSummary(slide) }}</span>
+                        <span>
+                          <template v-if="operationCountdownLabel(slide)">
+                            실행까지
+                            <strong class="operation-countdown-value">{{
+                              operationCountdownLabel(slide)
+                            }}</strong>
+                            남음
+                          </template>
+                          <template v-else>{{
+                            operationSummary(slide)
+                          }}</template>
+                        </span>
                       </div>
                       <div class="operation-card__meta">
                         <span
@@ -1612,7 +1623,10 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '@/boot/axios'
-import { getOperationTargetDates } from '@/utils/operation-schedule'
+import {
+  getOperationCountdownState,
+  getOperationTargetDates
+} from '@/utils/operation-schedule'
 import { useQuasar } from 'quasar'
 import {
   CategoryScale,
@@ -1751,16 +1765,21 @@ const priceChartComponent = ref(null)
 const performanceChartComponent = ref(null)
 const clockNow = ref(new Date())
 let worldClockIntervalId = null
+let operationAutoRefreshTimeoutId = null
+const autoRefreshedOperationIds = new Set()
 
 onMounted(() => {
   worldClockIntervalId = window.setInterval(() => {
     clockNow.value = new Date()
-  }, 60_000)
+  }, 1_000)
 })
 
 onBeforeUnmount(() => {
   if (worldClockIntervalId !== null) {
     window.clearInterval(worldClockIntervalId)
+  }
+  if (operationAutoRefreshTimeoutId !== null) {
+    window.clearTimeout(operationAutoRefreshTimeoutId)
   }
 })
 
@@ -2015,8 +2034,26 @@ function formatBoolean(value) {
   return '-'
 }
 
+function operationCountdownLabel(slide) {
+  if (!slide.isMissing || !slide.isNextPending) return ''
+
+  const countdown = getOperationCountdownState(
+    operationSlideDateTime(slide),
+    clockNow.value
+  )
+  return countdown.phase === 'countdown' ? countdown.label : ''
+}
+
 function operationSummary(slide) {
-  if (slide.isMissing) return '실행 준비 중'
+  if (slide.isMissing) {
+    if (!slide.isNextPending) return '실행 준비 중'
+
+    const countdown = getOperationCountdownState(
+      operationSlideDateTime(slide),
+      clockNow.value
+    )
+    return countdown.phase === 'checking' ? '실행 확인 중' : '실행 준비 중'
+  }
   const details = slide.job?.details || {}
   if (slide.jobType === 'PREPARE') {
     return `세션 ${formatInteger(details.completedSessionCount)} · 종가 ${formatClosePrice(details.closePrice)}`
@@ -2286,6 +2323,32 @@ const operationSlides = computed(() => {
     }
   })
 })
+
+function scheduleOperationAutoRefresh(slides) {
+  if (operationAutoRefreshTimeoutId !== null) {
+    window.clearTimeout(operationAutoRefreshTimeoutId)
+    operationAutoRefreshTimeoutId = null
+  }
+
+  const slide = slides.find(item => item.isNextPending)
+  if (!slide || autoRefreshedOperationIds.has(slide.id)) return
+
+  const targetTime = operationSlideDateTime(slide)?.getTime()
+  if (!Number.isFinite(targetTime)) return
+
+  const refreshDelay = Math.max(0, targetTime + 3_000 - Date.now())
+  operationAutoRefreshTimeoutId = window.setTimeout(() => {
+    operationAutoRefreshTimeoutId = null
+    if (autoRefreshedOperationIds.has(slide.id)) return
+
+    autoRefreshedOperationIds.add(slide.id)
+    if (!isOperationLoading.value && !isOperationRefreshing.value) {
+      fetchOperationResult()
+    }
+  }, refreshDelay)
+}
+
+watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 
 function isOperationExpanded(id) {
   return expandedOperationIds.value.includes(id)
@@ -3690,7 +3753,7 @@ function shortTypeLabel(value) {
 .operation-node--next::after {
   position: absolute;
   inset: 0;
-  background:  #357a557e;
+  background: #357a557e;
   pointer-events: none;
   animation: operation-next-glow 2.2s ease-in-out infinite;
   content: '';
@@ -3763,6 +3826,12 @@ function shortTypeLabel(value) {
   > div:first-child > span {
     color: var(--dk-muted);
     font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+
+    .operation-countdown-value {
+      // color: var(--dk-ink);
+      font-weight: 600;
+    }
   }
 }
 
