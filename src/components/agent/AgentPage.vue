@@ -45,21 +45,21 @@
         </div>
         <div class="workspace-intro__status">
           <span class="system-state"><i></i> AGENT CONNECTED</span>
-          <div class="workspace-intro__update">
-            <p v-if="lastUpdatedAt">
-              UPDATED · {{ formatDateTime(lastUpdatedAt) }}
-            </p>
-            <q-btn
-              flat
-              dense
-              round
-              icon="refresh"
-              color="dark"
-              aria-label="새로고침"
-              class="workspace-intro__refresh"
-              :loading="isRefreshing"
-              @click="refreshActiveTab"
-            />
+          <div class="workspace-intro__times" aria-label="지역별 현재 시각">
+            <div class="workspace-intro__time-row">
+              <span>NEW YORK</span>
+              <i aria-hidden="true">·</i>
+              <time :datetime="clockNow.toISOString()">
+                {{ formatZonedDateTime(clockNow, 'America/New_York', 'AUTO') }}
+              </time>
+            </div>
+            <div class="workspace-intro__time-row">
+              <span>SEOUL</span>
+              <i aria-hidden="true">·</i>
+              <time :datetime="clockNow.toISOString()">
+                {{ formatZonedDateTime(clockNow, 'Asia/Seoul', 'KST') }}
+              </time>
+            </div>
           </div>
         </div>
       </section>
@@ -114,15 +114,45 @@
                 <div>
                   <p class="section-index">01 · LIVE OPERATION</p>
                   <h2 id="agent-operation-title" class="dk-serif">
-                    {{ operationResult.symbol }} Operation
+                    Agent Operation
                   </h2>
-                  <p>
+                  <p class="section-heading__description">
                     Donkebi Agent가 시장을 관찰하고 행동한 기록을 확인합니다.
                   </p>
                 </div>
-                <div class="source-tags">
-                  <span>{{ operationResult.owner || 'PRIVATE' }}</span>
-                  <span>STRATEGY {{ operationResult.strategyId }}</span>
+                <div
+                  class="section-heading__meta section-heading__meta--operation"
+                >
+                  <div class="source-tags">
+                    <span>{{ operationResult.owner || 'PRIVATE' }}</span>
+                    <span>STRATEGY {{ operationResult.strategyId }}</span>
+                  </div>
+                  <div
+                    class="section-heading__updated section-heading__updated--quiet"
+                  >
+                    <span class="section-heading__updated-label"
+                      >UPDATED ·</span
+                    >
+                    <time
+                      :datetime="
+                        operationUpdatedAt
+                          ? operationUpdatedAt.toISOString()
+                          : undefined
+                      "
+                      >{{ formatDateTime(operationUpdatedAt) }}</time
+                    >
+                    <q-btn
+                      flat
+                      dense
+                      round
+                      icon="refresh"
+                      color="dark"
+                      aria-label="운영 상태 새로고침"
+                      class="section-heading__refresh"
+                      :loading="isOperationRefreshing"
+                      @click="fetchOperationResult"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -135,12 +165,8 @@
                   v-for="slide in operationSlides"
                   :key="slide.id"
                   class="operation-slide"
-                  :class="{ 'is-date-start': slide.isDateStart }"
                 >
                   <aside class="operation-rail">
-                    <time v-if="slide.isDateStart" class="operation-date">
-                      {{ slide.targetDate }}
-                    </time>
                     <span
                       class="operation-node"
                       :class="`operation-node--${operationStatusKind(slide)}`"
@@ -905,6 +931,19 @@
                       </div>
                     </q-slide-transition>
                   </q-card>
+                  <div
+                    v-if="slide.isDateBoundary"
+                    class="operation-date-divider"
+                    role="separator"
+                    :aria-label="`${slide.targetDate} 날짜 구분`"
+                  >
+                    <div class="operation-date-divider__rail">
+                      <span></span>
+                      <time :datetime="slide.targetDate">{{
+                        formatOperationDate(slide.targetDate)
+                      }}</time>
+                    </div>
+                  </div>
                 </article>
               </div>
               <div v-else class="operation-empty-state">
@@ -958,20 +997,50 @@
                   <div>
                     <p class="section-index">01 · CURRENT STATE</p>
                     <h2 id="agent-overview-title" class="dk-serif">
-                      {{ agentResult.symbol }} Agent
+                      Agent Performance
                     </h2>
                     <p>
                       {{ agentResult.evaluation.fromDate }} —
                       {{ agentResult.evaluation.throughDate }}
                     </p>
                   </div>
-                  <div class="source-tags">
-                    <span>{{
-                      agentResult.finalPortfolio.currency || 'USD'
-                    }}</span>
-                    <span>{{
-                      agentResult.finalPortfolio.source || 'UNKNOWN SOURCE'
-                    }}</span>
+                  <div
+                    class="section-heading__meta section-heading__meta--performance"
+                  >
+                    <div class="source-tags">
+                      <span>{{
+                        agentResult.finalPortfolio.currency || 'USD'
+                      }}</span>
+                      <span>{{
+                        agentResult.finalPortfolio.source || 'UNKNOWN SOURCE'
+                      }}</span>
+                    </div>
+                    <div
+                      class="section-heading__updated section-heading__updated--quiet"
+                    >
+                      <span class="section-heading__updated-label"
+                        >UPDATED ·</span
+                      >
+                      <time
+                        :datetime="
+                          performanceUpdatedAt
+                            ? performanceUpdatedAt.toISOString()
+                            : undefined
+                        "
+                        >{{ formatDateTime(performanceUpdatedAt) }}</time
+                      >
+                      <q-btn
+                        flat
+                        dense
+                        round
+                        icon="refresh"
+                        color="dark"
+                        aria-label="성과 정보 새로고침"
+                        class="section-heading__refresh"
+                        :loading="isPerformanceRefreshing"
+                        @click="fetchAgentResult"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1506,7 +1575,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '@/boot/axios'
 import { getOperationTargetDates } from '@/utils/operation-schedule'
 import { useQuasar } from 'quasar'
@@ -1608,6 +1677,7 @@ const OPERATION_PHASES = [
   { jobType: 'PLAN', label: 'Plan', index: '03' },
   { jobType: 'SUBMIT', label: 'Submit', index: '04' }
 ]
+const OPERATION_WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const chartPresets = [
   { label: '전체', value: 'all' },
   { label: '1개월', value: 1 },
@@ -1639,17 +1709,20 @@ const isChartRangeDragging = ref(false)
 const chartHoverDate = ref(null)
 const priceChartComponent = ref(null)
 const performanceChartComponent = ref(null)
+const clockNow = ref(new Date())
+let worldClockIntervalId = null
 
-const isRefreshing = computed(() =>
-  activeTab.value === 'operation'
-    ? isOperationRefreshing.value
-    : isPerformanceRefreshing.value
-)
-const lastUpdatedAt = computed(() =>
-  activeTab.value === 'operation'
-    ? operationUpdatedAt.value
-    : performanceUpdatedAt.value
-)
+onMounted(() => {
+  worldClockIntervalId = window.setInterval(() => {
+    clockNow.value = new Date()
+  }, 60_000)
+})
+
+onBeforeUnmount(() => {
+  if (worldClockIntervalId !== null) {
+    window.clearInterval(worldClockIntervalId)
+  }
+})
 
 function finiteNumber(value) {
   if (value === null || value === undefined || value === '') return null
@@ -1762,7 +1835,10 @@ function normalizeOperationResult(result = {}) {
 
     return dateSlides
       .sort(compareOperationSlidesByIdDesc)
-      .map((slide, index) => ({ ...slide, isDateStart: index === 0 }))
+      .map((slide, index) => ({
+        ...slide,
+        isDateBoundary: index === dateSlides.length - 1
+      }))
   })
 
   return { ...result, jobs, slides }
@@ -1775,6 +1851,29 @@ function getInitialExpandedOperationIds() {
 function formatOperationTime(value) {
   if (!value) return '예정'
   return operationTimeMinute(value) || '-'
+}
+
+function formatOperationDate(value) {
+  if (!value) return '-'
+
+  const [year, month, day] = String(value).split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  const isValidDate =
+    Number.isInteger(year) &&
+    Number.isInteger(month) &&
+    Number.isInteger(day) &&
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+
+  if (!isValidDate) return '-'
+
+  const formattedDate = [year, month, day]
+    .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0'))
+    .join('.')
+  const weekday = OPERATION_WEEKDAYS[date.getUTCDay()]
+
+  return `${formattedDate} ${weekday}`
 }
 
 function formatOperationDuration(job) {
@@ -2111,12 +2210,6 @@ async function fetchAgentResult() {
     isPerformanceLoading.value = false
     isPerformanceRefreshing.value = false
   }
-}
-
-function refreshActiveTab() {
-  return activeTab.value === 'operation'
-    ? fetchOperationResult()
-    : fetchAgentResult()
 }
 
 function checkPassword() {
@@ -2676,16 +2769,38 @@ function formatCompactNumber(value) {
   }).format(number)
 }
 
-function formatDateTime(date) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
+function formatZonedDateTime(value, timeZone, zoneLabel = '') {
+  if (!value) return '-'
+
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const options = {
+    timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+    weekday: 'short',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
-  }).format(date)
+    hourCycle: 'h23'
+  }
+  if (zoneLabel === 'AUTO') options.timeZoneName = 'short'
+
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', options)
+      .formatToParts(date)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  )
+  const formatted = `${parts.year}.${parts.month}.${parts.day} ${parts.weekday.toUpperCase()} · ${parts.hour}:${parts.minute}`
+  const suffix = zoneLabel === 'AUTO' ? parts.timeZoneName : zoneLabel
+
+  return suffix ? `${formatted} ${suffix}` : formatted
+}
+
+function formatDateTime(date) {
+  return formatZonedDateTime(date, 'Asia/Seoul', 'KST')
 }
 
 function profitClass(value) {
@@ -2830,16 +2945,66 @@ function shortTypeLabel(value) {
   }
 }
 
-.workspace-intro__update {
-  display: flex;
+.workspace-intro__times {
+  display: grid;
   width: 100%;
-  min-height: 28px;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
+  gap: 0;
 }
 
-.workspace-intro__refresh {
+.workspace-intro__time-row {
+  display: grid;
+  width: 100%;
+  min-height: 22px;
+  grid-template-columns: 62px 8px minmax(0, max-content) auto;
+  align-items: center;
+  column-gap: 6px;
+  color: var(--dk-muted);
+  font-size: 0.61rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+
+  > span {
+    letter-spacing: 0.1em;
+  }
+
+  > i {
+    font-style: normal;
+    text-align: center;
+  }
+
+  time {
+    white-space: nowrap;
+  }
+}
+
+.section-heading__meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.section-heading__meta--operation {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.section-heading__updated {
+  display: flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 4px;
+  color: var(--dk-muted);
+  font-size: 0.59rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.section-heading__refresh {
   flex: 0 0 auto;
   width: 22px;
   min-width: 22px;
@@ -2964,6 +3129,12 @@ function shortTypeLabel(value) {
   }
 
   > div > p:last-child {
+    margin: 0;
+    color: var(--dk-muted);
+    font-size: 0.75rem;
+  }
+
+  &__description {
     margin: 0;
     color: var(--dk-muted);
     font-size: 0.75rem;
@@ -3142,15 +3313,17 @@ function shortTypeLabel(value) {
 
 .operation-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 
 .operation-slide {
   position: relative;
   display: grid;
   min-width: 0;
+  margin-bottom: 8px;
   grid-template-columns: 132px minmax(0, 1fr);
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 0;
 }
 
 .operation-rail {
@@ -3177,21 +3350,56 @@ function shortTypeLabel(value) {
     font-weight: 600;
   }
 
-  time:not(.operation-date) {
+  time {
     color: var(--dk-muted);
     font-size: 0.62rem;
     letter-spacing: 0.05em;
   }
 }
 
-.operation-date {
-  position: absolute;
-  top: 2px;
-  left: 35px;
-  font-size: 0.61rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
+.operation-date-divider {
+  height: 28px;
+  grid-column: 1 / -1;
+}
+
+.operation-date-divider__rail {
+  position: relative;
+  height: 100%;
+  min-width: 0;
+
+  &::before {
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    left: 11px;
+    width: 1px;
+    background: var(--dk-line-strong);
+    content: '';
+  }
+
+  span {
+    position: absolute;
+    top: calc(50% + 4px);
+    left: 9px;
+    z-index: 1;
+    width: 5px;
+    height: 5px;
+    background: var(--dk-line-strong);
+    transform: translateY(-50%);
+  }
+
+  time {
+    position: absolute;
+    top: calc(50% + 4px);
+    left: 27px;
+    color: var(--dk-muted);
+    font-size: 0.58rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+    transform: translateY(-50%);
+    white-space: nowrap;
+  }
 }
 
 .operation-node {
@@ -3846,6 +4054,47 @@ function shortTypeLabel(value) {
     align-items: flex-start;
   }
 
+  .section-heading__meta {
+    align-items: flex-start;
+  }
+
+  .section-heading__meta--operation {
+    width: 100%;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .section-heading__meta--performance {
+    width: 100%;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .section-heading__updated--quiet {
+    min-height: 16px;
+    font-size: 0.59rem;
+    letter-spacing: 0.02em;
+    line-height: 16px;
+
+    .section-heading__updated-label {
+      display: none;
+    }
+
+    .section-heading__refresh {
+      align-self: center;
+      width: 16px;
+      min-width: 16px;
+      height: 16px;
+      min-height: 16px;
+      margin-right: -7px;
+      color: inherit !important;
+    }
+  }
+
   .source-tags {
     justify-content: flex-start;
   }
@@ -3889,7 +4138,11 @@ function shortTypeLabel(value) {
 
   .operation-slide {
     grid-template-columns: 78px minmax(0, 1fr);
-    gap: 6px;
+    column-gap: 6px;
+  }
+
+  .operation-date-divider {
+    height: 24px;
   }
 
   .operation-rail {
@@ -3907,10 +4160,22 @@ function shortTypeLabel(value) {
     }
   }
 
-  .operation-date {
-    top: 1px;
-    left: 25px;
-    font-size: 0.54rem;
+  .operation-date-divider__rail {
+    &::before {
+      left: 8px;
+    }
+
+    span {
+      left: 6px;
+      width: 5px;
+      height: 5px;
+    }
+
+    time {
+      left: 22px;
+      font-size: 0.52rem;
+      letter-spacing: 0.025em;
+    }
   }
 
   .operation-node {

@@ -373,7 +373,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /계획 기준일[\s\S]*?slide\.job\.details\?\.calculatedThroughDate[\s\S]*?주문 대상일[\s\S]*?slide\.targetDate[\s\S]*?완료 세션[\s\S]*?slide\.job\.details\?\.completedSessionCount[\s\S]*?종가[\s\S]*?slide\.job\.details\?\.closePrice/
+    /계획 기준일[\s\S]*?slide\.job\.details\s*\?\.calculatedThroughDate[\s\S]*?주문 대상일[\s\S]*?slide\.targetDate[\s\S]*?완료 세션[\s\S]*?slide\.job\.details\?\.completedSessionCount[\s\S]*?종가[\s\S]*?slide\.job\.details\?\.closePrice/
   )
   assert.match(
     source,
@@ -390,7 +390,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /function formatCashRatio\(details = \{\}\)[\s\S]*?availableCash \/ totalAsset[\s\S]*?formatPct[\s\S]*?false/
+    /function formatCashRatio\(details = \{\}\)[\s\S]*?formatPct[\s\S]*?availableCash \/ totalAsset[\s\S]*?false/
   )
   assert.match(
     source,
@@ -438,7 +438,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /주문 대상일[\s\S]*?<span>주문<\/span[\s\S]*?totalSubmissionCount\(slide\.job\.details\)[\s\S]*?<span>Broker<\/span[\s\S]*?summarizeSubmissionValues[\s\S]*?'submissionMode'/
+    /주문 대상일[\s\S]*?<span>주문<\/span[\s\S]*?totalSubmissionCount\(\s*slide\.job\.details\s*\)[\s\S]*?<span>Broker<\/span[\s\S]*?summarizeSubmissionValues[\s\S]*?'submissionMode'/
   )
   assert.match(
     source,
@@ -477,7 +477,25 @@ test('agent operation follows the status API in descending id order', async () =
     /const missingComesFirst = missingSlide\.phaseIndex > recordedSlide\.phaseIndex/
   )
   assert.match(source, /\.sort\(compareOperationSlidesByIdDesc\)/)
-  assert.match(source, /isDateStart: index === 0/)
+  assert.match(source, /isDateBoundary: index === dateSlides\.length - 1/)
+  assert.match(
+    source,
+    /slide\.isDateBoundary[\s\S]*?operation-date-divider[\s\S]*?formatOperationDate\(slide\.targetDate\)/
+  )
+  assert.match(
+    source,
+    /const OPERATION_WEEKDAYS = \[\s*'SUN',\s*'MON',\s*'TUE',\s*'WED',\s*'THU',\s*'FRI',\s*'SAT'\s*\][\s\S]*?function formatOperationDate\(value\)[\s\S]*?Date\.UTC\(year, month - 1, day\)[\s\S]*?OPERATION_WEEKDAYS\[date\.getUTCDay\(\)\][\s\S]*?formattedDate\} \$\{weekday\}/
+  )
+  assert.match(
+    source,
+    /\.operation-date-divider__rail \{[\s\S]*?height: 100%;[\s\S]*?span \{[\s\S]*?background: var\(--dk-line-strong\);/
+  )
+  assert.match(source, /\.operation-date-divider \{[^}]*grid-column: 1 \/ -1;/)
+  assert.match(
+    source,
+    /\.operation-date-divider__rail \{[\s\S]*?span \{[\s\S]*?top: calc\(50% \+ 4px\);[\s\S]*?transform: translateY\(-50%\);[\s\S]*?time \{[\s\S]*?top: calc\(50% \+ 4px\);[\s\S]*?transform: translateY\(-50%\);/
+  )
+  assert.doesNotMatch(source, /isDateStart/)
   assert.match(
     source,
     /\.operation-status \{[\s\S]*?min-width: 68px;[\s\S]*?text-align: center;/
@@ -564,22 +582,103 @@ test('agent tabs use the backtest navigation treatment', async () => {
   )
 })
 
-test('agent refresh sits beside the update time as an icon-only action', async () => {
+test('agent cards own their update time and icon-only refresh action', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
-  const updateRow = source.slice(
-    source.indexOf('<div class="workspace-intro__update">'),
-    source.indexOf('</div>', source.indexOf('class="workspace-intro__refresh"'))
+  const operationTitleIndex = source.indexOf('id="agent-operation-title"')
+  const operationHeading = source.slice(
+    source.lastIndexOf('class="section-heading', operationTitleIndex),
+    source.indexOf('class="operation-list"')
+  )
+  const performanceHeading = source.slice(
+    source.indexOf('id="agent-overview-title"'),
+    source.indexOf('class="summary-grid"')
   )
 
-  assert.match(updateRow, /UPDATED · \{\{ formatDateTime\(lastUpdatedAt\) \}\}/)
-  assert.match(updateRow, /icon="refresh"/)
-  assert.match(updateRow, /round/)
-  assert.match(updateRow, /aria-label="새로고침"/)
-  assert.doesNotMatch(updateRow, /\n\s+label="새로고침"/)
+  assert.match(
+    operationHeading,
+    /section-heading section-heading--split[\s\S]*?section-heading__meta section-heading__meta--operation[\s\S]*?source-tags[\s\S]*?section-heading__updated[\s\S]*?formatDateTime\(operationUpdatedAt\)[\s\S]*?aria-label="운영 상태 새로고침"[\s\S]*?:loading="isOperationRefreshing"[\s\S]*?@click="fetchOperationResult"/
+  )
+  assert.match(
+    performanceHeading,
+    /section-heading__meta section-heading__meta--performance[\s\S]*?source-tags[\s\S]*?section-heading__updated section-heading__updated--quiet[\s\S]*?section-heading__updated-label[\s\S]*?formatDateTime\(performanceUpdatedAt\)[\s\S]*?aria-label="성과 정보 새로고침"[\s\S]*?:loading="isPerformanceRefreshing"[\s\S]*?@click="fetchAgentResult"/
+  )
+  assert.match(operationHeading, /icon="refresh"/)
+  assert.match(performanceHeading, /icon="refresh"/)
+  assert.match(
+    operationHeading,
+    /section-heading__updated-label"[\s\S]*?>UPDATED ·<\/span[\s\S]*?>[\s\S]*?color="dark"/
+  )
+  assert.match(
+    operationHeading,
+    /section-heading__updated section-heading__updated--quiet/
+  )
+  assert.match(performanceHeading, /section-heading__updated--quiet/)
   assert.match(
     source,
-    /\.workspace-intro__update \{[\s\S]*?width: 100%;[\s\S]*?justify-content: flex-start;[\s\S]*?gap: 6px;/
+    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--quiet \{[\s\S]*?min-height: 16px;[\s\S]*?font-size: 0\.59rem;[\s\S]*?letter-spacing: 0\.02em;[\s\S]*?line-height: 16px;[\s\S]*?\.section-heading__updated-label \{[\s\S]*?display: none;[\s\S]*?\.section-heading__refresh \{[\s\S]*?align-self: center;[\s\S]*?width: 16px;[\s\S]*?min-width: 16px;[\s\S]*?height: 16px;[\s\S]*?min-height: 16px;[\s\S]*?margin-right: -7px;[\s\S]*?color: inherit !important;/
   )
+  assert.match(
+    source,
+    /\.section-heading__meta--operation \{[\s\S]*?flex-direction: column;[\s\S]*?align-items: flex-end;[\s\S]*?justify-content: flex-end;/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__meta--operation \{[\s\S]*?width: 100%;[\s\S]*?flex-direction: row;[\s\S]*?align-items: flex-end;[\s\S]*?justify-content: space-between;/
+  )
+  assert.match(
+    source,
+    /\.section-heading__meta--performance \{[\s\S]*?width: 100%;[\s\S]*?flex-direction: row;[\s\S]*?align-items: flex-end;[\s\S]*?justify-content: space-between;/
+  )
+  assert.doesNotMatch(operationHeading, /\n\s+label="새로고침"/)
+  assert.doesNotMatch(performanceHeading, /\n\s+label="새로고침"/)
+  assert.match(
+    source,
+    /\.section-heading__meta \{[\s\S]*?align-items: flex-end;[\s\S]*?gap: 4px;/
+  )
+  assert.match(
+    source,
+    /\.section-heading__updated \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?font-size: 0\.59rem;/
+  )
+  assert.match(
+    source,
+    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__meta \{[\s\S]*?align-items: flex-start;/
+  )
+})
+
+test('agent header aligns only the New York and Seoul clocks', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const timeRows = source.slice(
+    source.indexOf('class="workspace-intro__times"'),
+    source.indexOf(
+      '</section>',
+      source.indexOf('class="workspace-intro__times"')
+    )
+  )
+
+  assert.ok(timeRows.indexOf('NEW YORK') < timeRows.indexOf('SEOUL'))
+  assert.match(
+    timeRows,
+    /formatZonedDateTime\(clockNow, 'Asia\/Seoul', 'KST'\)/
+  )
+  assert.match(
+    timeRows,
+    /formatZonedDateTime\(\s*clockNow,\s*'America\/New_York',\s*'AUTO'\s*\)/
+  )
+  assert.doesNotMatch(timeRows, /UPDATED|refresh/)
+  assert.match(
+    source,
+    /function formatZonedDateTime\(value, timeZone, zoneLabel = ''\)[\s\S]*?weekday: 'short'[\s\S]*?timeZoneName = 'short'[\s\S]*?weekday\.toUpperCase\(\)/
+  )
+  assert.match(
+    source,
+    /function formatDateTime\(date\) \{\s*return formatZonedDateTime\(date, 'Asia\/Seoul', 'KST'\)\s*\}/
+  )
+  assert.match(
+    source,
+    /onMounted\(\(\) => \{[\s\S]*?setInterval[\s\S]*?60_000[\s\S]*?onBeforeUnmount\(\(\) => \{[\s\S]*?clearInterval/
+  )
+  assert.match(source, /\.workspace-intro__times \{[^}]*gap: 0;/)
+  assert.match(source, /\.workspace-intro__time-row \{[^}]*min-height: 22px;/)
 })
 
 test('agent page covers current status charts and operation history', async () => {
@@ -724,11 +823,12 @@ test('agent loads and refreshes operation and performance independently', async 
     source,
     /watch\(activeTab,[\s\S]*?tab === 'performance'[\s\S]*?!agentResult\.value[\s\S]*?fetchAgentResult\(\)/
   )
-  assert.match(
+  assert.match(source, /@click="fetchOperationResult"/)
+  assert.match(source, /@click="fetchAgentResult"/)
+  assert.doesNotMatch(
     source,
-    /function refreshActiveTab\(\)[\s\S]*?activeTab\.value === 'operation'[\s\S]*?fetchOperationResult\(\)[\s\S]*?fetchAgentResult\(\)/
+    /function refreshActiveTab\(|lastUpdatedAt|isRefreshing/
   )
-  assert.match(source, /@click="refreshActiveTab"/)
 })
 
 test('agent data workspace follows the backtest layout system', async () => {
