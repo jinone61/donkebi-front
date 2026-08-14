@@ -362,7 +362,7 @@ test('agent operation follows the status API in descending id order', async () =
   assert.doesNotMatch(source, /getMostFrequentOperationTime|estimatedTimes/)
   assert.match(
     source,
-    /slide\.estimatedTime[\s\S]*?`\$\{formatOperationTime\(slide\.estimatedTime\)\} 예정`[\s\S]*?'아직 기록 없음'/
+    /slide\.estimatedTime[\s\S]*?`\$\{formatOperationTime\(operationSlideDateTime\(slide\)\)\} 예정`[\s\S]*?'아직 기록 없음'/
   )
   assert.match(
     source,
@@ -486,10 +486,33 @@ test('agent operation follows the status API in descending id order', async () =
     /const missingComesFirst = missingSlide\.phaseIndex > recordedSlide\.phaseIndex/
   )
   assert.match(source, /\.sort\(compareOperationSlidesByIdDesc\)/)
-  assert.match(source, /isDateBoundary: index === dateSlides\.length - 1/)
+  assert.doesNotMatch(
+    source,
+    /isDateBoundary: index === dateSlides\.length - 1/
+  )
   assert.match(
     source,
-    /slide\.isDateBoundary[\s\S]*?operation-date-divider[\s\S]*?formatOperationDate\(slide\.targetDate\)/
+    /const operationSlides = computed\(\(\) => \{[\s\S]*?const slides = operationResult\.value\?\.slides \|\| \[\][\s\S]*?timelineDate = operationTimelineDate\(slide\)[\s\S]*?nextTimelineDate = operationTimelineDate\(slides\[index \+ 1\]\)[\s\S]*?isDateBoundary: timelineDate !== nextTimelineDate/
+  )
+  assert.match(
+    source,
+    /slide\.isDateBoundary[\s\S]*?operation-date-divider[\s\S]*?:datetime="slide\.timelineDate"[\s\S]*?formatOperationDate\(slide\.timelineDate\)/
+  )
+  assert.match(
+    source,
+    /function operationTimelineDate\(slide\)[\s\S]*?operationSlideDateTime\(slide\)[\s\S]*?timeZone: OPERATION_TIME_ZONES\[operationTimeZone\.value\][\s\S]*?return `\$\{parts\.year\}-\$\{parts\.month\}-\$\{parts\.day\}`/
+  )
+  assert.match(
+    source,
+    /function operationSlideDateTime\(slide\)[\s\S]*?slide\?\.job\?\.startedAt[\s\S]*?slide\?\.estimatedTime[\s\S]*?slide\?\.targetDate/
+  )
+  assert.match(
+    source,
+    /class="operation-rail"[\s\S]*?formatOperationTime\(operationSlideDateTime\(slide\)\)/
+  )
+  assert.match(
+    source,
+    /function formatOperationTime\(value\) \{[\s\S]*?if \(!value\) return '--:--'/
   )
   assert.match(
     source,
@@ -630,6 +653,102 @@ test('operation timeline switches displayed times between Seoul and New York', a
   assert.match(
     source,
     /\.timeline-timezone-toggle \{[\s\S]*?display: inline-flex;[\s\S]*?&\.is-active \{[\s\S]*?color: var\(--dk-ink\);/
+  )
+})
+
+test('operation timezone changes use restrained accessible motion', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const operationListIndex = source.indexOf('class="operation-list"')
+  const timelineTimeMotion = source.slice(
+    source.indexOf('.timeline-time-enter-active'),
+    source.indexOf('.timeline-date-enter-active')
+  )
+  const operationTimeline = source.slice(
+    source.lastIndexOf('<TransitionGroup', operationListIndex),
+    source.indexOf('class="operation-empty-state"')
+  )
+
+  assert.match(
+    operationTimeline,
+    /class="operation-rail__time"[\s\S]*?<Transition name="timeline-time">[\s\S]*?<time :key="operationTimeZone">[\s\S]*?formatOperationTime\(operationSlideDateTime\(slide\)\)/
+  )
+  assert.match(
+    operationTimeline,
+    /<Transition name="timeline-date">[\s\S]*?v-if="slide\.isDateBoundary"[\s\S]*?operation-date-divider/
+  )
+  assert.match(
+    operationTimeline,
+    /<TransitionGroup[\s\S]*?tag="div"[\s\S]*?name="operation-flow"[\s\S]*?class="operation-list"[\s\S]*?v-for="slide in operationSlides"/
+  )
+  assert.match(
+    source,
+    /\.timeline-time-enter-active,[\s\S]*?\.timeline-time-leave-active \{[\s\S]*?transition:[\s\S]*?160ms/
+  )
+  assert.doesNotMatch(timelineTimeMotion, /transform/)
+  assert.match(
+    source,
+    /\.operation-rail__time \{[\s\S]*?position: relative;[\s\S]*?min-height: 1em;[\s\S]*?time \{[\s\S]*?position: absolute;[\s\S]*?inset: 0 auto auto 0;[\s\S]*?font-variant-numeric: tabular-nums;/
+  )
+  assert.match(
+    source,
+    /\.timeline-date-enter-from,[\s\S]*?\.timeline-date-leave-to \{[\s\S]*?opacity: 0;[\s\S]*?translateY\(3px\)/
+  )
+  assert.match(
+    source,
+    /\.timeline-date-leave-active \{[\s\S]*?position: absolute;[\s\S]*?top: 100%;[\s\S]*?width: 100%;/
+  )
+  assert.match(
+    source,
+    /\.operation-flow-move \{[\s\S]*?transition: transform 220ms cubic-bezier\(0\.22, 1, 0\.36, 1\);/
+  )
+  assert.match(
+    source,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.timeline-time-enter-active,[\s\S]*?\.timeline-date-leave-active,[\s\S]*?\.operation-flow-move[\s\S]*?transition: none;/
+  )
+})
+
+test('only the next scheduled operation gets a visible inner glow', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const nodeMarkup = source.slice(
+    source.indexOf('class="operation-node"'),
+    source.indexOf('</span>', source.indexOf('class="operation-node"'))
+  )
+  const nextNodeStyles = source.slice(
+    source.indexOf('.operation-node--next'),
+    source.indexOf('.operation-card', source.indexOf('.operation-node--next'))
+  )
+
+  assert.match(
+    source,
+    /function nextPendingOperationId\(slides\)[\s\S]*?filter\(slide => slide\.isMissing\)[\s\S]*?right\.targetDate\.localeCompare\(left\.targetDate\)[\s\S]*?left\.phaseIndex - right\.phaseIndex/
+  )
+  assert.match(
+    source,
+    /const nextPendingId = nextPendingOperationId\(slides\)[\s\S]*?isNextPending: slide\.id === nextPendingId/
+  )
+  assert.match(nodeMarkup, /operation-node--next[\s\S]*?slide\.isNextPending/)
+  assert.match(
+    nextNodeStyles,
+    /\.operation-node--next \{[\s\S]*?overflow: hidden;/
+  )
+  assert.match(
+    nextNodeStyles,
+    /\.operation-node--next::after \{[\s\S]*?inset: 0;[\s\S]*?background: rgba\(91, 111, 78, 0\.72\);[\s\S]*?animation: operation-next-glow 1\.8s/
+  )
+  assert.doesNotMatch(nextNodeStyles, /top: calc\(50%/)
+  assert.doesNotMatch(nextNodeStyles, /width: 16px/)
+  assert.doesNotMatch(nextNodeStyles, /height: 16px/)
+  assert.doesNotMatch(nextNodeStyles, /border: 1px/)
+  assert.doesNotMatch(nextNodeStyles, /border-radius: 50%/)
+  assert.doesNotMatch(nextNodeStyles, /agent-accent/)
+  assert.match(
+    source,
+    /@keyframes operation-next-glow \{[\s\S]*?clip-path: circle\(37\.5% at 50% 50%\)[\s\S]*?clip-path: circle\(58% at 50% 50%\)/
+  )
+  assert.doesNotMatch(nextNodeStyles, /transform: scale/)
+  assert.match(
+    source,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.operation-node--next::after \{[\s\S]*?animation: none;/
   )
 })
 

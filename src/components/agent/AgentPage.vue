@@ -178,8 +178,10 @@
                 </div>
               </div>
 
-              <div
+              <TransitionGroup
                 v-if="operationSlides.length"
+                tag="div"
+                name="operation-flow"
                 class="operation-list"
                 aria-label="날짜별 Agent 작업 흐름"
               >
@@ -191,12 +193,21 @@
                   <aside class="operation-rail">
                     <span
                       class="operation-node"
-                      :class="`operation-node--${operationStatusKind(slide)}`"
+                      :class="[
+                        `operation-node--${operationStatusKind(slide)}`,
+                        { 'operation-node--next': slide.isNextPending }
+                      ]"
                     >
                       {{ operationNodeLabel(slide) }}
                     </span>
                     <strong>{{ slide.label }}</strong>
-                    <time>{{ formatOperationTime(slide.job?.startedAt) }}</time>
+                    <span class="operation-rail__time">
+                      <Transition name="timeline-time">
+                        <time :key="operationTimeZone">{{
+                          formatOperationTime(operationSlideDateTime(slide))
+                        }}</time>
+                      </Transition>
+                    </span>
                   </aside>
 
                   <q-card
@@ -953,21 +964,23 @@
                       </div>
                     </q-slide-transition>
                   </q-card>
-                  <div
-                    v-if="slide.isDateBoundary"
-                    class="operation-date-divider"
-                    role="separator"
-                    :aria-label="`${slide.targetDate} 날짜 구분`"
-                  >
-                    <div class="operation-date-divider__rail">
-                      <span></span>
-                      <time :datetime="slide.targetDate">{{
-                        formatOperationDate(slide.targetDate)
-                      }}</time>
+                  <Transition name="timeline-date">
+                    <div
+                      v-if="slide.isDateBoundary"
+                      class="operation-date-divider"
+                      role="separator"
+                      :aria-label="`${slide.timelineDate} 날짜 구분`"
+                    >
+                      <div class="operation-date-divider__rail">
+                        <span></span>
+                        <time :datetime="slide.timelineDate">{{
+                          formatOperationDate(slide.timelineDate)
+                        }}</time>
+                      </div>
                     </div>
-                  </div>
+                  </Transition>
                 </article>
-              </div>
+              </TransitionGroup>
               <div v-else class="operation-empty-state">
                 <strong>표시할 작업 기록이 없습니다.</strong>
                 <p>Agent가 실행되면 날짜별 흐름이 이곳에 이어집니다.</p>
@@ -1773,7 +1786,7 @@ function operationStatusKind(slide) {
 function operationStatusLabel(slide) {
   if (slide.isMissing) {
     return slide.estimatedTime
-      ? `${formatOperationTime(slide.estimatedTime)} 예정`
+      ? `${formatOperationTime(operationSlideDateTime(slide))} 예정`
       : '아직 기록 없음'
   }
   return slide.job?.status || 'UNKNOWN'
@@ -1855,12 +1868,7 @@ function normalizeOperationResult(result = {}) {
       }
     })
 
-    return dateSlides
-      .sort(compareOperationSlidesByIdDesc)
-      .map((slide, index) => ({
-        ...slide,
-        isDateBoundary: index === dateSlides.length - 1
-      }))
+    return dateSlides.sort(compareOperationSlidesByIdDesc)
   })
 
   return { ...result, jobs, slides }
@@ -1899,8 +1907,57 @@ function parseOperationDateTime(value) {
   )
 }
 
+function operationSlideDateTime(slide) {
+  if (slide?.job?.startedAt) {
+    return parseOperationDateTime(slide.job.startedAt)
+  }
+
+  const estimatedTime = slide?.estimatedTime
+  const targetDate = slide?.targetDate
+  if (!estimatedTime || !targetDate) return null
+
+  const estimatedDate = parseOperationDateTime(estimatedTime)
+  if (Number.isNaN(estimatedDate.getTime())) return null
+
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Seoul',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    })
+      .formatToParts(estimatedDate)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  )
+
+  return parseOperationDateTime(
+    `${targetDate}T${parts.hour}:${parts.minute}:${parts.second}`
+  )
+}
+
+function operationTimelineDate(slide) {
+  const date = operationSlideDateTime(slide)
+  if (!date || Number.isNaN(date.getTime())) return slide?.targetDate || '-'
+
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: OPERATION_TIME_ZONES[operationTimeZone.value],
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+      .formatToParts(date)
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  )
+
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
 function formatOperationTime(value) {
-  if (!value) return '예정'
+  if (!value) return '--:--'
 
   const date = parseOperationDateTime(value)
   if (Number.isNaN(date.getTime())) return '-'
@@ -2202,7 +2259,33 @@ function normalizeStrategyResult(result = {}) {
   }
 }
 
-const operationSlides = computed(() => operationResult.value?.slides || [])
+function nextPendingOperationId(slides) {
+  return (
+    slides
+      .filter(slide => slide.isMissing)
+      .sort((left, right) => {
+        const dateOrder = right.targetDate.localeCompare(left.targetDate)
+        return dateOrder || left.phaseIndex - right.phaseIndex
+      })[0]?.id || null
+  )
+}
+
+const operationSlides = computed(() => {
+  const slides = operationResult.value?.slides || []
+  const nextPendingId = nextPendingOperationId(slides)
+
+  return slides.map((slide, index) => {
+    const timelineDate = operationTimelineDate(slide)
+    const nextTimelineDate = operationTimelineDate(slides[index + 1])
+
+    return {
+      ...slide,
+      timelineDate,
+      isDateBoundary: timelineDate !== nextTimelineDate,
+      isNextPending: slide.id === nextPendingId
+    }
+  })
+})
 
 function isOperationExpanded(id) {
   return expandedOperationIds.value.includes(id)
@@ -3276,6 +3359,9 @@ function shortTypeLabel(value) {
     font: inherit;
     letter-spacing: inherit;
     opacity: 0.42;
+    transition:
+      color 140ms ease,
+      opacity 140ms ease;
     cursor: pointer;
 
     &.is-active {
@@ -3470,6 +3556,18 @@ function shortTypeLabel(value) {
   }
 }
 
+.operation-rail__time {
+  position: relative;
+  display: block;
+  min-height: 1em;
+
+  time {
+    position: absolute;
+    inset: 0 auto auto 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 .operation-date-divider {
   height: 28px;
   grid-column: 1 / -1;
@@ -3515,6 +3613,40 @@ function shortTypeLabel(value) {
   }
 }
 
+.timeline-time-enter-active,
+.timeline-time-leave-active {
+  transition: opacity 160ms ease;
+}
+
+.timeline-time-enter-from,
+.timeline-time-leave-to {
+  opacity: 0;
+}
+
+.timeline-date-enter-active,
+.timeline-date-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.timeline-date-enter-from,
+.timeline-date-leave-to {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+.timeline-date-leave-active {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+}
+
+.operation-flow-move {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .operation-node {
   position: absolute;
   top: 33px;
@@ -3549,6 +3681,32 @@ function shortTypeLabel(value) {
   border-color: var(--dk-ink);
   background: var(--dk-ink);
   font-size: 1rem;
+}
+
+.operation-node--next {
+  overflow: hidden;
+}
+
+.operation-node--next::after {
+  position: absolute;
+  inset: 0;
+  background:  #357a557e;
+  pointer-events: none;
+  animation: operation-next-glow 2.2s ease-in-out infinite;
+  content: '';
+}
+
+@keyframes operation-next-glow {
+  0%,
+  100% {
+    opacity: 0.26;
+    clip-path: circle(37.5% at 50% 50%);
+  }
+
+  50% {
+    opacity: 0.92;
+    clip-path: circle(58% at 50% 50%);
+  }
 }
 
 .operation-slide:has(.operation-card.is-expanded) .operation-node {
@@ -4554,6 +4712,32 @@ function shortTypeLabel(value) {
 
   .chart-container {
     height: 300px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-time-enter-active,
+  .timeline-time-leave-active,
+  .timeline-date-enter-active,
+  .timeline-date-leave-active,
+  .operation-flow-move {
+    transition: none;
+  }
+
+  .timeline-date-enter-from,
+  .timeline-date-leave-to {
+    transform: none;
+  }
+
+  .timeline-timezone-toggle button {
+    transition: none;
+  }
+
+  .operation-node--next::after {
+    opacity: 0.72;
+    box-shadow: 0 0 0 2px rgba(23, 23, 23, 0.08);
+    animation: none;
+    clip-path: circle(45% at 50% 50%);
   }
 }
 </style>
