@@ -1545,11 +1545,11 @@
                           <div class="detail-summary q-mb-sm">
                             <span
                               >시작
-                              {{ formatMoney(day.cash?.openingCash) }}</span
+                              {{ formatMoney(day.cash?.openingCash, 2) }}</span
                             >
                             <span
                               >마감
-                              {{ formatMoney(day.cash?.closingCash) }}</span
+                              {{ formatMoney(day.cash?.closingCash, 2) }}</span
                             >
                           </div>
                           <div
@@ -1578,10 +1578,12 @@
                                       profitClass(transaction.changeAmount)
                                     "
                                   >
-                                    {{ formatMoney(transaction.changeAmount) }}
+                                    {{
+                                      formatMoney(transaction.changeAmount, 2)
+                                    }}
                                   </td>
                                   <td class="text-right">
-                                    {{ formatMoney(transaction.cashAfter) }}
+                                    {{ formatMoney(transaction.cashAfter, 2) }}
                                   </td>
                                 </tr>
                               </tbody>
@@ -2857,10 +2859,16 @@ function formatInteger(value) {
   return formatNumber(value, 0)
 }
 
-function formatMoney(value) {
+function formatMoney(value, fractionDigits = 0) {
   const number = finiteNumber(value)
   if (number === null) return '-'
-  return `${number < 0 ? '-' : ''}$${formatNumber(Math.abs(number), 0)}`
+
+  const formattedNumber = new Intl.NumberFormat('ko-KR', {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits
+  }).format(Math.abs(number))
+
+  return `${number < 0 ? '-' : ''}$${formattedNumber}`
 }
 
 function formatPrice(value, minimumFractionDigits = 0) {

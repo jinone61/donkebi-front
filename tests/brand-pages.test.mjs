@@ -273,6 +273,27 @@ test('daily cash flow omits tier details that the API does not provide', async (
   }
 })
 
+test('agent daily cash flow displays every amount to two decimal places', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const cashFlowStart = source.indexOf(
+    '<div class="detail-title">현금 흐름</div>'
+  )
+  const cashFlowEnd = source.indexOf(
+    '<div v-else class="detail-note">현금 거래 없음</div>',
+    cashFlowStart
+  )
+  const cashFlow = source.slice(cashFlowStart, cashFlowEnd)
+
+  assert.match(cashFlow, /formatMoney\(day\.cash\?\.openingCash, 2\)/)
+  assert.match(cashFlow, /formatMoney\(day\.cash\?\.closingCash, 2\)/)
+  assert.match(cashFlow, /formatMoney\(transaction\.changeAmount, 2\)/)
+  assert.match(cashFlow, /formatMoney\(transaction\.cashAfter, 2\)/)
+  assert.match(
+    source,
+    /function formatMoney\(value, fractionDigits = 0\)[\s\S]*?minimumFractionDigits: fractionDigits,[\s\S]*?maximumFractionDigits: fractionDigits/
+  )
+})
+
 test('agent workspace owns its strategy result API and normalization', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
