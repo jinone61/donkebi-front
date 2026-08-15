@@ -38,6 +38,16 @@ test('package metadata describes the AI agent trading product', async () => {
   )
 })
 
+test('production entry points opt the whole site out of search indexing', async () => {
+  const [indexHtml, robotsTxt] = await Promise.all([
+    readSource('index.html'),
+    readSource('public/robots.txt').catch(() => '')
+  ])
+
+  assert.match(indexHtml, /<meta name="robots" content="noindex, nofollow" \/>/)
+  assert.equal(robotsTxt, 'User-agent: *\nDisallow:\n')
+})
+
 test('home presents the quiet AI trading agent narrative', async () => {
   const source = await readSource('src/pages/index/(home).vue')
 
