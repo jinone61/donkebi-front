@@ -34,7 +34,7 @@ test('package metadata describes the AI agent trading product', async () => {
     packageJson.description,
     'Quiet AI agent trading system for strategy backtesting and execution'
   )
-  assert.equal(packageJson.scripts.build, 'quasar build')
+  assert.equal(packageJson.scripts.build, 'quasar build -m pwa')
   assert.equal(packageJson.scripts.deploy, undefined)
 })
 
@@ -121,6 +121,19 @@ test('bottom navigation identifies the active route with color alone', async () 
   assert.doesNotMatch(navigationStyles, /&::before/)
 })
 
+test('bottom navigation labels match the header menu typography', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(
+    source,
+    /&__nav \{[\s\S]*?button,[\s\S]*?a \{[\s\S]*?font-size: var\(--dk-text-label\);[\s\S]*?font-weight: 500;[\s\S]*?letter-spacing: 0\.07em;/
+  )
+  assert.match(
+    source,
+    /\.pwa-bottom-navigation \{[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-label\);[\s\S]*?font-weight: 500;[\s\S]*?letter-spacing: 0\.07em;/
+  )
+})
+
 test('bottom navigation uses touch-friendly icon sizing', async () => {
   const source = await readSource('src/pages/index.vue')
 
@@ -151,7 +164,7 @@ test('public pages share a role-based typography scale', async () => {
 
   assert.match(
     layout,
-    /\.pwa-bottom-navigation[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-caption\);/
+    /\.pwa-bottom-navigation[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-label\);/
   )
 
   for (const source of [home, backtest, agent]) {
