@@ -914,7 +914,6 @@
                             <thead>
                               <tr>
                                 <th class="text-left">유형</th>
-                                <th class="text-left">티어</th>
                                 <th class="text-right">변동액</th>
                                 <th class="text-right">변동 후 현금</th>
                               </tr>
@@ -925,7 +924,6 @@
                                 :key="`${day.sessionDate}-cash-${index}`"
                               >
                                 <td>{{ transaction.type }}</td>
-                                <td>{{ transaction.tier || '-' }}</td>
                                 <td
                                   class="text-right"
                                   :class="profitClass(transaction.changeAmount)"

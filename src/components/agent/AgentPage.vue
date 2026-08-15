@@ -1442,31 +1442,27 @@
                           >
                             <thead>
                               <tr>
-                                <th class="text-left">주문 실행일</th>
                                 <th class="text-left">생성 기준일</th>
+                                <th class="text-left">주문 실행일</th>
                                 <th class="text-left">모드</th>
-                                <th class="text-right">매수가</th>
-                                <th class="text-right">결과 반영</th>
                                 <th class="text-right">Broker</th>
+                                <th class="text-right">주문 결과 반영</th>
                               </tr>
                             </thead>
                             <tbody>
                               <tr>
                                 <td class="text-left">{{
-                                  day.plan?.targetDate || day.sessionDate
+                                  day.plan?.basisDate || '-'
                                 }}</td>
                                 <td class="text-left">{{
-                                  day.plan?.basisDate || '-'
+                                  day.plan?.targetDate || day.sessionDate
                                 }}</td>
                                 <td class="text-left">{{ day.mode }}</td>
                                 <td class="text-right">{{
-                                  formatPrice(day.plan?.buyPrice)
+                                  day.submissionMode
                                 }}</td>
                                 <td class="text-right">{{
                                   day.plan?.completionStatus || '-'
-                                }}</td>
-                                <td class="text-right">{{
-                                  day.submissionMode
                                 }}</td>
                               </tr>
                             </tbody>
@@ -1482,13 +1478,13 @@
                                   <th class="text-left">구분</th
                                   ><th class="text-left">티어</th
                                   ><th class="text-left">유형</th
-                                  ><th class="text-right">수량</th
                                   ><th class="text-left daily-submission-status"
                                     >제출 상태</th
                                   ><th class="text-left">Broker ID</th>
                                   <th class="text-right">주문가</th>
                                   <th class="text-right">체결가</th
-                                  ><th class="text-right">체결수량</th>
+                                  ><th class="text-right">수량</th
+                                  ><th class="text-right">체결</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1496,15 +1492,18 @@
                                   v-for="(order, index) in day.orders"
                                   :key="`${day.sessionDate}-${order.tier}-${index}`"
                                 >
-                                  <td>{{ sideLabel(order.tradeSide) }}</td>
+                                  <td>
+                                    <span
+                                      class="operation-side"
+                                      :class="sideClass(order.tradeSide)"
+                                      >{{ sideLabel(order.tradeSide) }}</span
+                                    >
+                                  </td>
                                   <td>{{ order.tier }}</td>
                                   <td>
                                     {{ shortTypeLabel(order.orderType) }}·
                                     {{ shortTypeLabel(order.planType) }}
                                   </td>
-                                  <td class="text-right">{{
-                                    formatInteger(order.quantity)
-                                  }}</td>
                                   <td class="daily-submission-status">
                                     {{ order.submission?.status || '미제출' }}
                                     <small v-if="order.submission?.mode">{{
@@ -1527,6 +1526,9 @@
                                   }}</td>
                                   <td class="text-right">{{
                                     formatPrice(order.executionPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatInteger(order.quantity)
                                   }}</td>
                                   <td class="text-right">{{
                                     formatInteger(order.executedQuantity)
@@ -1558,7 +1560,6 @@
                               <thead>
                                 <tr>
                                   <th class="text-left">유형</th>
-                                  <th class="text-left">티어</th>
                                   <th class="text-right">변동액</th>
                                   <th class="text-right">변동 후 현금</th>
                                 </tr>
@@ -1571,7 +1572,6 @@
                                   :key="`${transaction.eventKey}-${index}`"
                                 >
                                   <td>{{ transaction.type }}</td>
-                                  <td>{{ transaction.tier || '-' }}</td>
                                   <td
                                     class="text-right"
                                     :class="

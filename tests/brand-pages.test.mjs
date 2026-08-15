@@ -250,6 +250,29 @@ test('daily order details show buy price instead of canceled quantity', async ()
   assert.doesNotMatch(orderDetail, /취소수량|canceledQuantity/)
 })
 
+test('daily cash flow omits tier details that the API does not provide', async () => {
+  for (const filePath of [
+    'src/components/agent/AgentPage.vue',
+    'src/components/backtest/BacktestPage.vue'
+  ]) {
+    const source = await readSource(filePath)
+    const cashFlowStart = source.indexOf(
+      '<div class="detail-title">현금 흐름</div>'
+    )
+    const cashFlowEnd = source.indexOf(
+      '<div v-else class="detail-note">현금 거래 없음</div>',
+      cashFlowStart
+    )
+    const cashFlow = source.slice(cashFlowStart, cashFlowEnd)
+
+    assert.match(
+      cashFlow,
+      /text-left">유형[\s\S]*?text-right">변동액[\s\S]*?text-right">변동 후 현금/
+    )
+    assert.doesNotMatch(cashFlow, /티어|transaction\.tier/)
+  }
+})
+
 test('agent workspace owns its strategy result API and normalization', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
 
@@ -285,20 +308,8 @@ test('agent daily history distinguishes submitted orders and executions', async 
     history,
     /주문 \{\{ day\.submittedOrderCount \}\} · 체결[\s\S]*?\{\{ day\.executions\.length \}\}/
   )
-  assert.match(
-    history,
-    /주문 실행일[\s\S]*?생성 기준일[\s\S]*?모드[\s\S]*?매수가[\s\S]*?결과 반영[\s\S]*?Broker/
-  )
-  assert.match(
-    history,
-    /plan-summary-table[\s\S]*?day\.plan\?\.targetDate[\s\S]*?day\.plan\?\.basisDate[\s\S]*?day\.mode[\s\S]*?day\.plan\?\.buyPrice[\s\S]*?day\.plan\?\.completionStatus[\s\S]*?day\.submissionMode/
-  )
   assert.match(history, /<div class="detail-title">계획<\/div>/)
   assert.doesNotMatch(history, /<div class="detail-title">당일 계획<\/div>/)
-  assert.match(
-    history,
-    /text-left">주문 실행일[\s\S]*?text-left">생성 기준일[\s\S]*?text-left">모드[\s\S]*?text-right">매수가[\s\S]*?text-right">결과 반영[\s\S]*?text-right">Broker/
-  )
   assert.match(
     source,
     /@media \(max-width: 767px\)[\s\S]*?:deep\(\.plan-summary-table th\),[\s\S]*?:deep\(\.plan-summary-table td\) \{\s*padding: 4px 2px;/
@@ -313,6 +324,24 @@ test('agent daily history distinguishes submitted orders and executions', async 
   )
 })
 
+test('agent daily plan summary prioritizes schedule and broker status', async () => {
+  const source = await readSource('src/components/agent/AgentPage.vue')
+  const planTable = source.slice(
+    source.indexOf('<div class="detail-title">계획</div>'),
+    source.indexOf('<div class="detail-title">주문 및 체결</div>')
+  )
+
+  assert.match(
+    planTable,
+    /text-left">생성 기준일[\s\S]*?text-left">주문 실행일[\s\S]*?text-left">모드[\s\S]*?text-right">Broker[\s\S]*?text-right">주문 결과 반영/
+  )
+  assert.match(
+    planTable,
+    /day\.plan\?\.basisDate[\s\S]*?day\.plan\?\.targetDate[\s\S]*?day\.mode[\s\S]*?day\.submissionMode[\s\S]*?day\.plan\?\.completionStatus/
+  )
+  assert.doesNotMatch(planTable, /매수가|buyPrice/)
+})
+
 test('agent daily order headers align with their data columns', async () => {
   const source = await readSource('src/components/agent/AgentPage.vue')
   const orderTable = source.slice(
@@ -322,7 +351,15 @@ test('agent daily order headers align with their data columns', async () => {
 
   assert.match(
     orderTable,
-    /text-left">구분[\s\S]*?text-left">티어[\s\S]*?text-left">유형[\s\S]*?text-right">수량[\s\S]*?daily-submission-status[\s\S]*?제출 상태[\s\S]*?text-left">Broker ID[\s\S]*?text-right">주문가[\s\S]*?text-right">체결가[\s\S]*?text-right">체결수량/
+    /text-left">구분[\s\S]*?text-left">티어[\s\S]*?text-left">유형[\s\S]*?daily-submission-status[\s\S]*?제출 상태[\s\S]*?text-left">Broker ID[\s\S]*?text-right">주문가[\s\S]*?text-right">체결가[\s\S]*?text-right">수량[\s\S]*?text-right">체결<\/th>/
+  )
+  assert.match(
+    orderTable,
+    /sideLabel\(order\.tradeSide\)[\s\S]*?order\.tier[\s\S]*?shortTypeLabel\(order\.orderType\)[\s\S]*?<td class="daily-submission-status">[\s\S]*?order\.submission\?\.brokerOrderId[\s\S]*?order\.orderPrice[\s\S]*?order\.executionPrice[\s\S]*?order\.quantity[\s\S]*?order\.executedQuantity/
+  )
+  assert.match(
+    orderTable,
+    /<td>[\s\S]*?class="operation-side"[\s\S]*?:class="sideClass\(order\.tradeSide\)"[\s\S]*?sideLabel\(order\.tradeSide\)[\s\S]*?<\/span\s*>[\s\S]*?<\/td>/
   )
   assert.match(
     orderTable,
@@ -982,10 +1019,6 @@ test('agent page covers current status charts and operation history', async () =
   assert.match(source, /:label="formatClosePrice\(day\.closePrice\)"/)
   assert.match(source, /group="daily-results"/)
   assert.match(source, /class="daily-detail bg-grey-1"/)
-  assert.match(
-    source,
-    /유형[\s\S]*?수량[\s\S]*?제출 상태[\s\S]*?Broker ID[\s\S]*?주문가[\s\S]*?체결가[\s\S]*?체결수량/
-  )
   assert.match(
     source,
     /shortTypeLabel\(order\.orderType\)[\s\S]*?shortTypeLabel\(order\.planType\)/
