@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import test from 'node:test'
 
 const readSource = path =>
   readFile(new URL(`../${path}`, import.meta.url), 'utf8')
+const readAsset = path => readFile(new URL(`../${path}`, import.meta.url))
 const execFileAsync = promisify(execFile)
 
 test('public navigation reflects the Donkebi agent story', async () => {
@@ -32,9 +34,178 @@ test('package metadata describes the AI agent trading product', async () => {
     packageJson.description,
     'Quiet AI agent trading system for strategy backtesting and execution'
   )
-  assert.equal(
-    packageJson.scripts.deploy,
-    'aws s3 sync ./dist/spa/ s3://donkebi-web --delete'
+  assert.equal(packageJson.scripts.build, 'quasar build')
+  assert.equal(packageJson.scripts.deploy, undefined)
+})
+
+test('PWA icons use the Donkebi mark', async () => {
+  const expectedHashes = {
+    'apple-icon-120x120.png':
+      '9bc398128ace0e5f29bcbd370ceb004ae545871b20dbd83f235704b2924d242e',
+    'apple-icon-152x152.png':
+      'b871eeccf1569025c439d574a8613f0df42c826a95f419c15c996e983c74959b',
+    'apple-icon-167x167.png':
+      '699b0d7e5f87c65e18d7bb70417f3204306251c069a8fd33b54f4bdfb5eb2a45',
+    'apple-icon-180x180.png':
+      'f72f69d76741a299e2df03e5503e390b870f41de4040e4ed439ecae0f683792b',
+    'icon-128x128.png':
+      '083524d2e26738b74bb05790577ce66762883ed00a8a6c6888c131f3ece4505d',
+    'icon-192x192.png':
+      '59468d2dfaa85231f189cac175af768c881fae99d8f966e2f008d963c33eec90',
+    'icon-256x256.png':
+      '64e1130fb48d311e3a29a688a0733d5675a4c0296f788dd83fa144a0da8fccfd',
+    'icon-384x384.png':
+      'eeb6bb37d3387145c646e321373c3f09079e7897e97f1ec8b2b158ac0e7a1950',
+    'icon-512x512.png':
+      '53428d5ca2b52e385eff548a8e1f471621074327b0fb36bf2b902c9783a3bd46',
+    'ms-icon-144x144.png':
+      'aec0889496cc3a07e918979cfe69136192634ad3a4daf1828fdc1d3434e11e85'
+  }
+
+  for (const [fileName, expectedHash] of Object.entries(expectedHashes)) {
+    const icon = await readAsset(`public/icons/${fileName}`)
+    const actualHash = createHash('sha256').update(icon).digest('hex')
+
+    assert.equal(
+      actualHash,
+      expectedHash,
+      `${fileName} should use Donkebi mark`
+    )
+  }
+})
+
+test('PWA uses Donkebi colors in standalone portrait mode', async () => {
+  const manifest = JSON.parse(await readSource('src-pwa/manifest.json'))
+
+  assert.equal(manifest.theme_color, '#f4f1ea')
+  assert.equal(manifest.background_color, '#f4f1ea')
+  assert.equal(manifest.orientation, 'portrait')
+  assert.equal(manifest.display, 'standalone')
+  assert.equal(manifest.display_override[0], 'standalone')
+})
+
+test('installed mobile PWA provides exact navigation for every workspace', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(
+    source,
+    /const pwaNavigationItems = \[[\s\S]*?label: 'HOME', to: '\/', icon: 'home'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'AGENT', to: '\/agent', icon: 'smart_toy'[\s\S]*?\]/
+  )
+  assert.match(
+    source,
+    /<nav class="pwa-bottom-navigation" aria-label="앱 메뉴">[\s\S]*?v-for="item in pwaNavigationItems"[\s\S]*?:to="item\.to"[\s\S]*?exact-active-class="pwa-bottom-navigation__link--active"[\s\S]*?<q-icon[^>]*:name="item\.icon"[\s\S]*?\{\{ item\.label \}\}/
+  )
+})
+
+test('bottom navigation only replaces the menu in installed mobile PWA', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(source, /\.pwa-bottom-navigation \{\s*display: none;/)
+  assert.match(
+    source,
+    /@media \(max-width: 767px\) and \(display-mode: standalone\) \{[\s\S]*?\.site-page-container \{[\s\S]*?padding-bottom: calc\(64px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\.menu-button,[\s\S]*?\.mobile-menu-layer \{\s*display: none;[\s\S]*?\.pwa-bottom-navigation \{[\s\S]*?display: grid;[\s\S]*?padding-bottom: env\(safe-area-inset-bottom\);/
+  )
+})
+
+test('bottom navigation identifies the active route with color alone', async () => {
+  const source = await readSource('src/pages/index.vue')
+  const navigationStyles = source.slice(
+    source.indexOf('@media (max-width: 767px) and (display-mode: standalone)'),
+    source.indexOf('</style>')
+  )
+
+  assert.match(
+    navigationStyles,
+    /&__link \{[\s\S]*?color: rgba\(23, 23, 23, 0\.42\);[\s\S]*?&--active \{\s*color: var\(--dk-ink\);/
+  )
+  assert.doesNotMatch(navigationStyles, /&::before/)
+})
+
+test('bottom navigation uses touch-friendly icon sizing', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(source, /&__icon \{\s*font-size: 1\.8rem;\s*\}/)
+})
+
+test('public pages share a role-based typography scale', async () => {
+  const [globalStyles, layout, home, backtest, agent] = await Promise.all([
+    readSource('src/css/app.scss'),
+    readSource('src/pages/index.vue'),
+    readSource('src/pages/index/(home).vue'),
+    readSource('src/components/backtest/BacktestPage.vue'),
+    readSource('src/components/agent/AgentPage.vue')
+  ])
+  const scale = {
+    caption: '0.6875rem',
+    label: '0.75rem',
+    'body-sm': '0.8125rem',
+    body: '0.875rem',
+    value: '1rem',
+    'heading-sm': '1.125rem',
+    heading: '1.25rem'
+  }
+
+  for (const [role, size] of Object.entries(scale)) {
+    assert.match(globalStyles, new RegExp(`--dk-text-${role}: ${size}`))
+  }
+
+  assert.match(
+    layout,
+    /\.pwa-bottom-navigation[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-caption\);/
+  )
+
+  for (const source of [home, backtest, agent]) {
+    assert.match(source, /font-size: var\(--dk-text-caption\);/)
+    assert.match(source, /font-size: var\(--dk-text-label\);/)
+    assert.match(source, /font-size: var\(--dk-text-body-sm\);/)
+    assert.match(source, /font-size: var\(--dk-text-body\);/)
+    assert.doesNotMatch(source, /font-size: 0\.[5-8]\d*rem;/)
+  }
+})
+
+test('private workspaces share one authentication layout', async () => {
+  const [globalStyles, backtest, agent] = await Promise.all([
+    readSource('src/css/app.scss'),
+    readSource('src/components/backtest/BacktestPage.vue'),
+    readSource('src/components/agent/AgentPage.vue')
+  ])
+
+  for (const source of [backtest, agent]) {
+    assert.match(
+      source,
+      /class="auth-area"[\s\S]*?class="auth-shell dk-container"[\s\S]*?class="auth-intro dk-reveal"[\s\S]*?class="auth-intro__meta"[\s\S]*?class="auth-form dk-reveal"[\s\S]*?class="auth-form__head"/
+    )
+    assert.doesNotMatch(
+      source,
+      /^\s*\.(?:auth-area|auth-shell|auth-intro|auth-form)(?:__\w+)?[^\n]*\{/m
+    )
+  }
+
+  assert.match(
+    globalStyles,
+    /\.auth-area \{[\s\S]*?min-height: calc\(100vh - 82px\);[\s\S]*?\.auth-shell \{[\s\S]*?grid-template-columns: repeat\(12, minmax\(0, 1fr\)\);[\s\S]*?\.auth-intro \{[\s\S]*?grid-column: 1 \/ 8;[\s\S]*?\.auth-form \{[\s\S]*?grid-column: 9 \/ 13;/
+  )
+  assert.match(
+    globalStyles,
+    /@media \(max-width: 767px\) \{[\s\S]*?\.auth-area \{[\s\S]*?min-height: calc\(100vh - 68px\);[\s\S]*?\.auth-shell \{[\s\S]*?flex-direction: column;[\s\S]*?gap: 74px;[\s\S]*?padding-block: 64px;[\s\S]*?\.auth-intro h1 \{[\s\S]*?font-size: clamp\(3\.5rem, 16vw, 5\.25rem\);/
+  )
+})
+
+test('private workspace password placeholders stay muted', async () => {
+  const globalStyles = await readSource('src/css/app.scss')
+
+  assert.match(
+    globalStyles,
+    /\.auth-form \{[\s\S]*?\.q-field__label \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?\.q-field__native \{[\s\S]*?color: var\(--dk-ink\);/
+  )
+})
+
+test('private workspace password controls share one field treatment', async () => {
+  const globalStyles = await readSource('src/css/app.scss')
+
+  assert.match(
+    globalStyles,
+    /\.auth-form \{[\s\S]*?\.q-field__control \{[\s\S]*?border-radius: 2px;[\s\S]*?background: rgba\(244, 241, 234, 0\.34\);[\s\S]*?\.q-field--outlined \.q-field__control::before \{[\s\S]*?border-color: var\(--dk-line\);[\s\S]*?\.q-field--outlined:hover \.q-field__control::before \{[\s\S]*?border-color: var\(--dk-line-strong\);[\s\S]*?\.q-field--outlined\.q-field--focused \.q-field__control::after \{[\s\S]*?border-color: var\(--dk-ink\);[\s\S]*?border-width: 1px;/
   )
 })
 
@@ -63,6 +234,16 @@ test('home presents the quiet AI trading agent narrative', async () => {
   for (const sectionId of ['system', 'backtest', 'principle', 'origin']) {
     assert.match(source, new RegExp(`id="${sectionId}"`))
   }
+})
+
+test('home hero gives its two-line title comfortable separation', async () => {
+  const source = await readSource('src/pages/index/(home).vue')
+  const heroTitleStyles = source.match(
+    /\.hero \{[\s\S]*?\n  h1 \{(?<styles>[\s\S]*?)\n  \}/
+  )?.groups?.styles
+
+  assert.ok(heroTitleStyles)
+  assert.match(heroTitleStyles, /line-height: 1\.08;/)
 })
 
 test('home primary action opens Agent while backtest actions stay on Backtest', async () => {
@@ -678,7 +859,7 @@ test('agent tabs use the backtest navigation treatment', async () => {
   )
   assert.match(
     source,
-    /:deep\(\.q-tab\) \{[\s\S]*?min-height: 52px;[\s\S]*?font-size: 0\.68rem;/
+    /:deep\(\.q-tab\) \{[\s\S]*?min-height: 52px;[\s\S]*?font-size: var\(--dk-text-label\);/
   )
 })
 
@@ -905,7 +1086,7 @@ test('agent cards own their update time and icon-only refresh action', async () 
   assert.match(performanceHeading, /section-heading__updated--quiet/)
   assert.match(
     source,
-    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--quiet \{[\s\S]*?min-height: 16px;[\s\S]*?font-size: 0\.59rem;[\s\S]*?letter-spacing: 0\.02em;[\s\S]*?line-height: 16px;[\s\S]*?\.section-heading__updated-label \{[\s\S]*?display: none;[\s\S]*?\.section-heading__refresh \{[\s\S]*?align-self: center;[\s\S]*?width: 16px;[\s\S]*?min-width: 16px;[\s\S]*?height: 16px;[\s\S]*?min-height: 16px;[\s\S]*?margin-right: -7px;[\s\S]*?color: inherit !important;/
+    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--quiet \{[\s\S]*?min-height: 16px;[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?letter-spacing: 0\.02em;[\s\S]*?line-height: 16px;[\s\S]*?\.section-heading__updated-label \{[\s\S]*?display: none;[\s\S]*?\.section-heading__refresh \{[\s\S]*?align-self: center;[\s\S]*?width: 16px;[\s\S]*?min-width: 16px;[\s\S]*?height: 16px;[\s\S]*?min-height: 16px;[\s\S]*?margin-right: -7px;[\s\S]*?color: inherit !important;/
   )
   assert.match(
     source,
@@ -931,7 +1112,7 @@ test('agent cards own their update time and icon-only refresh action', async () 
   )
   assert.match(
     source,
-    /\.section-heading__updated \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?font-size: 0\.59rem;/
+    /\.section-heading__updated \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?font-size: var\(--dk-text-caption\);/
   )
   assert.match(
     source,
@@ -1015,7 +1196,7 @@ test('agent page covers current status charts and operation history', async () =
   )
   assert.match(
     source,
-    /@media \(max-width: 767px\)[\s\S]*?\.summary-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\.metric-card \{[\s\S]*?font-size: 18px/
+    /@media \(max-width: 767px\)[\s\S]*?\.summary-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\.metric-card \{[\s\S]*?font-size: var\(--dk-text-heading-sm\)/
   )
   assert.doesNotMatch(source, /reportedTotalProfit|reportedTotalReturnPct/)
   assert.match(
@@ -1032,7 +1213,7 @@ test('agent page covers current status charts and operation history', async () =
   )
   assert.match(
     source,
-    /\.daily-mobile-summary__cash \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 500;/
+    /\.daily-mobile-summary__cash \{[\s\S]*?font-size: var\(--dk-text-label\);[\s\S]*?font-weight: 500;/
   )
   assert.match(source, /expand-icon-class="daily-expand-section"/)
   assert.match(
@@ -1071,7 +1252,7 @@ test('agent summary cards use the compact readable backtest treatment', async ()
   assert.match(summaryStyles, /padding: 10px 14px;/)
   assert.match(summaryStyles, /border: 1px solid var\(--dk-line\);/)
   assert.match(summaryStyles, /background: var\(--dk-surface\);/)
-  assert.match(summaryStyles, /font-size: 18px;/)
+  assert.match(summaryStyles, /font-size: var\(--dk-text-heading-sm\);/)
   assert.match(summaryStyles, /font-weight: 650;/)
   assert.match(summaryStyles, /text-align: center;/)
   assert.doesNotMatch(summaryStyles, /strong\.value-(?:positive|negative)/)
@@ -1138,7 +1319,7 @@ test('agent data workspace follows the backtest layout system', async () => {
   )
   assert.match(
     source,
-    /\.section-heading[\s\S]*?h2 \{[\s\S]*?font-size: 1\.22rem;/
+    /\.section-heading[\s\S]*?h2 \{[\s\S]*?font-size: var\(--dk-text-heading\);/
   )
   assert.match(
     source,

@@ -2568,70 +2568,6 @@ function sideColor(side) {
   font-variant-numeric: tabular-nums;
 }
 
-.auth-area {
-  min-height: calc(100vh - 82px);
-}
-
-.auth-shell {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 24px;
-  align-items: center;
-  min-height: calc(100vh - 82px);
-  padding-block: clamp(72px, 8vw, 120px);
-}
-
-.auth-intro {
-  grid-column: 1 / 8;
-
-  h1 {
-    margin: 38px 0 0;
-    font-size: clamp(4.2rem, 7.5vw, 7.8rem);
-    font-weight: 400;
-    line-height: 1.02;
-  }
-
-  > p:not(.dk-eyebrow) {
-    max-width: 440px;
-    margin: 32px 0 0;
-    color: var(--dk-muted);
-    font-size: 0.82rem;
-    line-height: 1.85;
-  }
-
-  &__meta {
-    display: flex;
-    gap: 32px;
-    margin-top: 70px;
-    color: var(--dk-muted);
-    font-size: 0.56rem;
-    letter-spacing: 0.12em;
-  }
-}
-
-.auth-form {
-  grid-column: 9 / 13;
-  padding-top: 18px;
-  border-top: 1px solid var(--dk-ink);
-  animation-delay: 150ms;
-
-  &__head {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 46px;
-    font-size: 0.56rem;
-    letter-spacing: 0.13em;
-  }
-
-  &__button {
-    height: 52px;
-    margin-top: 12px;
-    border-radius: 0;
-    font-size: 0.62rem;
-    letter-spacing: 0.14em;
-  }
-}
-
 .workspace-intro {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -2658,7 +2594,7 @@ function sideColor(side) {
     > p {
       margin: 13px 0 0;
       color: var(--dk-muted);
-      font-size: 0.72rem;
+      font-size: var(--dk-text-body-sm);
       line-height: 1.65;
     }
   }
@@ -2667,7 +2603,7 @@ function sideColor(side) {
     display: flex;
     gap: 8px;
     align-items: center;
-    font-size: 0.56rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.13em;
 
     i {
@@ -2692,7 +2628,7 @@ function sideColor(side) {
 
   :deep(.q-tab) {
     min-height: 52px;
-    font-size: 0.68rem;
+    font-size: var(--dk-text-label);
     font-weight: 500;
     letter-spacing: 0.08em;
   }
@@ -2728,7 +2664,7 @@ function sideColor(side) {
   :deep(.text-h6) {
     color: var(--dk-ink) !important;
     font-family: var(--dk-font-serif);
-    font-size: 1.22rem;
+    font-size: var(--dk-text-heading);
     font-weight: 400;
   }
 
@@ -2852,14 +2788,14 @@ function sideColor(side) {
 
 .metric-label {
   color: var(--dk-muted);
-  font-size: 0.68rem;
+  font-size: var(--dk-text-label);
   letter-spacing: 0.04em;
 }
 
 .metric-value {
   margin-top: 5px;
   color: var(--dk-ink);
-  font-size: 18px;
+  font-size: var(--dk-text-heading-sm);
   font-weight: 650;
   line-height: 1.25;
   overflow-wrap: anywhere;
@@ -2868,7 +2804,7 @@ function sideColor(side) {
 .metric-caption {
   margin-top: 3px;
   color: var(--dk-muted);
-  font-size: 11px;
+  font-size: var(--dk-text-caption);
 }
 
 .mobile-data-card {
@@ -2898,13 +2834,13 @@ function sideColor(side) {
 
 .data-label {
   color: var(--dk-muted);
-  font-size: 11px;
+  font-size: var(--dk-text-caption);
 }
 
 .data-value {
   margin-top: 2px;
   color: var(--dk-ink);
-  font-size: 14px;
+  font-size: var(--dk-text-body);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -2979,7 +2915,7 @@ function sideColor(side) {
 .daily-header {
   padding: 7px 44px 7px 12px;
   color: var(--dk-muted);
-  font-size: 12px;
+  font-size: var(--dk-text-label);
   font-weight: 700;
   background: rgba(23, 23, 23, 0.035);
 }
@@ -2987,7 +2923,7 @@ function sideColor(side) {
 .daily-row {
   width: 100%;
   color: var(--dk-ink);
-  font-size: 13px;
+  font-size: var(--dk-text-body-sm);
 }
 
 .daily-cell {
@@ -3017,7 +2953,7 @@ function sideColor(side) {
 .detail-title {
   margin-bottom: 8px;
   color: var(--dk-ink);
-  font-size: 14px;
+  font-size: var(--dk-text-body);
   font-weight: 700;
 }
 
@@ -3026,13 +2962,13 @@ function sideColor(side) {
   flex-wrap: wrap;
   gap: 8px 20px;
   color: var(--dk-muted);
-  font-size: 13px;
+  font-size: var(--dk-text-body-sm);
 }
 
 .detail-note {
   margin-top: 6px;
   color: var(--dk-muted);
-  font-size: 13px;
+  font-size: var(--dk-text-body-sm);
 }
 
 .table-scroll {
@@ -3054,7 +2990,7 @@ function sideColor(side) {
 
 :deep(.q-table th) {
   color: var(--dk-muted);
-  font-size: 0.68rem;
+  font-size: var(--dk-text-label);
   font-weight: 600;
   letter-spacing: 0.03em;
 }
@@ -3076,41 +3012,14 @@ function sideColor(side) {
 }
 
 @media (max-width: 900px) {
-  .auth-intro {
-    grid-column: 1 / 7;
-  }
-
-  .auth-form {
-    grid-column: 8 / 13;
-  }
-
   .ratio-grid {
     grid-template-columns: repeat(3, minmax(90px, 1fr));
   }
 }
 
 @media (max-width: 767px) {
-  .backtest-page,
-  .auth-area,
-  .auth-shell {
+  .backtest-page {
     min-height: calc(100vh - 68px);
-  }
-
-  .auth-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 74px;
-    align-items: stretch;
-    justify-content: center;
-    padding-block: 64px;
-  }
-
-  .auth-intro h1 {
-    font-size: clamp(3.5rem, 16vw, 5.25rem);
-  }
-
-  .auth-form {
-    width: 100%;
   }
 
   .tabs-bar {
@@ -3163,7 +3072,7 @@ function sideColor(side) {
     padding: 12px;
 
     :deep(.text-h6) {
-      font-size: 1.1rem;
+      font-size: var(--dk-text-heading-sm);
     }
   }
 
@@ -3172,7 +3081,7 @@ function sideColor(side) {
   }
 
   .metric-value {
-    font-size: 16px;
+    font-size: var(--dk-text-value);
   }
 
   .chart-range-heading {
@@ -3183,7 +3092,7 @@ function sideColor(side) {
 
   .chart-range-dates {
     width: 100%;
-    font-size: 13px;
+    font-size: var(--dk-text-body-sm);
   }
 
   .chart-range-presets {
@@ -3259,7 +3168,7 @@ function sideColor(side) {
 
   .daily-mobile-summary__primary {
     color: var(--dk-ink);
-    font-size: 14px;
+    font-size: var(--dk-text-body);
     font-weight: 700;
     white-space: nowrap;
   }
@@ -3267,18 +3176,11 @@ function sideColor(side) {
   .daily-mobile-summary__meta {
     margin-top: 4px;
     color: var(--dk-muted);
-    font-size: 11px;
+    font-size: var(--dk-text-caption);
   }
 
   .daily-detail {
     padding: 12px;
-  }
-}
-
-@media (max-width: 420px) {
-  .auth-intro__meta {
-    display: grid;
-    gap: 8px;
   }
 }
 </style>

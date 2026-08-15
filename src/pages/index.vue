@@ -68,11 +68,29 @@
     </q-header>
 
     <q-page-container
+      class="site-page-container"
       :inert="mobileMenuOpen"
       :aria-hidden="mobileMenuOpen ? 'true' : undefined"
     >
       <router-view />
     </q-page-container>
+
+    <nav class="pwa-bottom-navigation" aria-label="앱 메뉴">
+      <router-link
+        v-for="item in pwaNavigationItems"
+        :key="item.to"
+        :to="item.to"
+        class="pwa-bottom-navigation__link"
+        exact-active-class="pwa-bottom-navigation__link--active"
+      >
+        <q-icon
+          class="pwa-bottom-navigation__icon"
+          :name="item.icon"
+          aria-hidden="true"
+        />
+        <span>{{ item.label }}</span>
+      </router-link>
+    </nav>
   </q-layout>
 </template>
 
@@ -80,6 +98,12 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { navigationItems } from '@/content/home.js'
+
+const pwaNavigationItems = [
+  { label: 'HOME', to: '/', icon: 'home' },
+  { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
+  { label: 'AGENT', to: '/agent', icon: 'smart_toy' }
+]
 
 const router = useRouter()
 const mobileMenuOpen = ref(false)
@@ -177,7 +201,7 @@ async function scrollTo(selector) {
       background: transparent;
       color: var(--dk-ink);
       cursor: pointer;
-      font-size: 0.68rem;
+      font-size: var(--dk-text-label);
       font-weight: 500;
       letter-spacing: 0.07em;
     }
@@ -243,6 +267,10 @@ async function scrollTo(selector) {
 
 .mobile-menu-layer,
 .mobile-nav {
+  display: none;
+}
+
+.pwa-bottom-navigation {
   display: none;
 }
 
@@ -325,6 +353,53 @@ async function scrollTo(selector) {
   .menu-reveal-leave-to .mobile-nav {
     opacity: 0;
     transform: translateY(-100%);
+  }
+}
+
+@media (max-width: 767px) and (display-mode: standalone) {
+  .site-page-container {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .menu-button,
+  .mobile-menu-layer {
+    display: none;
+  }
+
+  .pwa-bottom-navigation {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2000;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--dk-line);
+    background: var(--dk-paper);
+    box-shadow: 0 -12px 30px rgba(23, 23, 23, 0.04);
+
+    &__link {
+      display: flex;
+      min-height: 64px;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      color: rgba(23, 23, 23, 0.42);
+      font-size: var(--dk-text-caption);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      transition: color var(--dk-fast);
+
+      &--active {
+        color: var(--dk-ink);
+      }
+    }
+
+    &__icon {
+      font-size: 1.8rem;
+    }
   }
 }
 </style>

@@ -253,7 +253,7 @@ const agentSteps = [
     max-width: 850px;
     margin: 38px 0 0;
     font-size: clamp(3.5rem, 6.5vw, 7rem);
-    line-height: 0.98;
+    line-height: 1.08;
     white-space: nowrap;
   }
 
@@ -261,7 +261,7 @@ const agentSteps = [
     max-width: 500px;
     margin: 38px 0 30px;
     color: var(--dk-muted);
-    font-size: 0.88rem;
+    font-size: var(--dk-text-body);
     line-height: 1.9;
   }
 
@@ -273,7 +273,7 @@ const agentSteps = [
     display: flex;
     justify-content: space-between;
     color: var(--dk-muted);
-    font-size: 0.57rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -347,7 +347,7 @@ const agentSteps = [
     left: 0;
     display: flex;
     justify-content: space-between;
-    font-size: 0.55rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.13em;
 
     span:last-child {
@@ -398,7 +398,7 @@ const agentSteps = [
     grid-column: 10 / 13;
     margin: 0;
     color: var(--dk-muted);
-    font-size: 0.78rem;
+    font-size: var(--dk-text-body);
     line-height: 1.85;
   }
 }
@@ -427,7 +427,7 @@ const agentSteps = [
   }
 
   &__index {
-    font-size: 0.58rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.13em;
   }
 
@@ -446,7 +446,7 @@ const agentSteps = [
     max-width: 220px;
     margin: 15px 0 0;
     color: var(--dk-muted);
-    font-size: 0.72rem;
+    font-size: var(--dk-text-body-sm);
     line-height: 1.75;
   }
 }
@@ -474,7 +474,7 @@ const agentSteps = [
       max-width: 430px;
       margin: 30px 0;
       color: var(--dk-muted);
-      font-size: 0.82rem;
+      font-size: var(--dk-text-body);
       line-height: 1.85;
     }
   }
@@ -486,7 +486,7 @@ const agentSteps = [
   align-items: center;
   padding-block: 8px;
   border-bottom: 1px solid currentColor;
-  font-size: 0.68rem;
+  font-size: var(--dk-text-label);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -508,7 +508,7 @@ const agentSteps = [
   &__meta {
     display: flex;
     justify-content: space-between;
-    font-size: 0.55rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.12em;
   }
 
@@ -573,7 +573,7 @@ const agentSteps = [
     right: 0;
     padding: 4px 0 4px 8px;
     background: var(--dk-ink);
-    font-size: 0.5rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.12em;
     opacity: 0;
     transform: translateX(-8px);
@@ -649,13 +649,13 @@ const agentSteps = [
     margin-top: clamp(60px, 8vw, 110px);
     padding-top: 22px;
     border-top: 1px solid var(--dk-line);
-    font-size: 0.6rem;
+    font-size: var(--dk-text-caption);
 
     p {
       grid-column: 9 / 13;
       margin: 0;
       color: var(--dk-muted);
-      font-size: 0.78rem;
+      font-size: var(--dk-text-body);
       line-height: 1.8;
     }
   }
@@ -710,7 +710,7 @@ const agentSteps = [
       max-width: 470px;
       margin: 32px 0 0;
       color: var(--dk-muted);
-      font-size: 0.82rem;
+      font-size: var(--dk-text-body);
       line-height: 1.9;
     }
   }
@@ -744,7 +744,7 @@ const agentSteps = [
     justify-content: space-between;
     padding-block: 14px;
     border-block: 1px solid rgba(244, 241, 234, 0.28);
-    font-size: 0.62rem;
+    font-size: var(--dk-text-label);
     letter-spacing: 0.13em;
     text-transform: uppercase;
   }
@@ -757,7 +757,7 @@ const agentSteps = [
     padding-top: 24px;
     border-top: 1px solid rgba(244, 241, 234, 0.18);
     color: rgba(244, 241, 234, 0.65);
-    font-size: 0.56rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
