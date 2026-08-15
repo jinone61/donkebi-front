@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import test from 'node:test'
 
 const readSource = path =>
   readFile(new URL(`../${path}`, import.meta.url), 'utf8')
+const readAsset = path => readFile(new URL(`../${path}`, import.meta.url))
 const execFileAsync = promisify(execFile)
 
 test('public navigation reflects the Donkebi agent story', async () => {
@@ -32,10 +34,44 @@ test('package metadata describes the AI agent trading product', async () => {
     packageJson.description,
     'Quiet AI agent trading system for strategy backtesting and execution'
   )
-  assert.equal(
-    packageJson.scripts.deploy,
-    'aws s3 sync ./dist/spa/ s3://donkebi-web --delete'
-  )
+  assert.equal(packageJson.scripts.build, 'quasar build')
+  assert.equal(packageJson.scripts.deploy, undefined)
+})
+
+test('PWA icons use the Donkebi mark', async () => {
+  const expectedHashes = {
+    'apple-icon-120x120.png':
+      '9bc398128ace0e5f29bcbd370ceb004ae545871b20dbd83f235704b2924d242e',
+    'apple-icon-152x152.png':
+      'b871eeccf1569025c439d574a8613f0df42c826a95f419c15c996e983c74959b',
+    'apple-icon-167x167.png':
+      '699b0d7e5f87c65e18d7bb70417f3204306251c069a8fd33b54f4bdfb5eb2a45',
+    'apple-icon-180x180.png':
+      'f72f69d76741a299e2df03e5503e390b870f41de4040e4ed439ecae0f683792b',
+    'icon-128x128.png':
+      '083524d2e26738b74bb05790577ce66762883ed00a8a6c6888c131f3ece4505d',
+    'icon-192x192.png':
+      '59468d2dfaa85231f189cac175af768c881fae99d8f966e2f008d963c33eec90',
+    'icon-256x256.png':
+      '64e1130fb48d311e3a29a688a0733d5675a4c0296f788dd83fa144a0da8fccfd',
+    'icon-384x384.png':
+      'eeb6bb37d3387145c646e321373c3f09079e7897e97f1ec8b2b158ac0e7a1950',
+    'icon-512x512.png':
+      '53428d5ca2b52e385eff548a8e1f471621074327b0fb36bf2b902c9783a3bd46',
+    'ms-icon-144x144.png':
+      'aec0889496cc3a07e918979cfe69136192634ad3a4daf1828fdc1d3434e11e85'
+  }
+
+  for (const [fileName, expectedHash] of Object.entries(expectedHashes)) {
+    const icon = await readAsset(`public/icons/${fileName}`)
+    const actualHash = createHash('sha256').update(icon).digest('hex')
+
+    assert.equal(
+      actualHash,
+      expectedHash,
+      `${fileName} should use Donkebi mark`
+    )
+  }
 })
 
 test('production entry points opt the whole site out of search indexing', async () => {
