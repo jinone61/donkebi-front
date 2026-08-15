@@ -19,7 +19,7 @@
     "lint": "oxfmt && oxlint --fix",
     "lint:check": "oxfmt --check && oxlint",
     "dev": "quasar dev",
-    "build": "quasar build",
+    "build": "quasar build -m pwa",
     "postinstall": "quasar prepare --silent"
   },
   "dependencies": {
