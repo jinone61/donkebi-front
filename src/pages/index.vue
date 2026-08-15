@@ -95,71 +95,71 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
-import { navigationItems } from "@/content/home.js";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { navigationItems } from '@/content/home.js'
 
 const pwaNavigationItems = [
-  { label: "HOME", to: "/", icon: "home" },
-  { label: "BACKTEST", to: "/backtest", icon: "query_stats" },
-  { label: "AGENT", to: "/agent", icon: "smart_toy" },
-];
+  { label: 'HOME', to: '/', icon: 'home' },
+  { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
+  { label: 'AGENT', to: '/agent', icon: 'smart_toy' }
+]
 
-const router = useRouter();
-const mobileMenuOpen = ref(false);
-const menuButton = ref(null);
-const previousBodyOverflow = ref("");
-let desktopMediaQuery;
+const router = useRouter()
+const mobileMenuOpen = ref(false)
+const menuButton = ref(null)
+const previousBodyOverflow = ref('')
+let desktopMediaQuery
 
 function closeMobileMenu({ restoreFocus = false } = {}) {
-  mobileMenuOpen.value = false;
-  if (restoreFocus) requestAnimationFrame(() => menuButton.value?.focus());
+  mobileMenuOpen.value = false
+  if (restoreFocus) requestAnimationFrame(() => menuButton.value?.focus())
 }
 
 function handleKeydown(event) {
-  if (event.key !== "Escape" || !mobileMenuOpen.value) return;
+  if (event.key !== 'Escape' || !mobileMenuOpen.value) return
 
-  closeMobileMenu({ restoreFocus: true });
+  closeMobileMenu({ restoreFocus: true })
 }
 
 function handleDesktopChange(event) {
-  if (event.matches) closeMobileMenu();
+  if (event.matches) closeMobileMenu()
 }
 
 onMounted(() => {
-  document.addEventListener("keydown", handleKeydown);
-  desktopMediaQuery = window.matchMedia("(min-width: 768px)");
-  desktopMediaQuery.addEventListener("change", handleDesktopChange);
-});
+  document.addEventListener('keydown', handleKeydown)
+  desktopMediaQuery = window.matchMedia('(min-width: 768px)')
+  desktopMediaQuery.addEventListener('change', handleDesktopChange)
+})
 onBeforeUnmount(() => {
-  document.removeEventListener("keydown", handleKeydown);
-  desktopMediaQuery?.removeEventListener("change", handleDesktopChange);
-  document.body.style.overflow = previousBodyOverflow.value;
-});
+  document.removeEventListener('keydown', handleKeydown)
+  desktopMediaQuery?.removeEventListener('change', handleDesktopChange)
+  document.body.style.overflow = previousBodyOverflow.value
+})
 
-watch(mobileMenuOpen, (isOpen) => {
+watch(mobileMenuOpen, isOpen => {
   if (isOpen) {
-    previousBodyOverflow.value = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return;
+    previousBodyOverflow.value = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return
   }
 
-  document.body.style.overflow = previousBodyOverflow.value;
-});
+  document.body.style.overflow = previousBodyOverflow.value
+})
 
 async function scrollTo(selector) {
-  closeMobileMenu();
+  closeMobileMenu()
 
-  if (router.currentRoute.value.path !== "/") {
-    await router.push("/");
-    await nextTick();
+  if (router.currentRoute.value.path !== '/') {
+    await router.push('/')
+    await nextTick()
   }
 
   requestAnimationFrame(() => {
     document
       .querySelector(selector)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
 }
 </script>
 
@@ -201,7 +201,7 @@ async function scrollTo(selector) {
       background: transparent;
       color: var(--dk-ink);
       cursor: pointer;
-      font-size: 0.68rem;
+      font-size: var(--dk-text-label);
       font-weight: 500;
       letter-spacing: 0.07em;
     }
@@ -387,7 +387,7 @@ async function scrollTo(selector) {
       align-items: center;
       justify-content: center;
       color: rgba(23, 23, 23, 0.42);
-      font-size: 0.58rem;
+      font-size: var(--dk-text-caption);
       font-weight: 600;
       letter-spacing: 0.06em;
       transition: color var(--dk-fast);

@@ -3029,71 +3029,6 @@ function shortTypeLabel(value) {
   color: var(--dk-ink);
 }
 
-.auth-area {
-  display: grid;
-  min-height: calc(100vh - 82px);
-  align-items: center;
-  padding: clamp(64px, 10vw, 132px) 0;
-}
-
-.auth-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-  gap: clamp(64px, 11vw, 160px);
-  align-items: end;
-}
-
-.auth-intro {
-  > p:not(.dk-eyebrow) {
-    max-width: 380px;
-    margin: 30px 0 0;
-    color: var(--dk-muted);
-    line-height: 1.8;
-  }
-
-  h1 {
-    margin: 18px 0 0;
-    font-size: clamp(4.4rem, 8vw, 8.7rem);
-    font-weight: 400;
-    line-height: 0.88;
-    letter-spacing: -0.07em;
-  }
-}
-
-.auth-intro__meta {
-  display: flex;
-  gap: 28px;
-  margin-top: 78px;
-  color: var(--dk-muted);
-  font-size: 0.62rem;
-  letter-spacing: 0.15em;
-}
-
-.auth-form {
-  padding-top: 20px;
-  border-top: 1px solid var(--dk-ink);
-}
-
-.auth-form__head {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.auth-form__head {
-  margin-bottom: 48px;
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-}
-
-.auth-form__button {
-  min-height: 48px;
-  margin-top: 16px;
-  border-radius: 0;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-}
-
 .workspace-intro {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -3125,7 +3060,7 @@ function shortTypeLabel(value) {
   p {
     margin: 0;
     color: var(--dk-muted);
-    font-size: 0.61rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.1em;
   }
 }
@@ -3144,7 +3079,7 @@ function shortTypeLabel(value) {
   align-items: center;
   column-gap: 6px;
   color: var(--dk-muted);
-  font-size: 0.61rem;
+  font-size: var(--dk-text-caption);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08em;
 
@@ -3183,7 +3118,7 @@ function shortTypeLabel(value) {
   align-items: center;
   gap: 4px;
   color: var(--dk-muted);
-  font-size: 0.59rem;
+  font-size: var(--dk-text-caption);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -3216,7 +3151,7 @@ function shortTypeLabel(value) {
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  font-size: 0.66rem;
+  font-size: var(--dk-text-label);
   letter-spacing: 0.13em;
 
   i {
@@ -3241,7 +3176,7 @@ function shortTypeLabel(value) {
 
   :deep(.q-tab) {
     min-height: 52px;
-    font-size: 0.68rem;
+    font-size: var(--dk-text-label);
     font-weight: 500;
     letter-spacing: 0.08em;
   }
@@ -3317,7 +3252,7 @@ function shortTypeLabel(value) {
 
   h2 {
     margin: 3px 0;
-    font-size: 1.22rem;
+    font-size: var(--dk-text-heading);
     font-weight: 400;
     line-height: 1.25;
     letter-spacing: 0;
@@ -3326,18 +3261,18 @@ function shortTypeLabel(value) {
   > div > p:last-child {
     margin: 0;
     color: var(--dk-muted);
-    font-size: 0.75rem;
+    font-size: var(--dk-text-body-sm);
   }
 
   &__description {
     margin: 0;
     color: var(--dk-muted);
-    font-size: 0.75rem;
+    font-size: var(--dk-text-body-sm);
   }
 
   > span {
     color: var(--dk-muted);
-    font-size: 0.64rem;
+    font-size: var(--dk-text-label);
     letter-spacing: 0.1em;
   }
 }
@@ -3371,7 +3306,7 @@ function shortTypeLabel(value) {
 .section-index {
   margin: 0;
   color: var(--dk-muted);
-  font-size: 0.58rem;
+  font-size: var(--dk-text-caption);
   font-weight: 600;
   letter-spacing: 0.1em;
 }
@@ -3381,7 +3316,7 @@ function shortTypeLabel(value) {
   align-items: center;
   gap: 4px;
   color: var(--dk-muted);
-  font-size: 0.56rem;
+  font-size: var(--dk-text-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
 
@@ -3423,7 +3358,7 @@ function shortTypeLabel(value) {
   span {
     padding: 7px 10px;
     border: 1px solid var(--dk-line);
-    font-size: 0.59rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.09em;
   }
 }
@@ -3444,7 +3379,7 @@ function shortTypeLabel(value) {
 
   &__label {
     color: var(--dk-muted);
-    font-size: 0.68rem;
+    font-size: var(--dk-text-label);
     letter-spacing: 0.04em;
   }
 
@@ -3452,7 +3387,7 @@ function shortTypeLabel(value) {
     display: block;
     margin-top: 5px;
     color: var(--dk-ink);
-    font-size: 18px;
+    font-size: var(--dk-text-heading-sm);
     font-weight: 650;
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -3477,13 +3412,13 @@ function shortTypeLabel(value) {
   h3 {
     margin: 2px 0 0;
     font-family: var(--dk-font-serif);
-    font-size: 1rem;
+    font-size: var(--dk-text-value);
     font-weight: 400;
   }
 
   > span {
     color: var(--dk-muted);
-    font-size: 0.58rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.08em;
   }
 }
@@ -3506,14 +3441,14 @@ function shortTypeLabel(value) {
       margin-bottom: 8px;
 
       strong {
-        font-size: 0.75rem;
+        font-size: var(--dk-text-body-sm);
       }
 
       span {
         padding: 2px 6px;
         border: 1px solid var(--dk-line-strong);
         color: var(--dk-muted);
-        font-size: 0.56rem;
+        font-size: var(--dk-text-caption);
       }
     }
 
@@ -3526,12 +3461,12 @@ function shortTypeLabel(value) {
 
     dt {
       color: var(--dk-muted);
-      font-size: 0.58rem;
+      font-size: var(--dk-text-caption);
     }
 
     dd {
       margin: 2px 0 0;
-      font-size: 0.7rem;
+      font-size: var(--dk-text-body-sm);
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       overflow-wrap: anywhere;
@@ -3579,13 +3514,13 @@ function shortTypeLabel(value) {
   }
 
   strong {
-    font-size: 0.72rem;
+    font-size: var(--dk-text-body-sm);
     font-weight: 600;
   }
 
   time {
     color: var(--dk-muted);
-    font-size: 0.62rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.05em;
   }
 }
@@ -3638,7 +3573,7 @@ function shortTypeLabel(value) {
     top: calc(50% + 4px);
     left: 27px;
     color: var(--dk-muted);
-    font-size: 0.58rem;
+    font-size: var(--dk-text-caption);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.05em;
@@ -3694,7 +3629,7 @@ function shortTypeLabel(value) {
   place-items: center;
   background: var(--dk-surface);
   color: var(--dk-surface);
-  font-size: 0.66rem;
+  font-size: var(--dk-text-label);
   font-weight: 700;
   transition:
     transform 180ms ease,
@@ -3782,21 +3717,21 @@ function shortTypeLabel(value) {
   p {
     margin: 0;
     color: var(--dk-muted);
-    font-size: 0.58rem;
+    font-size: var(--dk-text-caption);
     font-weight: 600;
     letter-spacing: 0.11em;
   }
 
   h3 {
     margin: 2px 0 1px;
-    font-size: 1.05rem;
+    font-size: var(--dk-text-heading-sm);
     font-weight: 400;
     line-height: 1.1;
   }
 
   > div:first-child > span {
     color: var(--dk-muted);
-    font-size: 0.66rem;
+    font-size: var(--dk-text-label);
     font-variant-numeric: tabular-nums;
 
     .operation-countdown-value {
@@ -3815,7 +3750,7 @@ function shortTypeLabel(value) {
 
   small {
     color: var(--dk-muted);
-    font-size: 0.58rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.04em;
   }
 }
@@ -3836,7 +3771,7 @@ function shortTypeLabel(value) {
   padding: 4px 7px;
   border: 1px solid var(--dk-line-strong);
   color: var(--dk-muted);
-  font-size: 0.56rem;
+  font-size: var(--dk-text-caption);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-align: center;
@@ -3879,12 +3814,12 @@ function shortTypeLabel(value) {
 
   strong {
     color: var(--dk-ink);
-    font-size: 0.78rem;
+    font-size: var(--dk-text-body);
   }
 
   p {
     margin: 5px 0 0;
-    font-size: 0.68rem;
+    font-size: var(--dk-text-label);
   }
 }
 
@@ -3897,7 +3832,7 @@ function shortTypeLabel(value) {
   border: 1px solid rgba(157, 74, 63, 0.3);
   background: rgba(157, 74, 63, 0.07);
   color: #733a32;
-  font-size: 0.68rem;
+  font-size: var(--dk-text-label);
 }
 
 .operation-mode-banner {
@@ -3912,12 +3847,12 @@ function shortTypeLabel(value) {
 
   span {
     color: rgba(242, 240, 233, 0.56);
-    font-size: 0.57rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.11em;
   }
 
   strong {
-    font-size: 0.8rem;
+    font-size: var(--dk-text-body);
     font-weight: 500;
   }
 
@@ -3945,12 +3880,12 @@ function shortTypeLabel(value) {
 
     span {
       color: var(--dk-muted);
-      font-size: 0.6rem;
+      font-size: var(--dk-text-caption);
     }
 
     strong {
       overflow: hidden;
-      font-size: 0.73rem;
+      font-size: var(--dk-text-body-sm);
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       text-overflow: ellipsis;
@@ -3970,7 +3905,7 @@ function shortTypeLabel(value) {
 
   small {
     color: var(--dk-muted);
-    font-size: 0.6rem;
+    font-size: var(--dk-text-caption);
     font-weight: 500;
   }
 }
@@ -3980,7 +3915,7 @@ function shortTypeLabel(value) {
 
   h4 {
     margin: 0 0 5px;
-    font-size: 0.7rem;
+    font-size: var(--dk-text-body-sm);
     font-weight: 600;
   }
 }
@@ -3997,14 +3932,14 @@ function shortTypeLabel(value) {
   :deep(td) {
     height: 28px;
     padding: 3px 6px;
-    font-size: 0.64rem;
+    font-size: var(--dk-text-label);
     white-space: nowrap;
   }
 
   small {
     display: block;
     color: #9d4a3f;
-    font-size: 0.58rem;
+    font-size: var(--dk-text-caption);
   }
 }
 
@@ -4019,7 +3954,7 @@ function shortTypeLabel(value) {
   align-items: center;
   justify-content: center;
   border-radius: 2px;
-  font-size: 0.6rem;
+  font-size: var(--dk-text-caption);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -4042,14 +3977,14 @@ function shortTypeLabel(value) {
 
   strong {
     font-family: var(--dk-font-serif);
-    font-size: 1.15rem;
+    font-size: var(--dk-text-heading-sm);
     font-weight: 400;
   }
 
   p {
     margin: 7px 0 0;
     color: var(--dk-muted);
-    font-size: 0.72rem;
+    font-size: var(--dk-text-body-sm);
   }
 }
 
@@ -4136,14 +4071,14 @@ function shortTypeLabel(value) {
   h3 {
     margin: 0;
     font-family: var(--dk-font-serif);
-    font-size: 1.22rem;
+    font-size: var(--dk-text-heading);
     font-weight: 400;
   }
 
   p {
     margin: 6px 0 0;
     color: var(--dk-muted);
-    font-size: 0.75rem;
+    font-size: var(--dk-text-body-sm);
   }
 }
 
@@ -4175,7 +4110,7 @@ function shortTypeLabel(value) {
 .daily-header {
   padding: 7px 44px 7px 12px;
   color: var(--dk-muted);
-  font-size: 12px;
+  font-size: var(--dk-text-label);
   font-weight: 700;
   background: rgba(23, 23, 23, 0.035);
 }
@@ -4183,7 +4118,7 @@ function shortTypeLabel(value) {
 .daily-row {
   width: 100%;
   color: var(--dk-ink);
-  font-size: 13px;
+  font-size: var(--dk-text-body-sm);
 }
 
 .daily-cell {
@@ -4228,7 +4163,7 @@ function shortTypeLabel(value) {
 .detail-title {
   margin-bottom: 8px;
   color: var(--dk-ink);
-  font-size: 14px;
+  font-size: var(--dk-text-body);
   font-weight: 700;
 }
 
@@ -4237,7 +4172,7 @@ function shortTypeLabel(value) {
   flex-wrap: wrap;
   gap: 8px 20px;
   color: var(--dk-muted);
-  font-size: 13px;
+  font-size: var(--dk-text-body-sm);
 }
 
 :deep(.plan-summary-table table) {
@@ -4254,7 +4189,7 @@ function shortTypeLabel(value) {
 .detail-note {
   margin-top: 6px;
   color: var(--dk-muted);
-  font-size: 13px;
+  font-size: var(--dk-text-body-sm);
 }
 
 .table-scroll {
@@ -4276,13 +4211,13 @@ function shortTypeLabel(value) {
 
 :deep(.q-table th) {
   color: var(--dk-muted);
-  font-size: 0.68rem;
+  font-size: var(--dk-text-label);
   font-weight: 600;
   letter-spacing: 0.03em;
 }
 
 :deep(.q-table td) {
-  font-size: 0.7rem;
+  font-size: var(--dk-text-body-sm);
 }
 
 .table-scroll small {
@@ -4298,7 +4233,7 @@ function shortTypeLabel(value) {
 
 .detail-empty {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--dk-text-body-sm);
 }
 
 .value-positive {
@@ -4320,26 +4255,12 @@ function shortTypeLabel(value) {
 }
 
 @media (max-width: 767px) {
-  .agent-page,
-  .auth-area {
+  .agent-page {
     min-height: calc(100vh - 68px);
   }
 
-  .auth-shell,
   .workspace-intro {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .auth-shell {
-    gap: 66px;
-  }
-
-  .auth-intro h1 {
-    font-size: clamp(4rem, 20vw, 6rem);
-  }
-
-  .auth-intro__meta {
-    margin-top: 42px;
   }
 
   .workspace-intro {
@@ -4387,7 +4308,7 @@ function shortTypeLabel(value) {
 
   .section-heading__updated--quiet {
     min-height: 16px;
-    font-size: 0.59rem;
+    font-size: var(--dk-text-caption);
     letter-spacing: 0.02em;
     line-height: 16px;
 
@@ -4445,7 +4366,7 @@ function shortTypeLabel(value) {
     padding: 10px 14px;
 
     strong {
-      font-size: 18px;
+      font-size: var(--dk-text-heading-sm);
     }
   }
 
@@ -4477,7 +4398,7 @@ function shortTypeLabel(value) {
     }
 
     strong {
-      font-size: 0.68rem;
+      font-size: var(--dk-text-label);
     }
   }
 
@@ -4494,7 +4415,7 @@ function shortTypeLabel(value) {
 
     time {
       left: 22px;
-      font-size: 0.52rem;
+      font-size: var(--dk-text-caption);
       letter-spacing: 0.025em;
     }
   }
@@ -4563,13 +4484,13 @@ function shortTypeLabel(value) {
 
     dt {
       color: var(--dk-muted);
-      font-size: 0.56rem;
+      font-size: var(--dk-text-caption);
       letter-spacing: 0.02em;
     }
 
     dd {
       margin: 2px 0 0;
-      font-size: 0.66rem;
+      font-size: var(--dk-text-label);
       font-variant-numeric: tabular-nums;
       overflow-wrap: anywhere;
     }
@@ -4603,7 +4524,7 @@ function shortTypeLabel(value) {
     gap: 8px;
     min-width: 0;
     padding: 7px 8px;
-    font-size: 0.66rem;
+    font-size: var(--dk-text-label);
 
     strong,
     span {
@@ -4617,7 +4538,7 @@ function shortTypeLabel(value) {
     padding: 6px 8px;
     border-top: 1px solid var(--dk-line);
     color: #9d4a3f;
-    font-size: 0.6rem;
+    font-size: var(--dk-text-caption);
     overflow-wrap: anywhere;
   }
 
@@ -4666,7 +4587,7 @@ function shortTypeLabel(value) {
 
   .daily-mobile-summary__primary {
     color: var(--dk-ink);
-    font-size: 14px;
+    font-size: var(--dk-text-body);
     font-weight: 700;
     white-space: nowrap;
   }
@@ -4674,7 +4595,7 @@ function shortTypeLabel(value) {
   .daily-mobile-summary__cash {
     padding-left: 6px;
     color: var(--dk-ink);
-    font-size: 12px;
+    font-size: var(--dk-text-label);
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -4685,19 +4606,19 @@ function shortTypeLabel(value) {
     border: 1px solid var(--dk-line);
     background: rgba(23, 23, 23, 0.045) !important;
     color: var(--dk-muted) !important;
-    font-size: 0.62rem;
+    font-size: var(--dk-text-caption);
     font-weight: 600;
   }
 
   .daily-mobile-summary__meta {
     margin-top: 4px;
     color: var(--dk-muted);
-    font-size: 11px;
+    font-size: var(--dk-text-caption);
   }
 
   .data-label {
     color: var(--dk-muted);
-    font-size: 11px;
+    font-size: var(--dk-text-caption);
   }
 
   .daily-detail {
@@ -4723,7 +4644,7 @@ function shortTypeLabel(value) {
 
   .chart-range-dates {
     width: 100%;
-    font-size: 13px;
+    font-size: var(--dk-text-body-sm);
   }
 
   .chart-range-presets {

@@ -127,6 +127,88 @@ test('bottom navigation uses touch-friendly icon sizing', async () => {
   assert.match(source, /&__icon \{\s*font-size: 1\.8rem;\s*\}/)
 })
 
+test('public pages share a role-based typography scale', async () => {
+  const [globalStyles, layout, home, backtest, agent] = await Promise.all([
+    readSource('src/css/app.scss'),
+    readSource('src/pages/index.vue'),
+    readSource('src/pages/index/(home).vue'),
+    readSource('src/components/backtest/BacktestPage.vue'),
+    readSource('src/components/agent/AgentPage.vue')
+  ])
+  const scale = {
+    caption: '0.6875rem',
+    label: '0.75rem',
+    'body-sm': '0.8125rem',
+    body: '0.875rem',
+    value: '1rem',
+    'heading-sm': '1.125rem',
+    heading: '1.25rem'
+  }
+
+  for (const [role, size] of Object.entries(scale)) {
+    assert.match(globalStyles, new RegExp(`--dk-text-${role}: ${size}`))
+  }
+
+  assert.match(
+    layout,
+    /\.pwa-bottom-navigation[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-caption\);/
+  )
+
+  for (const source of [home, backtest, agent]) {
+    assert.match(source, /font-size: var\(--dk-text-caption\);/)
+    assert.match(source, /font-size: var\(--dk-text-label\);/)
+    assert.match(source, /font-size: var\(--dk-text-body-sm\);/)
+    assert.match(source, /font-size: var\(--dk-text-body\);/)
+    assert.doesNotMatch(source, /font-size: 0\.[5-8]\d*rem;/)
+  }
+})
+
+test('private workspaces share one authentication layout', async () => {
+  const [globalStyles, backtest, agent] = await Promise.all([
+    readSource('src/css/app.scss'),
+    readSource('src/components/backtest/BacktestPage.vue'),
+    readSource('src/components/agent/AgentPage.vue')
+  ])
+
+  for (const source of [backtest, agent]) {
+    assert.match(
+      source,
+      /class="auth-area"[\s\S]*?class="auth-shell dk-container"[\s\S]*?class="auth-intro dk-reveal"[\s\S]*?class="auth-intro__meta"[\s\S]*?class="auth-form dk-reveal"[\s\S]*?class="auth-form__head"/
+    )
+    assert.doesNotMatch(
+      source,
+      /^\s*\.(?:auth-area|auth-shell|auth-intro|auth-form)(?:__\w+)?[^\n]*\{/m
+    )
+  }
+
+  assert.match(
+    globalStyles,
+    /\.auth-area \{[\s\S]*?min-height: calc\(100vh - 82px\);[\s\S]*?\.auth-shell \{[\s\S]*?grid-template-columns: repeat\(12, minmax\(0, 1fr\)\);[\s\S]*?\.auth-intro \{[\s\S]*?grid-column: 1 \/ 8;[\s\S]*?\.auth-form \{[\s\S]*?grid-column: 9 \/ 13;/
+  )
+  assert.match(
+    globalStyles,
+    /@media \(max-width: 767px\) \{[\s\S]*?\.auth-area \{[\s\S]*?min-height: calc\(100vh - 68px\);[\s\S]*?\.auth-shell \{[\s\S]*?flex-direction: column;[\s\S]*?gap: 74px;[\s\S]*?padding-block: 64px;[\s\S]*?\.auth-intro h1 \{[\s\S]*?font-size: clamp\(3\.5rem, 16vw, 5\.25rem\);/
+  )
+})
+
+test('private workspace password placeholders stay muted', async () => {
+  const globalStyles = await readSource('src/css/app.scss')
+
+  assert.match(
+    globalStyles,
+    /\.auth-form \{[\s\S]*?\.q-field__label \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?\.q-field__native \{[\s\S]*?color: var\(--dk-ink\);/
+  )
+})
+
+test('private workspace password controls share one field treatment', async () => {
+  const globalStyles = await readSource('src/css/app.scss')
+
+  assert.match(
+    globalStyles,
+    /\.auth-form \{[\s\S]*?\.q-field__control \{[\s\S]*?border-radius: 2px;[\s\S]*?background: rgba\(244, 241, 234, 0\.34\);[\s\S]*?\.q-field--outlined \.q-field__control::before \{[\s\S]*?border-color: var\(--dk-line\);[\s\S]*?\.q-field--outlined:hover \.q-field__control::before \{[\s\S]*?border-color: var\(--dk-line-strong\);[\s\S]*?\.q-field--outlined\.q-field--focused \.q-field__control::after \{[\s\S]*?border-color: var\(--dk-ink\);[\s\S]*?border-width: 1px;/
+  )
+})
+
 test('production entry points opt the whole site out of search indexing', async () => {
   const [indexHtml, robotsTxt] = await Promise.all([
     readSource('index.html'),
@@ -152,6 +234,16 @@ test('home presents the quiet AI trading agent narrative', async () => {
   for (const sectionId of ['system', 'backtest', 'principle', 'origin']) {
     assert.match(source, new RegExp(`id="${sectionId}"`))
   }
+})
+
+test('home hero gives its two-line title comfortable separation', async () => {
+  const source = await readSource('src/pages/index/(home).vue')
+  const heroTitleStyles = source.match(
+    /\.hero \{[\s\S]*?\n  h1 \{(?<styles>[\s\S]*?)\n  \}/
+  )?.groups?.styles
+
+  assert.ok(heroTitleStyles)
+  assert.match(heroTitleStyles, /line-height: 1\.08;/)
 })
 
 test('home primary action opens Agent while backtest actions stay on Backtest', async () => {
@@ -767,7 +859,7 @@ test('agent tabs use the backtest navigation treatment', async () => {
   )
   assert.match(
     source,
-    /:deep\(\.q-tab\) \{[\s\S]*?min-height: 52px;[\s\S]*?font-size: 0\.68rem;/
+    /:deep\(\.q-tab\) \{[\s\S]*?min-height: 52px;[\s\S]*?font-size: var\(--dk-text-label\);/
   )
 })
 
@@ -994,7 +1086,7 @@ test('agent cards own their update time and icon-only refresh action', async () 
   assert.match(performanceHeading, /section-heading__updated--quiet/)
   assert.match(
     source,
-    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--quiet \{[\s\S]*?min-height: 16px;[\s\S]*?font-size: 0\.59rem;[\s\S]*?letter-spacing: 0\.02em;[\s\S]*?line-height: 16px;[\s\S]*?\.section-heading__updated-label \{[\s\S]*?display: none;[\s\S]*?\.section-heading__refresh \{[\s\S]*?align-self: center;[\s\S]*?width: 16px;[\s\S]*?min-width: 16px;[\s\S]*?height: 16px;[\s\S]*?min-height: 16px;[\s\S]*?margin-right: -7px;[\s\S]*?color: inherit !important;/
+    /@media \(max-width: 767px\)[\s\S]*?\.section-heading__updated--quiet \{[\s\S]*?min-height: 16px;[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?letter-spacing: 0\.02em;[\s\S]*?line-height: 16px;[\s\S]*?\.section-heading__updated-label \{[\s\S]*?display: none;[\s\S]*?\.section-heading__refresh \{[\s\S]*?align-self: center;[\s\S]*?width: 16px;[\s\S]*?min-width: 16px;[\s\S]*?height: 16px;[\s\S]*?min-height: 16px;[\s\S]*?margin-right: -7px;[\s\S]*?color: inherit !important;/
   )
   assert.match(
     source,
@@ -1020,7 +1112,7 @@ test('agent cards own their update time and icon-only refresh action', async () 
   )
   assert.match(
     source,
-    /\.section-heading__updated \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?font-size: 0\.59rem;/
+    /\.section-heading__updated \{[\s\S]*?color: var\(--dk-muted\);[\s\S]*?font-size: var\(--dk-text-caption\);/
   )
   assert.match(
     source,
@@ -1104,7 +1196,7 @@ test('agent page covers current status charts and operation history', async () =
   )
   assert.match(
     source,
-    /@media \(max-width: 767px\)[\s\S]*?\.summary-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\.metric-card \{[\s\S]*?font-size: 18px/
+    /@media \(max-width: 767px\)[\s\S]*?\.summary-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?\.metric-card \{[\s\S]*?font-size: var\(--dk-text-heading-sm\)/
   )
   assert.doesNotMatch(source, /reportedTotalProfit|reportedTotalReturnPct/)
   assert.match(
@@ -1121,7 +1213,7 @@ test('agent page covers current status charts and operation history', async () =
   )
   assert.match(
     source,
-    /\.daily-mobile-summary__cash \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 500;/
+    /\.daily-mobile-summary__cash \{[\s\S]*?font-size: var\(--dk-text-label\);[\s\S]*?font-weight: 500;/
   )
   assert.match(source, /expand-icon-class="daily-expand-section"/)
   assert.match(
@@ -1160,7 +1252,7 @@ test('agent summary cards use the compact readable backtest treatment', async ()
   assert.match(summaryStyles, /padding: 10px 14px;/)
   assert.match(summaryStyles, /border: 1px solid var\(--dk-line\);/)
   assert.match(summaryStyles, /background: var\(--dk-surface\);/)
-  assert.match(summaryStyles, /font-size: 18px;/)
+  assert.match(summaryStyles, /font-size: var\(--dk-text-heading-sm\);/)
   assert.match(summaryStyles, /font-weight: 650;/)
   assert.match(summaryStyles, /text-align: center;/)
   assert.doesNotMatch(summaryStyles, /strong\.value-(?:positive|negative)/)
@@ -1227,7 +1319,7 @@ test('agent data workspace follows the backtest layout system', async () => {
   )
   assert.match(
     source,
-    /\.section-heading[\s\S]*?h2 \{[\s\S]*?font-size: 1\.22rem;/
+    /\.section-heading[\s\S]*?h2 \{[\s\S]*?font-size: var\(--dk-text-heading\);/
   )
   assert.match(
     source,
