@@ -68,74 +68,98 @@
     </q-header>
 
     <q-page-container
+      class="site-page-container"
       :inert="mobileMenuOpen"
       :aria-hidden="mobileMenuOpen ? 'true' : undefined"
     >
       <router-view />
     </q-page-container>
+
+    <nav class="pwa-bottom-navigation" aria-label="앱 메뉴">
+      <router-link
+        v-for="item in pwaNavigationItems"
+        :key="item.to"
+        :to="item.to"
+        class="pwa-bottom-navigation__link"
+        exact-active-class="pwa-bottom-navigation__link--active"
+      >
+        <q-icon
+          class="pwa-bottom-navigation__icon"
+          :name="item.icon"
+          aria-hidden="true"
+        />
+        <span>{{ item.label }}</span>
+      </router-link>
+    </nav>
   </q-layout>
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { navigationItems } from '@/content/home.js'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { navigationItems } from "@/content/home.js";
 
-const router = useRouter()
-const mobileMenuOpen = ref(false)
-const menuButton = ref(null)
-const previousBodyOverflow = ref('')
-let desktopMediaQuery
+const pwaNavigationItems = [
+  { label: "HOME", to: "/", icon: "home" },
+  { label: "BACKTEST", to: "/backtest", icon: "query_stats" },
+  { label: "AGENT", to: "/agent", icon: "smart_toy" },
+];
+
+const router = useRouter();
+const mobileMenuOpen = ref(false);
+const menuButton = ref(null);
+const previousBodyOverflow = ref("");
+let desktopMediaQuery;
 
 function closeMobileMenu({ restoreFocus = false } = {}) {
-  mobileMenuOpen.value = false
-  if (restoreFocus) requestAnimationFrame(() => menuButton.value?.focus())
+  mobileMenuOpen.value = false;
+  if (restoreFocus) requestAnimationFrame(() => menuButton.value?.focus());
 }
 
 function handleKeydown(event) {
-  if (event.key !== 'Escape' || !mobileMenuOpen.value) return
+  if (event.key !== "Escape" || !mobileMenuOpen.value) return;
 
-  closeMobileMenu({ restoreFocus: true })
+  closeMobileMenu({ restoreFocus: true });
 }
 
 function handleDesktopChange(event) {
-  if (event.matches) closeMobileMenu()
+  if (event.matches) closeMobileMenu();
 }
 
 onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-  desktopMediaQuery = window.matchMedia('(min-width: 768px)')
-  desktopMediaQuery.addEventListener('change', handleDesktopChange)
-})
+  document.addEventListener("keydown", handleKeydown);
+  desktopMediaQuery = window.matchMedia("(min-width: 768px)");
+  desktopMediaQuery.addEventListener("change", handleDesktopChange);
+});
 onBeforeUnmount(() => {
-  document.removeEventListener('keydown', handleKeydown)
-  desktopMediaQuery?.removeEventListener('change', handleDesktopChange)
-  document.body.style.overflow = previousBodyOverflow.value
-})
+  document.removeEventListener("keydown", handleKeydown);
+  desktopMediaQuery?.removeEventListener("change", handleDesktopChange);
+  document.body.style.overflow = previousBodyOverflow.value;
+});
 
-watch(mobileMenuOpen, isOpen => {
+watch(mobileMenuOpen, (isOpen) => {
   if (isOpen) {
-    previousBodyOverflow.value = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return
+    previousBodyOverflow.value = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return;
   }
 
-  document.body.style.overflow = previousBodyOverflow.value
-})
+  document.body.style.overflow = previousBodyOverflow.value;
+});
 
 async function scrollTo(selector) {
-  closeMobileMenu()
+  closeMobileMenu();
 
-  if (router.currentRoute.value.path !== '/') {
-    await router.push('/')
-    await nextTick()
+  if (router.currentRoute.value.path !== "/") {
+    await router.push("/");
+    await nextTick();
   }
 
   requestAnimationFrame(() => {
     document
       .querySelector(selector)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 </script>
 
@@ -246,6 +270,10 @@ async function scrollTo(selector) {
   display: none;
 }
 
+.pwa-bottom-navigation {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .site-header {
     &__inner {
@@ -325,6 +353,53 @@ async function scrollTo(selector) {
   .menu-reveal-leave-to .mobile-nav {
     opacity: 0;
     transform: translateY(-100%);
+  }
+}
+
+@media (max-width: 767px) and (display-mode: standalone) {
+  .site-page-container {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .menu-button,
+  .mobile-menu-layer {
+    display: none;
+  }
+
+  .pwa-bottom-navigation {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2000;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--dk-line);
+    background: var(--dk-paper);
+    box-shadow: 0 -12px 30px rgba(23, 23, 23, 0.04);
+
+    &__link {
+      display: flex;
+      min-height: 64px;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      color: rgba(23, 23, 23, 0.42);
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      transition: color var(--dk-fast);
+
+      &--active {
+        color: var(--dk-ink);
+      }
+    }
+
+    &__icon {
+      font-size: 1.8rem;
+    }
   }
 }
 </style>

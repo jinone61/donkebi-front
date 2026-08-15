@@ -74,12 +74,57 @@ test('PWA icons use the Donkebi mark', async () => {
   }
 })
 
-test('PWA uses Donkebi colors while staying portrait-only', async () => {
+test('PWA uses Donkebi colors in standalone portrait mode', async () => {
   const manifest = JSON.parse(await readSource('src-pwa/manifest.json'))
 
   assert.equal(manifest.theme_color, '#f4f1ea')
   assert.equal(manifest.background_color, '#f4f1ea')
   assert.equal(manifest.orientation, 'portrait')
+  assert.equal(manifest.display, 'standalone')
+  assert.equal(manifest.display_override[0], 'standalone')
+})
+
+test('installed mobile PWA provides exact navigation for every workspace', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(
+    source,
+    /const pwaNavigationItems = \[[\s\S]*?label: 'HOME', to: '\/', icon: 'home'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'AGENT', to: '\/agent', icon: 'smart_toy'[\s\S]*?\]/
+  )
+  assert.match(
+    source,
+    /<nav class="pwa-bottom-navigation" aria-label="앱 메뉴">[\s\S]*?v-for="item in pwaNavigationItems"[\s\S]*?:to="item\.to"[\s\S]*?exact-active-class="pwa-bottom-navigation__link--active"[\s\S]*?<q-icon[^>]*:name="item\.icon"[\s\S]*?\{\{ item\.label \}\}/
+  )
+})
+
+test('bottom navigation only replaces the menu in installed mobile PWA', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(source, /\.pwa-bottom-navigation \{\s*display: none;/)
+  assert.match(
+    source,
+    /@media \(max-width: 767px\) and \(display-mode: standalone\) \{[\s\S]*?\.site-page-container \{[\s\S]*?padding-bottom: calc\(64px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\.menu-button,[\s\S]*?\.mobile-menu-layer \{\s*display: none;[\s\S]*?\.pwa-bottom-navigation \{[\s\S]*?display: grid;[\s\S]*?padding-bottom: env\(safe-area-inset-bottom\);/
+  )
+})
+
+test('bottom navigation identifies the active route with color alone', async () => {
+  const source = await readSource('src/pages/index.vue')
+  const navigationStyles = source.slice(
+    source.indexOf('@media (max-width: 767px) and (display-mode: standalone)'),
+    source.indexOf('</style>')
+  )
+
+  assert.match(
+    navigationStyles,
+    /&__link \{[\s\S]*?color: rgba\(23, 23, 23, 0\.42\);[\s\S]*?&--active \{\s*color: var\(--dk-ink\);/
+  )
+  assert.doesNotMatch(navigationStyles, /&::before/)
+})
+
+test('bottom navigation uses touch-friendly icon sizing', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(source, /&__icon \{\s*font-size: 1\.8rem;\s*\}/)
 })
 
 test('production entry points opt the whole site out of search indexing', async () => {
