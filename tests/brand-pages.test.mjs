@@ -74,6 +74,14 @@ test('PWA icons use the Donkebi mark', async () => {
   }
 })
 
+test('PWA uses Donkebi colors while staying portrait-only', async () => {
+  const manifest = JSON.parse(await readSource('src-pwa/manifest.json'))
+
+  assert.equal(manifest.theme_color, '#f4f1ea')
+  assert.equal(manifest.background_color, '#f4f1ea')
+  assert.equal(manifest.orientation, 'portrait')
+})
+
 test('production entry points opt the whole site out of search indexing', async () => {
   const [indexHtml, robotsTxt] = await Promise.all([
     readSource('index.html'),
