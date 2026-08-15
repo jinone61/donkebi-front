@@ -1624,8 +1624,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '@/boot/axios'
 import {
+  getLatestOperationStartedAt,
   getOperationCountdownState,
-  getOperationTargetDates
+  getOperationEstimatedDateTime,
+  getOperationTargetDates,
+  parseOperationDateTime
 } from '@/utils/operation-schedule'
 import { useQuasar } from 'quasar'
 import {
@@ -1862,6 +1865,10 @@ function normalizeOperationResult(result = {}) {
   const slides = dates.flatMap((targetDate, dateIndex) => {
     const dateJobs = jobs.filter(job => job.targetDate === targetDate)
     const previousTargetDate = dates[dateIndex + 1] || null
+    const estimatedReferenceTime = getLatestOperationStartedAt(
+      jobs,
+      previousTargetDate
+    )
 
     const dateSlides = OPERATION_PHASES.map((phase, phaseIndex) => {
       const attempts = dateJobs
@@ -1877,11 +1884,13 @@ function normalizeOperationResult(result = {}) {
         ...phase,
         id: `${targetDate}-${phase.jobType}`,
         targetDate,
+        previousTargetDate,
         phaseIndex,
         isMissing: !job,
         estimatedTime: !job
           ? getPreviousOperationTime(jobs, previousTargetDate, phase.jobType)
           : null,
+        estimatedReferenceTime: !job ? estimatedReferenceTime : null,
         attemptCount: attempts.length,
         job
       }
@@ -1897,63 +1906,17 @@ function getInitialExpandedOperationIds() {
   return []
 }
 
-function parseOperationDateTime(value) {
-  if (value instanceof Date) return value
-
-  const stringValue = String(value)
-  if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(stringValue)) {
-    return new Date(stringValue)
-  }
-
-  const parts = stringValue.match(
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?$/
-  )
-  if (!parts) return new Date(stringValue)
-
-  const [, year, month, day, hour, minute, second = '0', fraction = ''] = parts
-  const millisecond = Number(`0.${fraction || '0'}`) * 1000
-
-  return new Date(
-    Date.UTC(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour) - 9,
-      Number(minute),
-      Number(second),
-      millisecond
-    )
-  )
-}
-
 function operationSlideDateTime(slide) {
   if (slide?.job?.startedAt) {
     return parseOperationDateTime(slide.job.startedAt)
   }
 
-  const estimatedTime = slide?.estimatedTime
-  const targetDate = slide?.targetDate
-  if (!estimatedTime || !targetDate) return null
-
-  const estimatedDate = parseOperationDateTime(estimatedTime)
-  if (Number.isNaN(estimatedDate.getTime())) return null
-
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Seoul',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hourCycle: 'h23'
-    })
-      .formatToParts(estimatedDate)
-      .filter(part => part.type !== 'literal')
-      .map(part => [part.type, part.value])
-  )
-
-  return parseOperationDateTime(
-    `${targetDate}T${parts.hour}:${parts.minute}:${parts.second}`
-  )
+  return getOperationEstimatedDateTime({
+    previousTargetDate: slide?.previousTargetDate,
+    nextSessionDate: slide?.targetDate,
+    previousStartedAt: slide?.estimatedTime,
+    referenceStartedAt: slide?.estimatedReferenceTime
+  })
 }
 
 function operationTimelineDate(slide) {
