@@ -387,9 +387,9 @@ async function scrollTo(selector) {
       align-items: center;
       justify-content: center;
       color: rgba(23, 23, 23, 0.42);
-      font-size: var(--dk-text-caption);
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      font-size: var(--dk-text-label);
+      font-weight: 500;
+      letter-spacing: 0.07em;
       transition: color var(--dk-fast);
 
       &--active {
@@ -398,7 +398,7 @@ async function scrollTo(selector) {
     }
 
     &__icon {
-      font-size: 1.8rem;
+      font-size: 1.5rem;
     }
   }
 }
