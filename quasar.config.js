@@ -26,7 +26,8 @@ export default defineConfig((/* ctx */) => {
       // 'line-awesome',
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
-      'material-icons' // optional, you are not bound to it
+      'material-icons',
+      'material-symbols-outlined'
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
