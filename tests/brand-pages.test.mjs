@@ -101,7 +101,7 @@ test('installed mobile PWA provides exact navigation for every workspace', async
 
   assert.match(
     source,
-    /const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION',[\s\S]*?to: '\/operation',[\s\S]*?icon: 'sym_o_event_list',[\s\S]*?flip: true[\s\S]*?label: 'PERFORMANCE', to: '\/performance', icon: 'speed'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value,[\s\S]*?icon: 'person_outline'[\s\S]*?\]\)/
+    /const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION',[\s\S]*?to: '\/operation',[\s\S]*?icon: 'sym_o_action_key'[\s\S]*?label: 'PERFORMANCE', to: '\/performance', icon: 'speed'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value,[\s\S]*?icon: 'person_outline'[\s\S]*?\]\)/
   )
   assert.match(quasarConfig, /extras:[\s\S]*?'material-symbols-outlined'/)
   assert.match(quasarConfig, /extras:[\s\S]*?'material-icons'/)
@@ -186,10 +186,7 @@ test('bottom navigation centers every icon in an equal frame', async () => {
     source,
     /&__icon \{[\s\S]*?display: grid;[\s\S]*?width: 24px;[\s\S]*?height: 24px;[\s\S]*?place-items: center;[\s\S]*?font-size: 1\.375rem;[\s\S]*?line-height: 1;/
   )
-  assert.match(
-    source,
-    /pwa-bottom-navigation__icon--flipped'[\s\S]*?item\.flip[\s\S]*?&--flipped \{\s*transform: scaleX\(-1\);/
-  )
+  assert.doesNotMatch(source, /item\.flip|pwa-bottom-navigation__icon--flipped/)
 })
 
 test('public pages share a role-based typography scale', async () => {
