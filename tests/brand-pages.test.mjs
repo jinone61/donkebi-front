@@ -91,6 +91,7 @@ test('PWA uses Donkebi colors in standalone portrait mode', async () => {
   assert.equal(manifest.orientation, 'portrait')
   assert.equal(manifest.display, 'standalone')
   assert.equal(manifest.display_override[0], 'standalone')
+  assert.equal(manifest.start_url, '/#/operation')
 })
 
 test('installed mobile PWA provides exact navigation for every workspace', async () => {
@@ -286,6 +287,14 @@ test('router and axios enforce the central JWT session', async () => {
   assert.match(
     router,
     /const PUBLIC_PATHS = new Set\(\['\/', '\/login'\]\)[\s\S]*?Router\.beforeEach\(to =>[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?path: '\/login'[\s\S]*?redirect: to\.fullPath/
+  )
+  assert.match(
+    router,
+    /const PWA_DISPLAY_MODE_QUERY =[\s\S]*?display-mode: standalone[\s\S]*?function isStandalonePwa\(\)[\s\S]*?window\.navigator\.standalone === true/
+  )
+  assert.match(
+    router,
+    /to\.path === '\/' && isStandalonePwa\(\)[\s\S]*?path: '\/operation'[\s\S]*?path: '\/login'[\s\S]*?redirect: '\/operation'/
   )
   assert.match(
     axiosBoot,

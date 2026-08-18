@@ -9,6 +9,17 @@ import {
 import { useAuthStore } from '@/stores/auth-store'
 
 const PUBLIC_PATHS = new Set(['/', '/login'])
+const PWA_DISPLAY_MODE_QUERY =
+  '(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)'
+
+function isStandalonePwa() {
+  if (import.meta.env.QUASAR_SERVER) return false
+
+  return (
+    window.matchMedia(PWA_DISPLAY_MODE_QUERY).matches ||
+    window.navigator.standalone === true
+  )
+}
 
 /*
  * If not building with SSR mode, you can
@@ -40,6 +51,16 @@ export default defineRouter(({ store }) => {
 
   Router.beforeEach(to => {
     const isAuthenticated = authStore.hasValidSession()
+
+    if (to.path === '/' && isStandalonePwa()) {
+      return isAuthenticated
+        ? { path: '/operation', replace: true }
+        : {
+            path: '/login',
+            query: { redirect: '/operation' },
+            replace: true
+          }
+    }
 
     if (to.path === '/login' && isAuthenticated) {
       return { path: '/operation', replace: true }
