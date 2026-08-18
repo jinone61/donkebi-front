@@ -7,7 +7,7 @@
         </router-link>
 
         <nav class="site-header__nav" aria-label="주요 메뉴">
-          <template v-for="item in navigationItems" :key="item.href ?? item.to">
+          <template v-for="item in navigationItems" :key="item.label">
             <router-link v-if="item.to" :to="item.to">
               {{ item.label }}
             </router-link>
@@ -45,10 +45,7 @@
             class="mobile-nav dk-container"
             aria-label="모바일 메뉴"
           >
-            <template
-              v-for="item in navigationItems"
-              :key="item.href ?? item.to"
-            >
+            <template v-for="item in navigationItems" :key="item.label">
               <router-link
                 v-if="item.to"
                 :to="item.to"
@@ -75,10 +72,14 @@
       <router-view />
     </q-page-container>
 
-    <nav class="pwa-bottom-navigation" aria-label="앱 메뉴">
+    <nav
+      v-if="!isLoginRoute"
+      class="pwa-bottom-navigation"
+      aria-label="앱 메뉴"
+    >
       <router-link
         v-for="item in pwaNavigationItems"
-        :key="item.to"
+        :key="item.label"
         :to="item.to"
         class="pwa-bottom-navigation__link"
         exact-active-class="pwa-bottom-navigation__link--active"
@@ -95,17 +96,37 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { navigationItems } from '@/content/home.js'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { navigationItems as primaryNavigationItems } from '@/content/home.js'
+import { useAuthStore } from '@/stores/auth-store'
 
-const pwaNavigationItems = [
-  { label: 'HOME', to: '/', icon: 'home' },
-  { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
-  { label: 'AGENT', to: '/agent', icon: 'smart_toy' }
-]
-
+const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
+authStore.hydrate()
+
+const isAuthenticated = computed(() => authStore.hasValidSession())
+const isLoginRoute = computed(() => route.path === '/login')
+const profileDestination = computed(() =>
+  isAuthenticated.value
+    ? '/profile'
+    : { path: '/login', query: { redirect: '/profile' } }
+)
+const navigationItems = computed(() => [
+  ...primaryNavigationItems,
+  { label: 'PROFILE', to: profileDestination.value }
+])
+const pwaNavigationItems = computed(() => [
+  { label: 'OPERATION', to: '/operation', icon: 'smart_toy' },
+  { label: 'PERFORMANCE', to: '/performance', icon: 'monitoring' },
+  { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
+  {
+    label: 'PROFILE',
+    to: profileDestination.value,
+    icon: 'person_outline'
+  }
+])
 const mobileMenuOpen = ref(false)
 const menuButton = ref(null)
 const previousBodyOverflow = ref('')
@@ -357,8 +378,12 @@ async function scrollTo(selector) {
 }
 
 @media (max-width: 767px) and (display-mode: standalone) {
+  .site-header__inner {
+    min-height: 56px;
+  }
+
   .site-page-container {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: calc(52px + env(safe-area-inset-bottom));
   }
 
   .menu-button,
@@ -373,7 +398,7 @@ async function scrollTo(selector) {
     left: 0;
     z-index: 2000;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid var(--dk-line);
     background: var(--dk-paper);
@@ -381,9 +406,9 @@ async function scrollTo(selector) {
 
     &__link {
       display: flex;
-      min-height: 64px;
+      min-height: 52px;
       flex-direction: column;
-      gap: 4px;
+      gap: 1px;
       align-items: center;
       justify-content: center;
       color: rgba(23, 23, 23, 0.42);

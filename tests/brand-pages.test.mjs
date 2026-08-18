@@ -7,6 +7,13 @@ import test from 'node:test'
 
 const readSource = path =>
   readFile(new URL(`../${path}`, import.meta.url), 'utf8')
+const readAgentSource = async () =>
+  (
+    await Promise.all([
+      readSource('src/pages/index/operation.vue'),
+      readSource('src/pages/index/performance.vue')
+    ])
+  ).join('\n')
 const readAsset = path => readFile(new URL(`../${path}`, import.meta.url))
 const execFileAsync = promisify(execFile)
 
@@ -15,14 +22,16 @@ test('public navigation reflects the Donkebi agent story', async () => {
 
   assert.deepEqual(
     navigationItems.map(item => item.label),
-    ['HOME', 'BACKTEST', 'AGENT']
+    ['HOME', 'OPERATION', 'PERFORMANCE', 'BACKTEST']
   )
-  assert.deepEqual(navigationItems[0], { label: 'HOME', href: '/' })
+  assert.deepEqual(navigationItems[0], { label: 'HOME', to: '/' })
   assert.deepEqual(
     navigationItems.filter(item => item.to),
     [
-      { label: 'BACKTEST', to: '/backtest' },
-      { label: 'AGENT', to: '/agent' }
+      { label: 'HOME', to: '/' },
+      { label: 'OPERATION', to: '/operation' },
+      { label: 'PERFORMANCE', to: '/performance' },
+      { label: 'BACKTEST', to: '/backtest' }
     ]
   )
 })
@@ -89,12 +98,43 @@ test('installed mobile PWA provides exact navigation for every workspace', async
 
   assert.match(
     source,
-    /const pwaNavigationItems = \[[\s\S]*?label: 'HOME', to: '\/', icon: 'home'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'AGENT', to: '\/agent', icon: 'smart_toy'[\s\S]*?\]/
+    /const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION', to: '\/operation', icon: 'smart_toy'[\s\S]*?label: 'PERFORMANCE', to: '\/performance', icon: 'monitoring'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value,[\s\S]*?icon: 'person_outline'[\s\S]*?\]\)/
+  )
+  assert.doesNotMatch(source, /label: 'HOME', to: '\/', icon: 'home'/)
+  assert.match(
+    source,
+    /<nav[\s\S]*?v-if="!isLoginRoute"[\s\S]*?class="pwa-bottom-navigation"[\s\S]*?v-for="item in pwaNavigationItems"[\s\S]*?:to="item\.to"[\s\S]*?exact-active-class="pwa-bottom-navigation__link--active"[\s\S]*?<q-icon[^>]*:name="item\.icon"[\s\S]*?\{\{ item\.label \}\}/
+  )
+})
+
+test('profile navigation consistently becomes login before authentication', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(
+    source,
+    /const profileDestination = computed\(\(\) =>[\s\S]*?isAuthenticated\.value[\s\S]*?\? '\/profile'[\s\S]*?: \{[\s\S]*?path: '\/login',[\s\S]*?redirect: '\/profile'/
   )
   assert.match(
     source,
-    /<nav class="pwa-bottom-navigation" aria-label="앱 메뉴">[\s\S]*?v-for="item in pwaNavigationItems"[\s\S]*?:to="item\.to"[\s\S]*?exact-active-class="pwa-bottom-navigation__link--active"[\s\S]*?<q-icon[^>]*:name="item\.icon"[\s\S]*?\{\{ item\.label \}\}/
+    /const navigationItems = computed\(\(\) => \[[\s\S]*?\.\.\.primaryNavigationItems,[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value/
   )
+  assert.doesNotMatch(source, /icon="person_outline"|account-popover/)
+})
+
+test('profile page shows the cached identity and controls the session', async () => {
+  const source = await readSource('src/pages/index/profile.vue')
+
+  assert.match(source, /<q-page class="profile-page">/)
+  assert.match(source, /PROFILE|Profile/)
+  assert.match(source, /authStore\.user\?\.name/)
+  assert.match(source, /authStore\.user\?\.email/)
+  assert.match(source, /ACTIVE/)
+  assert.match(source, /getAuthExpiration\(authStore\.session\)/)
+  assert.match(source, /Asia\/Seoul/)
+  assert.match(source, /KST/)
+  assert.match(source, /authStore\.clearSession\(\)/)
+  assert.match(source, /router\.replace\('\/'\)/)
+  assert.doesNotMatch(source, /accessToken|userId|phone/)
 })
 
 test('bottom navigation only replaces the menu in installed mobile PWA', async () => {
@@ -103,7 +143,7 @@ test('bottom navigation only replaces the menu in installed mobile PWA', async (
   assert.match(source, /\.pwa-bottom-navigation \{\s*display: none;/)
   assert.match(
     source,
-    /@media \(max-width: 767px\) and \(display-mode: standalone\) \{[\s\S]*?\.site-page-container \{[\s\S]*?padding-bottom: calc\(64px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\.menu-button,[\s\S]*?\.mobile-menu-layer \{\s*display: none;[\s\S]*?\.pwa-bottom-navigation \{[\s\S]*?display: grid;[\s\S]*?padding-bottom: env\(safe-area-inset-bottom\);/
+    /@media \(max-width: 767px\) and \(display-mode: standalone\) \{[\s\S]*?\.site-header__inner \{[\s\S]*?min-height: 56px;[\s\S]*?\.site-page-container \{[\s\S]*?padding-bottom: calc\(52px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\.menu-button,[\s\S]*?\.mobile-menu-layer \{\s*display: none;[\s\S]*?\.pwa-bottom-navigation \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?padding-bottom: env\(safe-area-inset-bottom\);[\s\S]*?&__link \{[\s\S]*?min-height: 52px;/
   )
 })
 
@@ -137,7 +177,7 @@ test('bottom navigation labels match the header menu typography', async () => {
 test('bottom navigation uses touch-friendly icon sizing', async () => {
   const source = await readSource('src/pages/index.vue')
 
-  assert.match(source, /&__icon \{\s*font-size: 1\.8rem;\s*\}/)
+  assert.match(source, /&__icon \{\s*font-size: 1\.5rem;\s*\}/)
 })
 
 test('public pages share a role-based typography scale', async () => {
@@ -146,7 +186,7 @@ test('public pages share a role-based typography scale', async () => {
     readSource('src/pages/index.vue'),
     readSource('src/pages/index/(home).vue'),
     readSource('src/components/backtest/BacktestPage.vue'),
-    readSource('src/components/agent/AgentPage.vue')
+    readAgentSource()
   ])
   const scale = {
     caption: '0.6875rem',
@@ -176,23 +216,22 @@ test('public pages share a role-based typography scale', async () => {
   }
 })
 
-test('private workspaces share one authentication layout', async () => {
-  const [globalStyles, backtest, agent] = await Promise.all([
+test('private workspaces use one central authentication layout', async () => {
+  const [globalStyles, login, backtest, agent] = await Promise.all([
     readSource('src/css/app.scss'),
+    readSource('src/pages/index/login.vue'),
     readSource('src/components/backtest/BacktestPage.vue'),
-    readSource('src/components/agent/AgentPage.vue')
+    readAgentSource()
   ])
 
-  for (const source of [backtest, agent]) {
-    assert.match(
-      source,
-      /class="auth-area"[\s\S]*?class="auth-shell dk-container"[\s\S]*?class="auth-intro dk-reveal"[\s\S]*?class="auth-intro__meta"[\s\S]*?class="auth-form dk-reveal"[\s\S]*?class="auth-form__head"/
-    )
-    assert.doesNotMatch(
-      source,
-      /^\s*\.(?:auth-area|auth-shell|auth-intro|auth-form)(?:__\w+)?[^\n]*\{/m
-    )
-  }
+  assert.match(
+    login,
+    /class="auth-area"[\s\S]*?class="auth-shell dk-container"[\s\S]*?class="auth-intro dk-reveal"[\s\S]*?class="auth-intro__meta"[\s\S]*?class="auth-form dk-reveal"[\s\S]*?autocomplete="email"[\s\S]*?autocomplete="current-password"/
+  )
+  assert.doesNotMatch(backtest, /PAGE_PASSWORD|class="auth-area"/)
+  assert.doesNotMatch(agent, /PAGE_PASSWORD|class="auth-area"/)
+  assert.doesNotMatch(backtest, /<div class="backtest-page"[^>]*>\s*<template>/)
+  assert.doesNotMatch(agent, /<div class="agent-page">\s*<template>/)
 
   assert.match(
     globalStyles,
@@ -220,6 +259,37 @@ test('private workspace password controls share one field treatment', async () =
     globalStyles,
     /\.auth-form \{[\s\S]*?\.q-field__control \{[\s\S]*?border-radius: 2px;[\s\S]*?background: rgba\(244, 241, 234, 0\.34\);[\s\S]*?\.q-field--outlined \.q-field__control::before \{[\s\S]*?border-color: var\(--dk-line\);[\s\S]*?\.q-field--outlined:hover \.q-field__control::before \{[\s\S]*?border-color: var\(--dk-line-strong\);[\s\S]*?\.q-field--outlined\.q-field--focused \.q-field__control::after \{[\s\S]*?border-color: var\(--dk-ink\);[\s\S]*?border-width: 1px;/
   )
+})
+
+test('router and axios enforce the central JWT session', async () => {
+  const [router, axiosBoot, login, layout, profile] = await Promise.all([
+    readSource('src/router/index.js'),
+    readSource('src/boot/axios.js'),
+    readSource('src/pages/index/login.vue'),
+    readSource('src/pages/index.vue'),
+    readSource('src/pages/index/profile.vue')
+  ])
+
+  assert.match(
+    router,
+    /const PUBLIC_PATHS = new Set\(\['\/', '\/login'\]\)[\s\S]*?Router\.beforeEach\(to =>[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?path: '\/login'[\s\S]*?redirect: to\.fullPath/
+  )
+  assert.match(
+    axiosBoot,
+    /interceptors\.request\.use[\s\S]*?config\.url !== LOGIN_URL[\s\S]*?config\.headers\.Authorization = authStore\.authorizationHeader/
+  )
+  assert.match(
+    axiosBoot,
+    /interceptors\.response\.use[\s\S]*?status === 401[\s\S]*?authStore\.clearSession\(\)[\s\S]*?path: '\/login'/
+  )
+  assert.doesNotMatch(axiosBoot, /Bearer eyJ/)
+  assert.match(
+    login,
+    /api\.post\(LOGIN_URL,[\s\S]*?email: email\.value,[\s\S]*?password: password\.value[\s\S]*?authStore\.setSession\(data\)/
+  )
+  assert.match(layout, /label: 'PROFILE',[\s\S]*?to: profileDestination\.value/)
+  assert.doesNotMatch(layout, /aria-label="사용자 메뉴"|account-popover/)
+  assert.match(profile, /LOG OUT[\s\S]*?authStore\.clearSession\(\)/)
 })
 
 test('production entry points opt the whole site out of search indexing', async () => {
@@ -271,9 +341,9 @@ test('home primary action opens Agent while backtest actions stay on Backtest', 
 
   assert.match(
     hero,
-    /<router-link class="section-link" to="\/agent">[\s\S]*?Donkebi Agent/
+    /<router-link class="section-link" to="\/operation">[\s\S]*?Donkebi Agent/
   )
-  assert.deepEqual(routeTargets, ['/agent', '/backtest', '/backtest'])
+  assert.deepEqual(routeTargets, ['/operation', '/backtest', '/backtest'])
 })
 
 test('mobile system descriptions use the available content width', async () => {
@@ -346,21 +416,35 @@ test('backtest route renders the editable workspace component', async () => {
   assert.match(source, /<BacktestPage\s*\/>/)
 })
 
-test('agent route renders the independent operation workspace', async () => {
-  const source = await readSource('src/pages/index/agent.vue')
+test('agent routes render independent operation and performance workspaces', async () => {
+  const [operation, performance] = await Promise.all([
+    readSource('src/pages/index/operation.vue'),
+    readSource('src/pages/index/performance.vue')
+  ])
 
-  assert.match(
-    source,
-    /import AgentPage from '@\/components\/agent\/AgentPage\.vue'/
+  await assert.rejects(
+    readSource('src/pages/index/agent.vue'),
+    error => error.code === 'ENOENT'
   )
-  assert.match(source, /<AgentPage\s*\/>/)
+  assert.match(operation, /<q-page class="agent-page">/)
+  assert.match(operation, /Agent Operation/)
+  assert.match(performance, /<q-page class="agent-page">/)
+  assert.match(performance, /Agent Performance/)
+  assert.match(performance, /v-model="draftChartRange"/)
+  assert.match(performance, /const appliedChartRange = ref\(/)
+  assert.match(performance, /buildChartPreviewRange\(/)
+  assert.match(
+    performance,
+    /appliedChartRange\.value = \{ \.\.\.range \}[\s\S]*?isChartRangeDragging\.value = false/
+  )
+  assert.doesNotMatch(operation, /AgentPage|defineProps/)
+  assert.doesNotMatch(performance, /AgentPage|defineProps/)
 })
 
 test('editable backtest workspace combines Donkebi branding with Korean task labels', async () => {
   const source = await readSource('src/components/backtest/BacktestPage.vue')
 
-  assert.match(source, /Private Access Only/)
-  assert.match(source, /Donkebi<br \/>Backtest\./)
+  assert.doesNotMatch(source, /Private Access Only|PAGE_PASSWORD/)
   assert.match(source, /Backtest · Agent 01/)
   assert.match(source, /Strategy backtest\./)
   assert.match(source, /같은 전략을 과거의 시장 위에서 다시 실행합니다\./)
@@ -456,7 +540,7 @@ test('daily order details show buy price instead of canceled quantity', async ()
 
 test('daily cash flow omits tier details that the API does not provide', async () => {
   for (const filePath of [
-    'src/components/agent/AgentPage.vue',
+    'src/pages/index/performance.vue',
     'src/components/backtest/BacktestPage.vue'
   ]) {
     const source = await readSource(filePath)
@@ -478,7 +562,7 @@ test('daily cash flow omits tier details that the API does not provide', async (
 })
 
 test('agent daily cash flow displays every amount to two decimal places', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
   const cashFlowStart = source.indexOf(
     '<div class="detail-title">현금 흐름</div>'
   )
@@ -499,7 +583,7 @@ test('agent daily cash flow displays every amount to two decimal places', async 
 })
 
 test('agent workspace owns its strategy result API and normalization', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
 
   assert.match(source, /const STRATEGY_ID = 1/)
   assert.match(
@@ -521,7 +605,7 @@ test('agent workspace owns its strategy result API and normalization', async () 
 })
 
 test('agent daily history distinguishes submitted orders and executions', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
   const history = source.slice(
     source.indexOf('aria-labelledby="agent-history-title"'),
     source.indexOf('<script setup>')
@@ -550,7 +634,7 @@ test('agent daily history distinguishes submitted orders and executions', async 
 })
 
 test('agent daily plan summary prioritizes schedule and broker status', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
   const planTable = source.slice(
     source.indexOf('<div class="detail-title">계획</div>'),
     source.indexOf('<div class="detail-title">주문 및 체결</div>')
@@ -568,7 +652,7 @@ test('agent daily plan summary prioritizes schedule and broker status', async ()
 })
 
 test('agent daily order headers align with their data columns', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
   const orderTable = source.slice(
     source.indexOf('<div class="detail-title">주문 및 체결</div>'),
     source.indexOf('<div class="detail-title">현금 흐름</div>')
@@ -597,7 +681,7 @@ test('agent daily order headers align with their data columns', async () => {
 })
 
 test('agent operation follows the status API in descending id order', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
 
   assert.match(
     source,
@@ -797,36 +881,39 @@ test('agent operation follows the status API in descending id order', async () =
 })
 
 test('agent workspace separates live operation from performance', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
-  const operationPanel = source.slice(
-    source.indexOf('v-show="activeTab === \'operation\'"'),
-    source.indexOf('v-show="activeTab === \'performance\'"')
-  )
-  const performancePanel = source.slice(
-    source.indexOf('v-show="activeTab === \'performance\'"'),
-    source.indexOf('</div>', source.indexOf('</main>'))
-  )
+  const [operation, performance] = await Promise.all([
+    readSource('src/pages/index/operation.vue'),
+    readSource('src/pages/index/performance.vue')
+  ])
 
-  assert.match(source, /Private Access Only/)
-  assert.match(source, /Donkebi<br \/>Agent\./)
-  assert.match(source, /Donkebi, at work\./)
-  assert.match(source, /const activeTab = ref\('operation'\)/)
-  assert.match(source, /<q-tab name="operation" label="OPERATION" \/>/)
-  assert.match(source, /<q-tab name="performance" label="PERFORMANCE" \/>/)
-  assert.match(operationPanel, /class="operation-list"/)
-  assert.match(operationPanel, /<q-slide-transition>/)
-  assert.match(
-    operationPanel,
-    /Donkebi Agent가 시장을 관찰하고 행동한 기록을 확인합니다\./
+  assert.match(operation, /Agent Operation/)
+  assert.doesNotMatch(
+    operation,
+    /Donkebi, at work\.|Operational Agent · Strategy 01/
   )
-  assert.match(performancePanel, /class="agent-overview"/)
-  assert.match(performancePanel, /class="agent-charts"/)
-  assert.match(performancePanel, /class="section-card agent-history"/)
-  assert.doesNotMatch(source, /import Agent(?:Overview|Charts|History)/)
+  assert.doesNotMatch(operation, /Agent Performance|AGENT_RESULT_URL|ChartJS/)
+  assert.doesNotMatch(performance, /Donkebi, at work\.|OPERATION_STATUS_URL/)
+  assert.doesNotMatch(
+    `${operation}\n${performance}`,
+    /Private Access Only|PAGE_PASSWORD|<q-tabs|AgentPage/
+  )
+  assert.match(operation, /class="operation-list"/)
+  assert.match(operation, /<q-slide-transition>/)
+  assert.match(
+    operation,
+    /nextOperationHeadline\.message[\s\S]*?nextOperationHeadline\.countdown[\s\S]*?operation-heading-countdown[\s\S]*?남음/
+  )
+  assert.match(performance, /class="agent-overview"/)
+  assert.match(performance, /class="agent-charts"/)
+  assert.match(performance, /class="section-card agent-history"/)
+  assert.doesNotMatch(
+    `${operation}\n${performance}`,
+    /import Agent(?:Overview|Charts|History)/
+  )
 })
 
 test('agent operation avoids nested and mobile horizontal scrolling', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
 
   assert.doesNotMatch(source, /<q-tab-panels|<q-tab-panel/)
   assert.match(
@@ -864,7 +951,7 @@ test('agent operation avoids nested and mobile horizontal scrolling', async () =
 })
 
 test('agent tabs use the backtest navigation treatment', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readAgentSource()
 
   assert.match(
     source,
@@ -877,17 +964,13 @@ test('agent tabs use the backtest navigation treatment', async () => {
 })
 
 test('operation timeline switches displayed times between Seoul and New York', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
   const operationHeading = source.slice(
     source.lastIndexOf(
       'class="section-heading section-heading--split"',
       source.indexOf('id="agent-operation-title"')
     ),
     source.indexOf('class="operation-list"')
-  )
-  const operationTitle = operationHeading.slice(
-    0,
-    operationHeading.indexOf('id="agent-operation-title"')
   )
 
   assert.match(source, /const operationTimeZone = ref\('KST'\)/)
@@ -897,9 +980,12 @@ test('operation timeline switches displayed times between Seoul and New York', a
   )
   assert.match(
     operationHeading,
-    /section-heading__updated section-heading__updated--quiet section-heading__updated--operation[\s\S]*?timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"[\s\S]*?operationTimeZone === 'KST'[\s\S]*?@click="operationTimeZone = 'KST'"[\s\S]*?>SEOUL<[\s\S]*?operationTimeZone === 'ET'[\s\S]*?@click="operationTimeZone = 'ET'"[\s\S]*?>NEW YORK<[\s\S]*?section-heading__updated-time[\s\S]*?formatOperationUpdatedAt\(operationUpdatedAt\)/
+    /section-heading__updated section-heading__updated--quiet section-heading__updated--operation[\s\S]*?section-heading__updated-time[\s\S]*?formatOperationUpdatedAt\(operationUpdatedAt\)[\s\S]*?operation-status-card[\s\S]*?timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"[\s\S]*?operationTimeZone === 'KST'[\s\S]*?@click="operationTimeZone = 'KST'"[\s\S]*?>SEOUL<[\s\S]*?operationTimeZone === 'ET'[\s\S]*?@click="operationTimeZone = 'ET'"[\s\S]*?>NEW YORK</
   )
-  assert.doesNotMatch(operationTitle, /timeline-timezone-toggle/)
+  assert.match(
+    operationHeading,
+    /formatOperationUpdatedAt\(operationUpdatedAt\)/
+  )
   assert.doesNotMatch(
     operationHeading,
     />UPDATED ·<|section-heading__updated-label/
@@ -919,7 +1005,7 @@ test('operation timeline switches displayed times between Seoul and New York', a
 })
 
 test('operation timezone changes use restrained accessible motion', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
   const operationListIndex = source.indexOf('class="operation-list"')
   const timelineTimeMotion = source.slice(
     source.indexOf('.timeline-time-enter-active'),
@@ -967,10 +1053,14 @@ test('operation timezone changes use restrained accessible motion', async () => 
     source,
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.timeline-time-enter-active,[\s\S]*?\.timeline-date-leave-active,[\s\S]*?\.operation-flow-move[\s\S]*?transition: none;/
   )
+  assert.match(
+    source,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.timeline-timezone-toggle button \{[\s\S]*?transition: none;/
+  )
 })
 
 test('only the next scheduled operation gets a visible inner glow', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
   const nodeMarkup = source.slice(
     source.indexOf('class="operation-node"'),
     source.indexOf('</span>', source.indexOf('class="operation-node"'))
@@ -1015,7 +1105,7 @@ test('only the next scheduled operation gets a visible inner glow', async () => 
 })
 
 test('the next operation counts down and refreshes once after a three-second grace period', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
   const cardHeadStyles = source.slice(
     source.indexOf('.operation-card__head {'),
     source.indexOf(
@@ -1045,12 +1135,20 @@ test('the next operation counts down and refreshes once after a three-second gra
     /function operationSummary\(slide\) \{[\s\S]*?countdown\.phase === 'checking' \? '실행 확인 중' : '실행 준비 중'/
   )
   assert.match(
+    source,
+    /const nextOperationHeadline = computed\(\(\) => \{[\s\S]*?find\(item => item\.isNextPending\)[\s\S]*?getOperationCountdownState\([\s\S]*?message: `\$\{slide\.jobType\} 실행까지`[\s\S]*?countdown: countdown\.label[\s\S]*?message: `\$\{slide\.jobType\} 실행을 확인하고 있습니다\.`[\s\S]*?다음 실행 일정을 확인하고 있습니다\./
+  )
+  assert.match(
     cardHeadStyles,
     /> div:first-child > span \{[\s\S]*?font-variant-numeric: tabular-nums;/
   )
   assert.match(
     cardHeadStyles,
     /\.operation-countdown-value \{[\s\S]*?font-weight: 600;/
+  )
+  assert.match(
+    source,
+    /\.operation-heading-countdown \{[\s\S]*?color: var\(--dk-ink\);[\s\S]*?font-weight: 500;/
   )
   assert.match(
     source,
@@ -1067,7 +1165,7 @@ test('the next operation counts down and refreshes once after a three-second gra
 })
 
 test('agent cards own their update time and icon-only refresh action', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readAgentSource()
   const operationTitleIndex = source.indexOf('id="agent-operation-title"')
   const operationHeading = source.slice(
     source.lastIndexOf(
@@ -1133,44 +1231,55 @@ test('agent cards own their update time and icon-only refresh action', async () 
   )
 })
 
-test('agent header aligns only the New York and Seoul clocks', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+test('operation status card shows only the selected world clock', async () => {
+  const source = await readSource('src/pages/index/operation.vue')
+  const headingIndex = source.indexOf(
+    'class="section-heading section-heading--split"'
+  )
+  const statusCardIndex = source.indexOf('class="operation-status-card"')
   const timeRows = source.slice(
-    source.indexOf('class="workspace-intro__times"'),
-    source.indexOf(
-      '</section>',
-      source.indexOf('class="workspace-intro__times"')
-    )
+    statusCardIndex,
+    source.indexOf('class="operation-list"')
+  )
+  const clockRows = timeRows.slice(
+    timeRows.indexOf('class="operation-status-card__times"')
   )
 
-  assert.ok(timeRows.indexOf('NEW YORK') < timeRows.indexOf('SEOUL'))
+  assert.doesNotMatch(source, /workspace-intro/)
+  assert.ok(headingIndex < statusCardIndex)
+  assert.match(timeRows, /system-state[\s\S]*?AGENT CONNECTED/)
   assert.match(
     timeRows,
-    /formatZonedDateTime\(clockNow, 'Asia\/Seoul', 'KST'\)/
+    /timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"/
   )
+  assert.doesNotMatch(clockRows, /<span>NEW YORK<|<span>SEOUL</)
   assert.match(
-    timeRows,
-    /formatZonedDateTime\(\s*clockNow,\s*'America\/New_York',\s*'AUTO'\s*\)/
+    clockRows,
+    /aria-label="선택한 지역의 현재 시각"[\s\S]*?:key="operationTimeZone"[\s\S]*?OPERATION_TIME_ZONES\[operationTimeZone\][\s\S]*?operationTimeZone === 'ET' \? 'AUTO' : 'KST'/
   )
-  assert.doesNotMatch(timeRows, /UPDATED|refresh/)
+  assert.doesNotMatch(timeRows, /refresh/)
   assert.match(
     source,
     /function formatZonedDateTime\(value, timeZone, zoneLabel = ''\)[\s\S]*?weekday: 'short'[\s\S]*?timeZoneName = 'short'[\s\S]*?weekday\.toUpperCase\(\)/
   )
   assert.match(
     source,
-    /function formatDateTime\(date\) \{\s*return formatZonedDateTime\(date, 'Asia\/Seoul', 'KST'\)\s*\}/
+    /onMounted\(\(\) => \{[\s\S]*?setInterval[\s\S]*?1_000[\s\S]*?onBeforeUnmount\(\(\) => \{[\s\S]*?clearInterval/
+  )
+  assert.match(source, /\.operation-status-card \{[^}]*display: flex;/)
+  assert.match(source, /\.operation-status-card__times \{[^}]*display: flex;/)
+  assert.match(
+    source,
+    /\.operation-status-card__times \{[\s\S]*?min-height: 22px;[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?time \{[\s\S]*?white-space: nowrap;/
   )
   assert.match(
     source,
-    /onMounted\(\(\) => \{[\s\S]*?setInterval[\s\S]*?1_000[\s\S]*?onBeforeUnmount\(\(\) => \{[\s\S]*?clearInterval/
+    /\.timeline-timezone-toggle \{[\s\S]*?button \{[\s\S]*?white-space: nowrap;/
   )
-  assert.match(source, /\.workspace-intro__times \{[^}]*gap: 0;/)
-  assert.match(source, /\.workspace-intro__time-row \{[^}]*min-height: 22px;/)
 })
 
 test('agent page covers current status charts and operation history', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readAgentSource()
 
   assert.match(source, /MODE TRANSITION/)
   assert.match(source, /주문 계획/)
@@ -1255,7 +1364,7 @@ test('agent page covers current status charts and operation history', async () =
 })
 
 test('agent summary cards use the compact readable backtest treatment', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
   const summaryStyles = source.slice(
     source.indexOf('.summary-grid {'),
     source.indexOf('.current-tiers {')
@@ -1274,7 +1383,7 @@ test('agent summary cards use the compact readable backtest treatment', async ()
 })
 
 test('agent operation flows with the page and starts with every job closed', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/operation.vue')
 
   assert.match(
     source,
@@ -1300,23 +1409,32 @@ test('agent operation flows with the page and starts with every job closed', asy
 })
 
 test('agent loads and refreshes operation and performance independently', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const [operation, performance] = await Promise.all([
+    readSource('src/pages/index/operation.vue'),
+    readSource('src/pages/index/performance.vue')
+  ])
 
-  assert.match(source, /checkPassword\(\)[\s\S]*?fetchOperationResult\(\)/)
   assert.match(
-    source,
-    /watch\(activeTab,[\s\S]*?tab === 'performance'[\s\S]*?!agentResult\.value[\s\S]*?fetchAgentResult\(\)/
+    operation,
+    /onMounted\(\(\) => \{[\s\S]*?fetchOperationResult\(\)/
   )
-  assert.match(source, /@click="fetchOperationResult"/)
-  assert.match(source, /@click="fetchAgentResult"/)
+  assert.match(performance, /onMounted\(fetchAgentResult\)/)
+  assert.doesNotMatch(operation, /fetchAgentResult|AGENT_RESULT_URL/)
+  assert.doesNotMatch(performance, /fetchOperationResult|OPERATION_STATUS_URL/)
   assert.doesNotMatch(
-    source,
+    `${operation}\n${performance}`,
+    /checkPassword|watch\(activeTab/
+  )
+  assert.match(operation, /@click="fetchOperationResult"/)
+  assert.match(performance, /@click="fetchAgentResult"/)
+  assert.doesNotMatch(
+    `${operation}\n${performance}`,
     /function refreshActiveTab\(|lastUpdatedAt|isRefreshing/
   )
 })
 
 test('agent data workspace follows the backtest layout system', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readAgentSource()
 
   assert.match(
     source,
@@ -1361,7 +1479,7 @@ test('agent data workspace follows the backtest layout system', async () => {
 })
 
 test('agent charts share the backtest hover guide experience', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
 
   assert.match(source, /id: 'agentChartRangeGuide'/)
   assert.match(source, /afterDatasetsDraw\(chart, _args, options\)/)
@@ -1374,7 +1492,7 @@ test('agent charts share the backtest hover guide experience', async () => {
 })
 
 test('agent charts match the backtest card and color system', async () => {
-  const source = await readSource('src/components/agent/AgentPage.vue')
+  const source = await readSource('src/pages/index/performance.vue')
 
   assert.match(source, /class="section-card chart-range-card"/)
   assert.equal((source.match(/class="chart-container"/g) || []).length, 2)
