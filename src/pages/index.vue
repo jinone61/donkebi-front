@@ -86,9 +86,6 @@
       >
         <q-icon
           class="pwa-bottom-navigation__icon"
-          :class="{
-            'pwa-bottom-navigation__icon--flipped': item.flip
-          }"
           :name="item.icon"
           aria-hidden="true"
         />
@@ -125,8 +122,7 @@ const pwaNavigationItems = computed(() => [
     label: 'OPERATION',
     to: '/operation',
     // icon: 'checklist_rtl'
-    icon: 'sym_o_event_list',
-    flip: true
+    icon: 'sym_o_action_key'
   },
   { label: 'PERFORMANCE', to: '/performance', icon: 'speed' },
   { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
@@ -439,10 +435,6 @@ async function scrollTo(selector) {
       place-items: center;
       font-size: 1.375rem;
       line-height: 1;
-
-      &--flipped {
-        transform: scaleX(-1);
-      }
     }
   }
 }
