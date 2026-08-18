@@ -1,31 +1,5 @@
 <template>
   <q-page class="agent-page">
-    <section class="workspace-intro dk-container">
-      <div>
-        <p class="dk-eyebrow">Operational Agent · Strategy 01</p>
-        <h1 class="dk-serif">Donkebi, at work.</h1>
-      </div>
-      <div class="workspace-intro__status">
-        <span class="system-state"><i></i> AGENT CONNECTED</span>
-        <div class="workspace-intro__times" aria-label="지역별 현재 시각">
-          <div class="workspace-intro__time-row">
-            <span>NEW YORK</span>
-            <i aria-hidden="true">·</i>
-            <time :datetime="clockNow.toISOString()">
-              {{ formatZonedDateTime(clockNow, 'America/New_York', 'AUTO') }}
-            </time>
-          </div>
-          <div class="workspace-intro__time-row">
-            <span>SEOUL</span>
-            <i aria-hidden="true">·</i>
-            <time :datetime="clockNow.toISOString()">
-              {{ formatZonedDateTime(clockNow, 'Asia/Seoul', 'KST') }}
-            </time>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <main class="content-container">
       <div class="agent-tab-panels">
         <section class="agent-tab-panel">
@@ -66,41 +40,28 @@
                 <h2 id="agent-operation-title" class="dk-serif">
                   Agent Operation
                 </h2>
-                <p class="section-heading__description">
-                  Donkebi Agent가 시장을 관찰하고 행동한 기록을 확인합니다.
+                <p class="section-heading__description" style="margin-top: 6px; font-size: 12px;">
+                  {{ nextOperationHeadline.message }}
+                  <template v-if="nextOperationHeadline.countdown">
+                    <strong class="operation-heading-countdown">{{
+                      nextOperationHeadline.countdown
+                    }}</strong>
+                    남음
+                  </template>
                 </p>
               </div>
               <div
                 class="section-heading__meta section-heading__meta--operation"
               >
                 <div class="source-tags">
-                  <span>{{ operationResult.owner || 'PRIVATE' }}</span>
-                  <span>STRATEGY {{ operationResult.strategyId }}</span>
+                  <span>{{ operationResult?.owner || 'PRIVATE' }}</span>
+                  <span
+                    >STRATEGY {{ operationResult?.strategyId || '01' }}</span
+                  >
                 </div>
                 <div
                   class="section-heading__updated section-heading__updated--quiet section-heading__updated--operation"
                 >
-                  <div
-                    class="timeline-timezone-toggle"
-                    role="group"
-                    aria-label="타임라인 시간대"
-                  >
-                    <button
-                      type="button"
-                      :class="{ 'is-active': operationTimeZone === 'KST' }"
-                      :aria-pressed="operationTimeZone === 'KST'"
-                      @click="operationTimeZone = 'KST'"
-                      >SEOUL</button
-                    >
-                    <span aria-hidden="true">|</span>
-                    <button
-                      type="button"
-                      :class="{ 'is-active': operationTimeZone === 'ET' }"
-                      :aria-pressed="operationTimeZone === 'ET'"
-                      @click="operationTimeZone = 'ET'"
-                      >NEW YORK</button
-                    >
-                  </div>
                   <div class="section-heading__updated-time">
                     <time
                       :datetime="
@@ -123,6 +84,50 @@
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div class="operation-status-card">
+              <div class="operation-status-card__head">
+                <span class="system-state"><i></i> AGENT CONNECTED</span>
+                <div
+                  class="timeline-timezone-toggle"
+                  role="group"
+                  aria-label="타임라인 시간대"
+                >
+                  <button
+                    type="button"
+                    :class="{ 'is-active': operationTimeZone === 'KST' }"
+                    :aria-pressed="operationTimeZone === 'KST'"
+                    @click="operationTimeZone = 'KST'"
+                    >SEOUL</button
+                  >
+                  <span aria-hidden="true">|</span>
+                  <button
+                    type="button"
+                    :class="{ 'is-active': operationTimeZone === 'ET' }"
+                    :aria-pressed="operationTimeZone === 'ET'"
+                    @click="operationTimeZone = 'ET'"
+                    >NEW YORK</button
+                  >
+                </div>
+              </div>
+              <div
+                class="operation-status-card__times"
+                aria-label="선택한 지역의 현재 시각"
+                aria-live="polite"
+              >
+                <time
+                  :key="operationTimeZone"
+                  :datetime="clockNow.toISOString()"
+                  >{{
+                    formatZonedDateTime(
+                      clockNow,
+                      OPERATION_TIME_ZONES[operationTimeZone],
+                      operationTimeZone === 'ET' ? 'AUTO' : 'KST'
+                    )
+                  }}</time
+                >
               </div>
             </div>
 
@@ -1286,6 +1291,38 @@ const operationSlides = computed(() => {
   })
 })
 
+const nextOperationHeadline = computed(() => {
+  const slide = operationSlides.value.find(item => item.isNextPending)
+  if (!slide) {
+    return {
+      message: '오늘의 실행을 완료했습니다.',
+      countdown: ''
+    }
+  }
+
+  const countdown = getOperationCountdownState(
+    operationSlideDateTime(slide),
+    clockNow.value
+  )
+  if (countdown.phase === 'countdown') {
+    return {
+      message: `${slide.jobType} 실행까지`,
+      countdown: countdown.label
+    }
+  }
+  if (countdown.phase === 'checking') {
+    return {
+      message: `${slide.jobType} 실행을 확인하고 있습니다.`,
+      countdown: ''
+    }
+  }
+
+  return {
+    message: '다음 실행 일정을 확인하고 있습니다.',
+    countdown: ''
+  }
+})
+
 function scheduleOperationAutoRefresh(slides) {
   if (operationAutoRefreshTimeoutId !== null) {
     window.clearTimeout(operationAutoRefreshTimeoutId)
@@ -1429,10 +1466,17 @@ function maTrendClass(details) {
 }
 
 function formatZonedDateTime(value, timeZone, zoneLabel = '') {
-  if (!value) return '-'
+  const parts = zonedDateTimeParts(value, timeZone, zoneLabel)
+  if (!parts) return '-'
+
+  return `${parts.dateWeekday} · ${parts.clock}`
+}
+
+function zonedDateTimeParts(value, timeZone, zoneLabel = '') {
+  if (!value) return null
 
   const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
+  if (Number.isNaN(date.getTime())) return null
 
   const options = {
     timeZone,
@@ -1452,10 +1496,11 @@ function formatZonedDateTime(value, timeZone, zoneLabel = '') {
       .filter(part => part.type !== 'literal')
       .map(part => [part.type, part.value])
   )
-  const formatted = `${parts.year}.${parts.month}.${parts.day} ${parts.weekday.toUpperCase()} · ${parts.hour}:${parts.minute}`
+  const dateWeekday = `${parts.year}.${parts.month}.${parts.day} ${parts.weekday.toUpperCase()}`
   const suffix = zoneLabel === 'AUTO' ? parts.timeZoneName : zoneLabel
+  const clock = `${parts.hour}:${parts.minute}${suffix ? ` ${suffix}` : ''}`
 
-  return suffix ? `${formatted} ${suffix}` : formatted
+  return { dateWeekday, clock }
 }
 
 function profitClass(value) {
@@ -1506,74 +1551,6 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
   color: var(--dk-ink);
 }
 
-.workspace-intro {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 24px;
-  align-items: end;
-  padding-block: 38px 34px;
-
-  > div:first-child {
-    grid-column: 1 / 9;
-  }
-
-  h1 {
-    margin: 15px 0 0;
-    font-size: clamp(2rem, 3.2vw, 3.6rem);
-    font-weight: 400;
-    line-height: 1.08;
-  }
-}
-
-.workspace-intro__status {
-  grid-column: 9 / 13;
-  display: flex;
-  padding-top: 13px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  border-top: 1px solid var(--dk-line-strong);
-
-  p {
-    margin: 0;
-    color: var(--dk-muted);
-    font-size: var(--dk-text-caption);
-    letter-spacing: 0.1em;
-  }
-}
-
-.workspace-intro__times {
-  display: grid;
-  width: 100%;
-  gap: 0;
-}
-
-.workspace-intro__time-row {
-  display: grid;
-  width: 100%;
-  min-height: 22px;
-  grid-template-columns: 62px 8px minmax(0, max-content) auto;
-  align-items: center;
-  column-gap: 6px;
-  color: var(--dk-muted);
-  font-size: var(--dk-text-caption);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
-
-  > span {
-    letter-spacing: 0.1em;
-  }
-
-  > i {
-    font-style: normal;
-    text-align: center;
-  }
-
-  time {
-    white-space: nowrap;
-  }
-}
-
 .section-heading__meta {
   display: flex;
   min-width: 0;
@@ -1621,22 +1598,6 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 
   :deep(.q-icon) {
     font-size: 14px;
-  }
-}
-
-.system-state {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  font-size: var(--dk-text-label);
-  letter-spacing: 0.13em;
-
-  i {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--agent-accent);
-    box-shadow: 0 0 0 4px var(--agent-accent-soft);
   }
 }
 
@@ -1745,6 +1706,7 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     margin: 0;
     color: var(--dk-muted);
     font-size: var(--dk-text-body-sm);
+    font-variant-numeric: tabular-nums;
   }
 
   > span {
@@ -1752,6 +1714,11 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     font-size: var(--dk-text-label);
     letter-spacing: 0.1em;
   }
+}
+
+.operation-heading-countdown {
+  color: var(--dk-ink);
+  font-weight: 500;
 }
 
 .section-heading--split {
@@ -1762,7 +1729,62 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 }
 
 .agent-operation > .section-heading {
-  margin-bottom: 22px;
+  margin-bottom: 10px;
+}
+
+.operation-status-card {
+  display: flex;
+  min-width: 0;
+  margin-bottom: 32px;
+  padding: 11px 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  border: 1px solid var(--dk-line);
+  border-radius: 2px;
+  background: var(--dk-surface);
+}
+
+.system-state {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+  font-size: var(--dk-text-label);
+  letter-spacing: 0.13em;
+  white-space: nowrap;
+
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--agent-accent);
+    box-shadow: 0 0 0 4px var(--agent-accent-soft);
+  }
+}
+
+.operation-status-card__head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.operation-status-card__times {
+  display: flex;
+  align-self: flex-start;
+  min-width: 0;
+  min-height: 22px;
+  align-items: center;
+  color: var(--dk-muted);
+  font-size: var(--dk-text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+
+  time {
+    white-space: nowrap;
+  }
 }
 
 .section-card {
@@ -1793,7 +1815,7 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
   align-items: center;
   gap: 4px;
   color: var(--dk-muted);
-  font-size: var(--dk-text-caption);
+  font-size: calc(var(--dk-text-caption) - 1px);
   font-weight: 600;
   letter-spacing: 0.08em;
 
@@ -1802,13 +1824,14 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     border: 0;
     background: transparent;
     color: inherit;
+    cursor: pointer;
     font: inherit;
     letter-spacing: inherit;
     opacity: 0.42;
+    white-space: nowrap;
     transition:
       color 140ms ease,
       opacity 140ms ease;
-    cursor: pointer;
 
     &.is-active {
       color: var(--dk-ink);
@@ -2736,23 +2759,6 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     min-height: calc(100vh - 68px);
   }
 
-  .workspace-intro {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .workspace-intro {
-    gap: 24px;
-
-    > div:first-child,
-    .workspace-intro__status {
-      grid-column: 1 / -1;
-    }
-
-    h1 {
-      font-size: clamp(1.85rem, 9vw, 2.65rem);
-    }
-  }
-
   .content-container {
     width: calc(100% - 16px);
     padding: 12px 0 56px;
@@ -2812,6 +2818,14 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 
   .section-heading__updated-time {
     justify-content: flex-end;
+  }
+
+  .operation-status-card {
+    padding: 11px 12px;
+  }
+
+  .operation-status-card__times {
+    width: 100%;
   }
 
   .source-tags {

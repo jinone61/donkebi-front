@@ -886,7 +886,11 @@ test('agent workspace separates live operation from performance', async () => {
     readSource('src/pages/index/performance.vue')
   ])
 
-  assert.match(operation, /Donkebi, at work\./)
+  assert.match(operation, /Agent Operation/)
+  assert.doesNotMatch(
+    operation,
+    /Donkebi, at work\.|Operational Agent · Strategy 01/
+  )
   assert.doesNotMatch(operation, /Agent Performance|AGENT_RESULT_URL|ChartJS/)
   assert.doesNotMatch(performance, /Donkebi, at work\.|OPERATION_STATUS_URL/)
   assert.doesNotMatch(
@@ -897,7 +901,7 @@ test('agent workspace separates live operation from performance', async () => {
   assert.match(operation, /<q-slide-transition>/)
   assert.match(
     operation,
-    /Donkebi Agent가 시장을 관찰하고 행동한 기록을 확인합니다\./
+    /nextOperationHeadline\.message[\s\S]*?nextOperationHeadline\.countdown[\s\S]*?operation-heading-countdown[\s\S]*?남음/
   )
   assert.match(performance, /class="agent-overview"/)
   assert.match(performance, /class="agent-charts"/)
@@ -968,10 +972,6 @@ test('operation timeline switches displayed times between Seoul and New York', a
     ),
     source.indexOf('class="operation-list"')
   )
-  const operationTitle = operationHeading.slice(
-    0,
-    operationHeading.indexOf('id="agent-operation-title"')
-  )
 
   assert.match(source, /const operationTimeZone = ref\('KST'\)/)
   assert.match(
@@ -980,9 +980,12 @@ test('operation timeline switches displayed times between Seoul and New York', a
   )
   assert.match(
     operationHeading,
-    /section-heading__updated section-heading__updated--quiet section-heading__updated--operation[\s\S]*?timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"[\s\S]*?operationTimeZone === 'KST'[\s\S]*?@click="operationTimeZone = 'KST'"[\s\S]*?>SEOUL<[\s\S]*?operationTimeZone === 'ET'[\s\S]*?@click="operationTimeZone = 'ET'"[\s\S]*?>NEW YORK<[\s\S]*?section-heading__updated-time[\s\S]*?formatOperationUpdatedAt\(operationUpdatedAt\)/
+    /section-heading__updated section-heading__updated--quiet section-heading__updated--operation[\s\S]*?section-heading__updated-time[\s\S]*?formatOperationUpdatedAt\(operationUpdatedAt\)[\s\S]*?operation-status-card[\s\S]*?timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"[\s\S]*?operationTimeZone === 'KST'[\s\S]*?@click="operationTimeZone = 'KST'"[\s\S]*?>SEOUL<[\s\S]*?operationTimeZone === 'ET'[\s\S]*?@click="operationTimeZone = 'ET'"[\s\S]*?>NEW YORK</
   )
-  assert.doesNotMatch(operationTitle, /timeline-timezone-toggle/)
+  assert.match(
+    operationHeading,
+    /formatOperationUpdatedAt\(operationUpdatedAt\)/
+  )
   assert.doesNotMatch(
     operationHeading,
     />UPDATED ·<|section-heading__updated-label/
@@ -1049,6 +1052,10 @@ test('operation timezone changes use restrained accessible motion', async () => 
   assert.match(
     source,
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.timeline-time-enter-active,[\s\S]*?\.timeline-date-leave-active,[\s\S]*?\.operation-flow-move[\s\S]*?transition: none;/
+  )
+  assert.match(
+    source,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.timeline-timezone-toggle button \{[\s\S]*?transition: none;/
   )
 })
 
@@ -1128,12 +1135,20 @@ test('the next operation counts down and refreshes once after a three-second gra
     /function operationSummary\(slide\) \{[\s\S]*?countdown\.phase === 'checking' \? '실행 확인 중' : '실행 준비 중'/
   )
   assert.match(
+    source,
+    /const nextOperationHeadline = computed\(\(\) => \{[\s\S]*?find\(item => item\.isNextPending\)[\s\S]*?getOperationCountdownState\([\s\S]*?message: `\$\{slide\.jobType\} 실행까지`[\s\S]*?countdown: countdown\.label[\s\S]*?message: `\$\{slide\.jobType\} 실행을 확인하고 있습니다\.`[\s\S]*?다음 실행 일정을 확인하고 있습니다\./
+  )
+  assert.match(
     cardHeadStyles,
     /> div:first-child > span \{[\s\S]*?font-variant-numeric: tabular-nums;/
   )
   assert.match(
     cardHeadStyles,
     /\.operation-countdown-value \{[\s\S]*?font-weight: 600;/
+  )
+  assert.match(
+    source,
+    /\.operation-heading-countdown \{[\s\S]*?color: var\(--dk-ink\);[\s\S]*?font-weight: 500;/
   )
   assert.match(
     source,
@@ -1216,26 +1231,33 @@ test('agent cards own their update time and icon-only refresh action', async () 
   )
 })
 
-test('agent header aligns only the New York and Seoul clocks', async () => {
+test('operation status card shows only the selected world clock', async () => {
   const source = await readSource('src/pages/index/operation.vue')
+  const headingIndex = source.indexOf(
+    'class="section-heading section-heading--split"'
+  )
+  const statusCardIndex = source.indexOf('class="operation-status-card"')
   const timeRows = source.slice(
-    source.indexOf('class="workspace-intro__times"'),
-    source.indexOf(
-      '</section>',
-      source.indexOf('class="workspace-intro__times"')
-    )
+    statusCardIndex,
+    source.indexOf('class="operation-list"')
+  )
+  const clockRows = timeRows.slice(
+    timeRows.indexOf('class="operation-status-card__times"')
   )
 
-  assert.ok(timeRows.indexOf('NEW YORK') < timeRows.indexOf('SEOUL'))
+  assert.doesNotMatch(source, /workspace-intro/)
+  assert.ok(headingIndex < statusCardIndex)
+  assert.match(timeRows, /system-state[\s\S]*?AGENT CONNECTED/)
   assert.match(
     timeRows,
-    /formatZonedDateTime\(clockNow, 'Asia\/Seoul', 'KST'\)/
+    /timeline-timezone-toggle[\s\S]*?aria-label="타임라인 시간대"/
   )
+  assert.doesNotMatch(clockRows, /<span>NEW YORK<|<span>SEOUL</)
   assert.match(
-    timeRows,
-    /formatZonedDateTime\(\s*clockNow,\s*'America\/New_York',\s*'AUTO'\s*\)/
+    clockRows,
+    /aria-label="선택한 지역의 현재 시각"[\s\S]*?:key="operationTimeZone"[\s\S]*?OPERATION_TIME_ZONES\[operationTimeZone\][\s\S]*?operationTimeZone === 'ET' \? 'AUTO' : 'KST'/
   )
-  assert.doesNotMatch(timeRows, /UPDATED|refresh/)
+  assert.doesNotMatch(timeRows, /refresh/)
   assert.match(
     source,
     /function formatZonedDateTime\(value, timeZone, zoneLabel = ''\)[\s\S]*?weekday: 'short'[\s\S]*?timeZoneName = 'short'[\s\S]*?weekday\.toUpperCase\(\)/
@@ -1244,8 +1266,16 @@ test('agent header aligns only the New York and Seoul clocks', async () => {
     source,
     /onMounted\(\(\) => \{[\s\S]*?setInterval[\s\S]*?1_000[\s\S]*?onBeforeUnmount\(\(\) => \{[\s\S]*?clearInterval/
   )
-  assert.match(source, /\.workspace-intro__times \{[^}]*gap: 0;/)
-  assert.match(source, /\.workspace-intro__time-row \{[^}]*min-height: 22px;/)
+  assert.match(source, /\.operation-status-card \{[^}]*display: flex;/)
+  assert.match(source, /\.operation-status-card__times \{[^}]*display: flex;/)
+  assert.match(
+    source,
+    /\.operation-status-card__times \{[\s\S]*?min-height: 22px;[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?time \{[\s\S]*?white-space: nowrap;/
+  )
+  assert.match(
+    source,
+    /\.timeline-timezone-toggle \{[\s\S]*?button \{[\s\S]*?white-space: nowrap;/
+  )
 })
 
 test('agent page covers current status charts and operation history', async () => {
