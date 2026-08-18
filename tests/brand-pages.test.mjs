@@ -300,7 +300,7 @@ test('router and axios enforce the central JWT session', async () => {
 
   assert.match(
     router,
-    /const PUBLIC_PATHS = new Set\(\['\/', '\/login'\]\)[\s\S]*?Router\.beforeEach\(to =>[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?path: '\/login'[\s\S]*?redirect: to\.fullPath/
+    /const PUBLIC_PATHS = new Set\(\['\/', '\/login'\]\)[\s\S]*?Router\.beforeEach\(\(to, from\) =>[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?path: '\/login'[\s\S]*?redirect: to\.fullPath/
   )
   assert.match(
     router,
@@ -309,6 +309,14 @@ test('router and axios enforce the central JWT session', async () => {
   assert.match(
     router,
     /to\.path === '\/' && isStandalonePwa\(\)[\s\S]*?path: '\/operation'[\s\S]*?path: '\/login'[\s\S]*?redirect: '\/operation'/
+  )
+  assert.match(
+    router,
+    /const routeScrollPositions = new Map\(\)[\s\S]*?scrollBehavior: \(to, _from, savedPosition\) =>[\s\S]*?savedPosition \|\|[\s\S]*?routeScrollPositions\.get\(to\.fullPath\)[\s\S]*?left: 0, top: 0/
+  )
+  assert.match(
+    router,
+    /Router\.beforeEach\(\(to, from\) =>[\s\S]*?!import\.meta\.env\.QUASAR_SERVER[\s\S]*?routeScrollPositions\.set\(from\.fullPath,[\s\S]*?left: window\.scrollX,[\s\S]*?top: window\.scrollY/
   )
   assert.match(
     axiosBoot,
