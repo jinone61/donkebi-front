@@ -189,7 +189,7 @@ test('bottom navigation centers every icon in an equal frame', async () => {
   )
   assert.match(
     source,
-    /&__link:first-child &__icon \{\s*transform: scaleX\(-1\);/
+    /&__link:first-child &__icon \{\s*font-variation-settings:[\s\S]*?'FILL' 1,[\s\S]*?'wght' 500;\s*transform: scaleX\(-1\);/
   )
   assert.doesNotMatch(source, /item\.flip|pwa-bottom-navigation__icon--flipped/)
 })
