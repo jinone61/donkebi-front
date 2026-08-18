@@ -508,7 +508,7 @@
                                       <div
                                         ><dt>주문 유형</dt
                                         ><dd>{{
-                                          execution.orderType || '-'
+                                          shortTypeLabel(execution.orderType)
                                         }}</dd></div
                                       >
                                       <div
@@ -580,7 +580,7 @@
                               <div
                                 ><span>매수가</span
                                 ><strong>{{
-                                  formatPrice(slide.job.details?.buyPrice)
+                                  formatPrice(slide.job.details?.buyPrice, 2)
                                 }}</strong></div
                               >
                             </div>
@@ -691,8 +691,11 @@
                                       <div
                                         ><dt>주문 유형</dt
                                         ><dd
-                                          >{{ order.orderType || '-' }} ·
-                                          {{ order.planType || '-' }}</dd
+                                          >{{ shortTypeLabel(order.orderType) }}
+                                          ·
+                                          {{
+                                            shortTypeLabel(order.planType)
+                                          }}</dd
                                         ></div
                                       >
                                       <div
@@ -871,7 +874,7 @@
                                       <div
                                         ><dt>주문 유형</dt
                                         ><dd>{{
-                                          submission.orderType || '-'
+                                          shortTypeLabel(submission.orderType)
                                         }}</dd></div
                                       >
                                       <div
@@ -1421,10 +1424,18 @@ function formatMoney(value, fractionDigits = 0) {
 function formatPrice(value, minimumFractionDigits = 0) {
   const number = finiteNumber(value)
   if (number === null) return '-'
+  const truncatedNumber = Math.trunc(number * 100) / 100
+
   return `$${new Intl.NumberFormat('ko-KR', {
     minimumFractionDigits,
     maximumFractionDigits: 2
-  }).format(number)}`
+  }).format(truncatedNumber)}`
+}
+
+function shortTypeLabel(value) {
+  const label = String(value || '').trim()
+  if (!label) return '-'
+  return /^[A-Za-z]/.test(label) ? label.charAt(0).toUpperCase() : label
 }
 
 function formatClosePrice(value) {

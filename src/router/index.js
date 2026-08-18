@@ -36,9 +36,12 @@ export default defineRouter(({ store }) => {
     : import.meta.env.QUASAR_VUE_ROUTER_MODE === 'history'
       ? createWebHistory
       : createWebHashHistory
+  const routeScrollPositions = new Map()
 
   const Router = createRouter({
-    scrollBehavior: () => ({ left: 0, top: 0 }),
+    scrollBehavior: (to, _from, savedPosition) =>
+      savedPosition ||
+      routeScrollPositions.get(to.fullPath) || { left: 0, top: 0 },
     routes,
 
     // Leave this as is and make changes in quasar.conf.js instead!
@@ -49,7 +52,14 @@ export default defineRouter(({ store }) => {
 
   const authStore = useAuthStore(store)
 
-  Router.beforeEach(to => {
+  Router.beforeEach((to, from) => {
+    if (!import.meta.env.QUASAR_SERVER && from.fullPath) {
+      routeScrollPositions.set(from.fullPath, {
+        left: window.scrollX,
+        top: window.scrollY
+      })
+    }
+
     const isAuthenticated = authStore.hasValidSession()
 
     if (to.path === '/' && isStandalonePwa()) {
