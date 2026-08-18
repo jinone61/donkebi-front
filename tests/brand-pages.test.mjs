@@ -113,6 +113,20 @@ test('installed mobile PWA provides exact navigation for every workspace', async
   )
 })
 
+test('all route pages retain their local state within one auth scope', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.match(
+    source,
+    /const routeCacheScope = computed\(\(\) =>[\s\S]*?isAuthenticated\.value \? 'authenticated' : 'public'/
+  )
+  assert.match(
+    source,
+    /<router-view v-slot="\{ Component \}">[\s\S]*?<keep-alive :key="routeCacheScope">[\s\S]*?<component[\s\S]*?:is="Component"[\s\S]*?:key="route\.path"[\s\S]*?<\/keep-alive>/
+  )
+  assert.doesNotMatch(source, /isCachedWorkspaceRoute|CACHED_WORKSPACE_PATHS/)
+})
+
 test('profile navigation consistently becomes login before authentication', async () => {
   const source = await readSource('src/pages/index.vue')
 
