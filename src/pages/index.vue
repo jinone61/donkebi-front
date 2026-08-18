@@ -438,6 +438,9 @@ async function scrollTo(selector) {
     }
 
     &__link:first-child &__icon {
+      font-variation-settings:
+        'FILL' 1,
+        'wght' 500;
       transform: scaleX(-1);
     }
   }
