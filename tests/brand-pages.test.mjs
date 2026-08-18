@@ -94,12 +94,17 @@ test('PWA uses Donkebi colors in standalone portrait mode', async () => {
 })
 
 test('installed mobile PWA provides exact navigation for every workspace', async () => {
-  const source = await readSource('src/pages/index.vue')
+  const [source, quasarConfig] = await Promise.all([
+    readSource('src/pages/index.vue'),
+    readSource('quasar.config.js')
+  ])
 
   assert.match(
     source,
-    /const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION', to: '\/operation', icon: 'smart_toy'[\s\S]*?label: 'PERFORMANCE', to: '\/performance', icon: 'monitoring'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value,[\s\S]*?icon: 'person_outline'[\s\S]*?\]\)/
+    /const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION',[\s\S]*?to: '\/operation',[\s\S]*?icon: 'sym_o_event_list',[\s\S]*?flip: true[\s\S]*?label: 'PERFORMANCE', to: '\/performance', icon: 'speed'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value,[\s\S]*?icon: 'person_outline'[\s\S]*?\]\)/
   )
+  assert.match(quasarConfig, /extras:[\s\S]*?'material-symbols-outlined'/)
+  assert.match(quasarConfig, /extras:[\s\S]*?'material-icons'/)
   assert.doesNotMatch(source, /label: 'HOME', to: '\/', icon: 'home'/)
   assert.match(
     source,
@@ -161,7 +166,7 @@ test('bottom navigation identifies the active route with color alone', async () 
   assert.doesNotMatch(navigationStyles, /&::before/)
 })
 
-test('bottom navigation labels match the header menu typography', async () => {
+test('bottom navigation keeps compact labels beneath centered icons', async () => {
   const source = await readSource('src/pages/index.vue')
 
   assert.match(
@@ -170,14 +175,21 @@ test('bottom navigation labels match the header menu typography', async () => {
   )
   assert.match(
     source,
-    /\.pwa-bottom-navigation \{[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-label\);[\s\S]*?font-weight: 500;[\s\S]*?letter-spacing: 0\.07em;/
+    /\.pwa-bottom-navigation \{[\s\S]*?&__link \{[\s\S]*?display: grid;[\s\S]*?grid-template-rows: 24px auto;[\s\S]*?justify-items: center;[\s\S]*?font-size: 0\.5rem;[\s\S]*?font-weight: 500;[\s\S]*?letter-spacing: 0\.06em;/
   )
 })
 
-test('bottom navigation uses touch-friendly icon sizing', async () => {
+test('bottom navigation centers every icon in an equal frame', async () => {
   const source = await readSource('src/pages/index.vue')
 
-  assert.match(source, /&__icon \{\s*font-size: 1\.5rem;\s*\}/)
+  assert.match(
+    source,
+    /&__icon \{[\s\S]*?display: grid;[\s\S]*?width: 24px;[\s\S]*?height: 24px;[\s\S]*?place-items: center;[\s\S]*?font-size: 1\.375rem;[\s\S]*?line-height: 1;/
+  )
+  assert.match(
+    source,
+    /pwa-bottom-navigation__icon--flipped'[\s\S]*?item\.flip[\s\S]*?&--flipped \{\s*transform: scaleX\(-1\);/
+  )
 })
 
 test('public pages share a role-based typography scale', async () => {
@@ -204,7 +216,7 @@ test('public pages share a role-based typography scale', async () => {
 
   assert.match(
     layout,
-    /\.pwa-bottom-navigation[\s\S]*?&__link \{[\s\S]*?font-size: var\(--dk-text-label\);/
+    /\.pwa-bottom-navigation[\s\S]*?&__link \{[\s\S]*?font-size: 0\.5rem;/
   )
 
   for (const source of [home, backtest, agent]) {

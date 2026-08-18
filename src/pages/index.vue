@@ -86,6 +86,9 @@
       >
         <q-icon
           class="pwa-bottom-navigation__icon"
+          :class="{
+            'pwa-bottom-navigation__icon--flipped': item.flip
+          }"
           :name="item.icon"
           aria-hidden="true"
         />
@@ -118,8 +121,14 @@ const navigationItems = computed(() => [
   { label: 'PROFILE', to: profileDestination.value }
 ])
 const pwaNavigationItems = computed(() => [
-  { label: 'OPERATION', to: '/operation', icon: 'smart_toy' },
-  { label: 'PERFORMANCE', to: '/performance', icon: 'monitoring' },
+  {
+    label: 'OPERATION',
+    to: '/operation',
+    // icon: 'checklist_rtl'
+    icon: 'sym_o_event_list',
+    flip: true
+  },
+  { label: 'PERFORMANCE', to: '/performance', icon: 'speed' },
   { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
   {
     label: 'PROFILE',
@@ -405,16 +414,17 @@ async function scrollTo(selector) {
     box-shadow: 0 -12px 30px rgba(23, 23, 23, 0.04);
 
     &__link {
-      display: flex;
+      display: grid;
       min-height: 52px;
-      flex-direction: column;
-      gap: 1px;
-      align-items: center;
-      justify-content: center;
+      grid-template-rows: 24px auto;
+      align-content: center;
+      justify-items: center;
+      gap: 2px;
       color: rgba(23, 23, 23, 0.42);
-      font-size: var(--dk-text-label);
+      font-size: 0.5rem;
       font-weight: 500;
-      letter-spacing: 0.07em;
+      letter-spacing: 0.06em;
+      line-height: 1;
       transition: color var(--dk-fast);
 
       &--active {
@@ -423,7 +433,16 @@ async function scrollTo(selector) {
     }
 
     &__icon {
-      font-size: 1.5rem;
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-items: center;
+      font-size: 1.375rem;
+      line-height: 1;
+
+      &--flipped {
+        transform: scaleX(-1);
+      }
     }
   }
 }

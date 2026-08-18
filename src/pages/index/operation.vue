@@ -40,7 +40,10 @@
                 <h2 id="agent-operation-title" class="dk-serif">
                   Agent Operation
                 </h2>
-                <p class="section-heading__description" style="margin-top: 6px; font-size: 12px;">
+                <p
+                  class="section-heading__description"
+                  style="margin-top: 6px; font-size: 12px"
+                >
                   {{ nextOperationHeadline.message }}
                   <template v-if="nextOperationHeadline.countdown">
                     <strong class="operation-heading-countdown">{{
