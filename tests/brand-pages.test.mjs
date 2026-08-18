@@ -801,7 +801,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /`mobile-\$\{execution\.executionId\}`[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?execution\.tier[\s\S]*?수량[\s\S]*?execution\.quantity[\s\S]*?주문 유형[\s\S]*?execution\.orderType[\s\S]*?주문가[\s\S]*?execution\.orderPrice[\s\S]*?체결가[\s\S]*?execution\.fillPrice[\s\S]*?Broker ID[\s\S]*?execution\.brokerOrderId/
+    /`mobile-\$\{execution\.executionId\}`[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?execution\.tier[\s\S]*?수량[\s\S]*?execution\.quantity[\s\S]*?주문 유형[\s\S]*?shortTypeLabel\(execution\.orderType\)[\s\S]*?주문가[\s\S]*?execution\.orderPrice[\s\S]*?체결가[\s\S]*?execution\.fillPrice[\s\S]*?Broker ID[\s\S]*?execution\.brokerOrderId/
   )
   assert.match(
     source,
@@ -813,7 +813,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /slide\.jobType === 'PLAN'[\s\S]*?<h4>주문 계획<\/h4>[\s\S]*?sideClass\(order\.tradeSide\)[\s\S]*?operation-mobile-rows--three-columns[\s\S]*?`mobile-\$\{order\.orderId\}`[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?order\.tier[\s\S]*?수량[\s\S]*?order\.quantity[\s\S]*?주문 유형[\s\S]*?order\.orderType[\s\S]*?order\.planType/
+    /slide\.jobType === 'PLAN'[\s\S]*?<h4>주문 계획<\/h4>[\s\S]*?sideClass\(order\.tradeSide\)[\s\S]*?operation-mobile-rows--three-columns[\s\S]*?`mobile-\$\{order\.orderId\}`[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?order\.tier[\s\S]*?수량[\s\S]*?order\.quantity[\s\S]*?주문 유형[\s\S]*?shortTypeLabel\(order\.orderType\)[\s\S]*?shortTypeLabel\(order\.planType\)/
   )
   assert.match(
     source,
@@ -833,7 +833,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2/
+    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?Math\.trunc\(number \* 100\) \/ 100[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2/
   )
   assert.match(
     source,
@@ -845,7 +845,11 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /`mobile-\$\{submission\.submissionId\}`[\s\S]*?sideClass\(submission\.tradeSide\)[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?submission\.tier[\s\S]*?수량[\s\S]*?submission\.quantity[\s\S]*?주문 유형[\s\S]*?submission\.orderType[\s\S]*?주문가[\s\S]*?submission\.orderPrice[\s\S]*?상태[\s\S]*?submission\.status[\s\S]*?Broker ID[\s\S]*?submission\.brokerOrderId/
+    /`mobile-\$\{submission\.submissionId\}`[\s\S]*?sideClass\(submission\.tradeSide\)[\s\S]*?<dl>[\s\S]*?Tier[\s\S]*?submission\.tier[\s\S]*?수량[\s\S]*?submission\.quantity[\s\S]*?주문 유형[\s\S]*?shortTypeLabel\(submission\.orderType\)[\s\S]*?주문가[\s\S]*?submission\.orderPrice[\s\S]*?상태[\s\S]*?submission\.status[\s\S]*?Broker ID[\s\S]*?submission\.brokerOrderId/
+  )
+  assert.match(
+    source,
+    /function shortTypeLabel\(value\)[\s\S]*?\^\[A-Za-z\][\s\S]*?charAt\(0\)\.toUpperCase\(\)/
   )
   assert.match(
     source,
