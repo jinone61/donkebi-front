@@ -121,8 +121,7 @@ const pwaNavigationItems = computed(() => [
   {
     label: 'OPERATION',
     to: '/operation',
-    // icon: 'checklist_rtl'
-    icon: 'sym_o_action_key'
+    icon: 'sym_o_event_list'
   },
   { label: 'PERFORMANCE', to: '/performance', icon: 'speed' },
   { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
@@ -434,7 +433,12 @@ async function scrollTo(selector) {
       height: 24px;
       place-items: center;
       font-size: 1.375rem;
+      font-variation-settings: 'wght' 500;
       line-height: 1;
+    }
+
+    &__link:first-child &__icon {
+      transform: scaleX(-1);
     }
   }
 }
