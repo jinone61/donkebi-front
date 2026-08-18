@@ -69,7 +69,11 @@
       :inert="mobileMenuOpen"
       :aria-hidden="mobileMenuOpen ? 'true' : undefined"
     >
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <keep-alive :key="routeCacheScope">
+          <component :is="Component" :key="route.path" />
+        </keep-alive>
+      </router-view>
     </q-page-container>
 
     <nav
@@ -108,6 +112,9 @@ authStore.hydrate()
 
 const isAuthenticated = computed(() => authStore.hasValidSession())
 const isLoginRoute = computed(() => route.path === '/login')
+const routeCacheScope = computed(() =>
+  isAuthenticated.value ? 'authenticated' : 'public'
+)
 const profileDestination = computed(() =>
   isAuthenticated.value
     ? '/profile'
