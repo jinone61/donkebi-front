@@ -1,43 +1,6 @@
 <template>
   <div class="backtest-page" @click="handleBacktestPageClick">
-    <div v-if="!isAuthenticated" class="auth-area">
-      <div class="auth-shell dk-container">
-        <div class="auth-intro dk-reveal">
-          <p class="dk-eyebrow">Private Access Only</p>
-          <h1 class="dk-serif">Donkebi<br />Backtest.</h1>
-          <p>승인된 사용자만 접근 가능합니다.</p>
-          <div class="auth-intro__meta" aria-hidden="true">
-            <span>AGENT / 01</span>
-            <span>ACCESS / RESTRICTED</span>
-          </div>
-        </div>
-
-        <q-form class="auth-form dk-reveal" @submit.prevent="checkPassword">
-          <div class="auth-form__head">
-            <span>AUTHENTICATION</span>
-            <span>01 / 01</span>
-          </div>
-          <q-input
-            v-model="inputPassword"
-            type="password"
-            label="비밀번호"
-            outlined
-            color="dark"
-            :error="passwordError"
-            error-message="비밀번호가 틀렸습니다."
-          />
-          <q-btn
-            type="submit"
-            label="ENTER INTERFACE"
-            color="dark"
-            unelevated
-            class="full-width auth-form__button"
-          />
-        </q-form>
-      </div>
-    </div>
-
-    <template v-else>
+    <template v-if="activeTab">
       <section class="workspace-intro dk-container">
         <div class="workspace-intro__identity">
           <p class="dk-eyebrow">Backtest · Agent 01</p>
@@ -1511,7 +1474,6 @@ function syncChartTooltips(sessionDate, chartComponents = []) {
 const $q = useQuasar()
 
 const BACKTEST_URL = '/api/dualsniper/backtest'
-const PAGE_PASSWORD = '1q2w3e!!'
 const CUSTOM_PRESET = 'Custom'
 const DAILY_HISTORY_PAGE_SIZE = 30
 const CHART_RANGE_PRESET_OPTIONS = [
@@ -1601,9 +1563,6 @@ const defenseFields = [
   { key: 'maWindow', label: 'MA 기간', suffix: '일', step: 1 }
 ]
 
-const isAuthenticated = ref(false)
-const inputPassword = ref('')
-const passwordError = ref(false)
 const startDateDialog = ref(false)
 const targetDateDialog = ref(false)
 const activeTab = ref('settings')
@@ -2226,16 +2185,6 @@ function cloneAttackMode(mode) {
 
 function cloneDefenseMode(mode) {
   return { ...mode, tierBuyRatiosPct: [...mode.tierBuyRatiosPct] }
-}
-
-function checkPassword() {
-  if (inputPassword.value === PAGE_PASSWORD) {
-    isAuthenticated.value = true
-    passwordError.value = false
-    inputPassword.value = ''
-    return
-  }
-  passwordError.value = true
 }
 
 function normalizeSymbol() {

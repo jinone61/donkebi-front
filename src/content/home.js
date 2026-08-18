@@ -1,10 +1,11 @@
 export const navigationItems = [
-  { label: 'HOME', href: '/' },
+  { label: 'HOME', to: '/' },
   // { label: 'SYSTEM', href: '#system' },
   // { label: 'PRINCIPLE', href: '#principle' },
   // { label: 'ORIGIN', href: '#origin' },
-  { label: 'BACKTEST', to: '/backtest' },
-  { label: 'AGENT', to: '/agent' }
+  { label: 'OPERATION', to: '/operation' },
+  { label: 'PERFORMANCE', to: '/performance' },
+  { label: 'BACKTEST', to: '/backtest' }
 ]
 
 export const marketSnapshot = {
