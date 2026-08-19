@@ -839,7 +839,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?Math\.trunc\(number \* 100\) \/ 100[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2/
+    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2,[\s\S]*?roundingMode: 'trunc'/
   )
   assert.match(
     source,
