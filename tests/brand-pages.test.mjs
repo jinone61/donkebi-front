@@ -336,6 +336,12 @@ test('router and axios enforce the central JWT session', async () => {
   assert.match(profile, /LOG OUT[\s\S]*?authStore\.clearSession\(\)/)
 })
 
+test('cached route scroll positions restore without global animation', async () => {
+  const globalStyles = await readSource('src/css/app.scss')
+
+  assert.doesNotMatch(globalStyles, /html\s*\{[^}]*scroll-behavior:\s*smooth;/)
+})
+
 test('production entry points opt the whole site out of search indexing', async () => {
   const [indexHtml, robotsTxt] = await Promise.all([
     readSource('index.html'),
@@ -833,7 +839,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?Math\.trunc\(number \* 100\) \/ 100[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2/
+    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2,[\s\S]*?roundingMode: 'trunc'/
   )
   assert.match(
     source,

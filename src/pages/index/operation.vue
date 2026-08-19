@@ -1424,12 +1424,12 @@ function formatMoney(value, fractionDigits = 0) {
 function formatPrice(value, minimumFractionDigits = 0) {
   const number = finiteNumber(value)
   if (number === null) return '-'
-  const truncatedNumber = Math.trunc(number * 100) / 100
 
   return `$${new Intl.NumberFormat('ko-KR', {
     minimumFractionDigits,
-    maximumFractionDigits: 2
-  }).format(truncatedNumber)}`
+    maximumFractionDigits: 2,
+    roundingMode: 'trunc'
+  }).format(number)}`
 }
 
 function shortTypeLabel(value) {
