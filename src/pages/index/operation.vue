@@ -110,11 +110,11 @@
                 aria-label="Active Tier 전체 요약"
               >
                 <div>
-                  <dt>보유</dt>
+                  <dt>총 보유</dt>
                   <dd>{{ formatInteger(activeTiersSummary.quantity) }}주</dd>
                 </div>
                 <div>
-                  <dt>매수가</dt>
+                  <dt>평균 매수가</dt>
                   <dd>{{ formatPrice(activeTiersSummary.averageBuyPrice) }}</dd>
                 </div>
                 <div>

@@ -772,7 +772,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /class="operation-active-tiers__summary"[\s\S]*?<dt>보유<\/dt>[\s\S]*?<dt>매수가<\/dt>[\s\S]*?<dt>손익<\/dt>[\s\S]*?<dt>수익률<\/dt>[\s\S]*?<dt>종가<\/dt>/
+    /class="operation-active-tiers__summary"[\s\S]*?<dt>총 보유<\/dt>[\s\S]*?<dt>평균 매수가<\/dt>[\s\S]*?<dt>손익<\/dt>[\s\S]*?<dt>수익률<\/dt>[\s\S]*?<dt>종가<\/dt>/
   )
   const activeTiersHeading = source.slice(
     source.indexOf('class="operation-active-tiers__heading"'),
