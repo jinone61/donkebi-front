@@ -90,6 +90,107 @@
               </div>
             </div>
 
+            <section
+              class="operation-active-tiers"
+              aria-labelledby="operation-active-tiers-title"
+            >
+              <div class="operation-active-tiers__heading">
+                <p id="operation-active-tiers-title" class="section-index">
+                  ACTIVE TIERS
+                </p>
+                <span>
+                  {{ operationResult.activeTiersAsOfDate || '-' }} ·
+                  {{ activeTiers.length }} TIERS
+                </span>
+              </div>
+
+              <dl
+                v-if="activeTiers.length"
+                class="operation-active-tiers__summary"
+                aria-label="Active Tier 전체 요약"
+              >
+                <div>
+                  <dt>보유</dt>
+                  <dd>{{ formatInteger(activeTiersSummary.quantity) }}주</dd>
+                </div>
+                <div>
+                  <dt>매수가</dt>
+                  <dd>{{ formatPrice(activeTiersSummary.averageBuyPrice) }}</dd>
+                </div>
+                <div>
+                  <dt>손익</dt>
+                  <dd :class="profitClass(activeTiersSummary.profitLoss)">
+                    {{ formatMoney(activeTiersSummary.profitLoss) }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>수익률</dt>
+                  <dd :class="profitClass(activeTiersSummary.returnPct)">
+                    {{ formatPct(activeTiersSummary.returnPct) }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>종가</dt>
+                  <dd>{{ formatClosePrice(activeTiersClosePrice) }}</dd>
+                </div>
+              </dl>
+
+              <q-markup-table
+                v-if="activeTiers.length"
+                flat
+                dense
+                separator="horizontal"
+                class="operation-active-tiers__table"
+              >
+                <thead>
+                  <tr>
+                    <th class="text-center">Tier</th>
+                    <th class="text-center">보유</th>
+                    <th class="text-center">매수일</th>
+                    <th class="text-right">매수가</th>
+                    <th class="text-right">손익</th>
+                    <th class="text-right">수익률</th>
+                    <th class="text-right">보유</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="tier in activeTiers" :key="tier.tier">
+                    <td class="operation-active-tier-name">
+                      {{ tier.tier }}
+                    </td>
+                    <td class="text-center">
+                      {{ formatInteger(tier.quantity) }}주
+                    </td>
+                    <td class="text-center">
+                      {{ tier.buySessionDate || '-' }}
+                    </td>
+                    <td class="text-right">
+                      {{ formatPrice(tier.buyPrice) }}
+                    </td>
+                    <td
+                      class="text-right"
+                      :class="profitClass(activeTierProfitLoss(tier))"
+                    >
+                      {{ formatMoney(activeTierProfitLoss(tier)) }}
+                    </td>
+                    <td
+                      class="text-right"
+                      :class="profitClass(activeTierReturnPct(tier))"
+                    >
+                      {{ formatPct(activeTierReturnPct(tier)) }}
+                    </td>
+                    <td class="text-right">
+                      {{ formatInteger(tier.heldSessionCount) }} /
+                      {{ formatInteger(tier.maxHoldDays) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </q-markup-table>
+              <p v-else class="operation-active-tiers__empty">
+                현재 운용 중인 Tier가 없습니다.
+              </p>
+            </section>
+
             <div class="operation-status-card">
               <div class="operation-status-card__head">
                 <span class="system-state"><i></i> AGENT CONNECTED</span>
@@ -1069,6 +1170,9 @@ function getPreviousOperationTime(jobs, targetDate, jobType) {
 
 function normalizeOperationResult(result = {}) {
   const jobs = Array.isArray(result.jobs) ? result.jobs : []
+  const activeTiers = Array.isArray(result.activeTiers)
+    ? result.activeTiers
+    : []
   const dates = getOperationTargetDates(
     jobs,
     OPERATION_PHASES.map(phase => phase.jobType)
@@ -1111,7 +1215,7 @@ function normalizeOperationResult(result = {}) {
     return dateSlides.sort(compareOperationSlidesByIdDesc)
   })
 
-  return { ...result, jobs, slides }
+  return { ...result, activeTiers, jobs, slides }
 }
 
 function getInitialExpandedOperationIds() {
@@ -1279,6 +1383,97 @@ function nextPendingOperationId(slides) {
       })[0]?.id || null
   )
 }
+
+const activeTiers = computed(() => operationResult.value?.activeTiers || [])
+
+const activeTiersClosePrice = computed(() => {
+  const asOfDate = operationResult.value?.activeTiersAsOfDate
+  const candidates = (operationResult.value?.jobs || [])
+    .map(job => {
+      const details = job.details || {}
+      const sessionDate =
+        details.appliedSessionDate || details.calculatedThroughDate
+      const closePrice = finiteNumber(details.closePrice)
+
+      return {
+        sessionDate,
+        closePrice,
+        jobId: finiteNumber(job.id) ?? -Infinity
+      }
+    })
+    .filter(
+      candidate =>
+        candidate.sessionDate &&
+        candidate.closePrice !== null &&
+        (!asOfDate || candidate.sessionDate <= asOfDate)
+    )
+    .sort(
+      (left, right) =>
+        right.sessionDate.localeCompare(left.sessionDate) ||
+        right.jobId - left.jobId
+    )
+
+  return candidates[0]?.closePrice ?? null
+})
+
+function activeTierReturnPct(tier) {
+  const buyPrice = finiteNumber(tier?.buyPrice)
+  const closePrice = activeTiersClosePrice.value
+  if (buyPrice === null || buyPrice === 0 || closePrice === null) return null
+
+  return ((closePrice - buyPrice) / buyPrice) * 100
+}
+
+function activeTierProfitLoss(tier) {
+  const buyPrice = finiteNumber(tier?.buyPrice)
+  const quantity = finiteNumber(tier?.quantity)
+  const closePrice = activeTiersClosePrice.value
+  if (buyPrice === null || quantity === null || closePrice === null) return null
+
+  return (closePrice - buyPrice) * quantity
+}
+
+const activeTiersSummary = computed(() => {
+  const totals = activeTiers.value.reduce(
+    (result, tier) => {
+      const quantity = finiteNumber(tier.quantity)
+      const buyPrice = finiteNumber(tier.buyPrice)
+      const profitLoss = activeTierProfitLoss(tier)
+
+      if (quantity !== null) result.quantity += quantity
+      if (quantity !== null && buyPrice !== null) {
+        result.costBasis += quantity * buyPrice
+        result.pricedQuantity += quantity
+      }
+      if (profitLoss !== null) {
+        result.profitLoss += profitLoss
+        result.hasProfitLoss = true
+      }
+
+      return result
+    },
+    {
+      quantity: 0,
+      pricedQuantity: 0,
+      costBasis: 0,
+      profitLoss: 0,
+      hasProfitLoss: false
+    }
+  )
+
+  return {
+    quantity: totals.quantity,
+    averageBuyPrice:
+      totals.pricedQuantity > 0
+        ? totals.costBasis / totals.pricedQuantity
+        : null,
+    profitLoss: totals.hasProfitLoss ? totals.profitLoss : null,
+    returnPct:
+      totals.costBasis > 0 && totals.hasProfitLoss
+        ? (totals.profitLoss / totals.costBasis) * 100
+        : null
+  }
+})
 
 const operationSlides = computed(() => {
   const slides = operationResult.value?.slides || []
@@ -1757,6 +1952,141 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
   border: 1px solid var(--dk-line);
   border-radius: 2px;
   background: var(--dk-surface);
+}
+
+.operation-active-tiers {
+  min-width: 0;
+  overflow: hidden;
+  margin-bottom: 10px;
+  border: 1px solid var(--dk-line);
+  border-radius: 2px;
+  background: var(--dk-surface);
+}
+
+.operation-active-tiers__heading {
+  display: flex;
+  min-width: 0;
+  padding: 10px 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--dk-line);
+
+  .section-index {
+    flex: 0 0 auto;
+  }
+
+  > span {
+    min-width: 0;
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.operation-active-tiers__table {
+  border-radius: 0;
+  box-shadow: none;
+
+  :deep(table) {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  :deep(th),
+  :deep(td) {
+    height: 38px;
+    padding: 6px 8px;
+    font-size: var(--dk-text-body-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  :deep(th) {
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+    font-weight: 500;
+  }
+
+  :deep(th:nth-child(1)),
+  :deep(td:nth-child(1)) {
+    width: 10%;
+  }
+
+  :deep(th:nth-child(2)),
+  :deep(td:nth-child(2)) {
+    width: 10%;
+  }
+
+  :deep(th:nth-child(3)),
+  :deep(td:nth-child(3)) {
+    width: 22%;
+  }
+
+  :deep(th:nth-child(4)),
+  :deep(td:nth-child(4)) {
+    width: 14%;
+  }
+
+  :deep(th:nth-child(5)),
+  :deep(td:nth-child(5)) {
+    width: 15%;
+  }
+
+  :deep(th:nth-child(6)),
+  :deep(td:nth-child(6)) {
+    width: 13%;
+  }
+
+  :deep(th:nth-child(7)),
+  :deep(td:nth-child(7)) {
+    width: 16%;
+  }
+}
+
+.operation-active-tiers__summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid var(--dk-line);
+  background: var(--dk-surface);
+
+  > div {
+    min-width: 0;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  dt {
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 3px 0 0;
+    font-size: var(--dk-text-body-sm);
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.operation-active-tier-name {
+  color: var(--dk-ink);
+  font-weight: 700;
+  text-align: center;
+}
+
+.operation-active-tiers__empty {
+  margin: 0;
+  padding: 14px;
+  color: var(--dk-muted);
+  font-size: var(--dk-text-body-sm);
+  text-align: center;
 }
 
 .system-state {
@@ -2840,6 +3170,37 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 
   .operation-status-card__times {
     width: 100%;
+  }
+
+  .operation-active-tiers__heading {
+    padding: 9px 10px;
+  }
+
+  .operation-active-tiers__table {
+    :deep(th),
+    :deep(td) {
+      height: 34px;
+      padding: 5px 3px;
+      font-size: clamp(0.61rem, 2.5vw, var(--dk-text-caption));
+    }
+
+    :deep(th) {
+      font-size: clamp(0.57rem, 2.3vw, var(--dk-text-caption));
+    }
+  }
+
+  .operation-active-tiers__summary {
+    > div {
+      padding: 9px 3px;
+    }
+
+    dt {
+      font-size: clamp(0.57rem, 2.3vw, var(--dk-text-caption));
+    }
+
+    dd {
+      font-size: clamp(0.64rem, 2.7vw, var(--dk-text-label));
+    }
   }
 
   .source-tags {

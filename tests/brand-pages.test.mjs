@@ -746,6 +746,49 @@ test('agent operation follows the status API in descending id order', async () =
     /const OPERATION_PHASES = \[[\s\S]*?jobType: 'PREPARE', label: 'Prepare',[\s\S]*?jobType: 'APPLY',[\s\S]*?jobType: 'PLAN',[\s\S]*?jobType: 'SUBMIT'/
   )
   assert.match(source, /function normalizeOperationResult\(result = \{\}\)/)
+  assert.match(
+    source,
+    /const activeTiers = Array\.isArray\(result\.activeTiers\)[\s\S]*?return \{ \.\.\.result, activeTiers, jobs, slides \}/
+  )
+  assert.match(
+    source,
+    /id="operation-active-tiers-title"[\s\S]*?ACTIVE TIERS[\s\S]*?activeTiersAsOfDate[\s\S]*?class="operation-active-tiers__table"/
+  )
+  assert.match(
+    source,
+    /Tier[\s\S]*?보유[\s\S]*?매수일[\s\S]*?매수가[\s\S]*?손익[\s\S]*?수익률[\s\S]*?<th class="text-right">보유<\/th>/
+  )
+  assert.match(
+    source,
+    /tier\.buySessionDate[\s\S]*?tier\.buyPrice[\s\S]*?activeTierProfitLoss\(tier\)[\s\S]*?activeTierReturnPct\(tier\)[\s\S]*?tier\.heldSessionCount[\s\S]*?tier\.maxHoldDays/
+  )
+  assert.match(
+    source,
+    /const activeTiersClosePrice = computed[\s\S]*?details\.appliedSessionDate \|\| details\.calculatedThroughDate[\s\S]*?candidate\.sessionDate <= asOfDate[\s\S]*?right\.sessionDate\.localeCompare\(left\.sessionDate\)/
+  )
+  assert.match(
+    source,
+    /function activeTierReturnPct\(tier\)[\s\S]*?\(closePrice - buyPrice\) \/ buyPrice[\s\S]*?function activeTierProfitLoss\(tier\)[\s\S]*?\(closePrice - buyPrice\) \* quantity/
+  )
+  assert.match(
+    source,
+    /class="operation-active-tiers__summary"[\s\S]*?<dt>보유<\/dt>[\s\S]*?<dt>매수가<\/dt>[\s\S]*?<dt>손익<\/dt>[\s\S]*?<dt>수익률<\/dt>[\s\S]*?<dt>종가<\/dt>/
+  )
+  const activeTiersHeading = source.slice(
+    source.indexOf('class="operation-active-tiers__heading"'),
+    source.indexOf('class="operation-active-tiers__summary"')
+  )
+  assert.doesNotMatch(activeTiersHeading, /formatClosePrice/)
+  const activeTiersSummaryStyles = source.slice(
+    source.indexOf('.operation-active-tiers__summary {'),
+    source.indexOf('.operation-active-tier-name {')
+  )
+  assert.match(activeTiersSummaryStyles, /background: var\(--dk-surface\)/)
+  assert.doesNotMatch(activeTiersSummaryStyles, /border-left/)
+  assert.match(
+    source,
+    /const activeTiersSummary = computed[\s\S]*?quantity \* buyPrice[\s\S]*?result\.profitLoss \+= profitLoss[\s\S]*?totals\.costBasis \/ totals\.pricedQuantity[\s\S]*?totals\.profitLoss \/ totals\.costBasis/
+  )
   assert.match(source, /isMissing: !job/)
   assert.match(
     source,
@@ -1291,6 +1334,7 @@ test('operation status card shows only the selected world clock', async () => {
     'class="section-heading section-heading--split"'
   )
   const statusCardIndex = source.indexOf('class="operation-status-card"')
+  const activeTiersCardIndex = source.indexOf('class="operation-active-tiers"')
   const timeRows = source.slice(
     statusCardIndex,
     source.indexOf('class="operation-list"')
@@ -1300,6 +1344,7 @@ test('operation status card shows only the selected world clock', async () => {
   )
 
   assert.doesNotMatch(source, /workspace-intro/)
+  assert.ok(activeTiersCardIndex < statusCardIndex)
   assert.ok(headingIndex < statusCardIndex)
   assert.match(timeRows, /system-state[\s\S]*?AGENT CONNECTED/)
   assert.match(
@@ -1349,10 +1394,23 @@ test('agent page covers current status charts and operation history', async () =
     source,
     /const currentTiers = computed\(\(\) => finalPortfolio\.value\.tiers \|\| \[\]\)/
   )
-  assert.match(source, /<h3 id="current-tiers-title">현재 Tier<\/h3>/)
+  assert.doesNotMatch(source, /현재 Tier/)
+  assert.match(source, /id="current-holdings-title"[\s\S]*?CURRENT HOLDINGS/)
+  assert.doesNotMatch(source, /current-holdings__summary/)
+  assert.doesNotMatch(source, /const currentHoldings = computed/)
   assert.match(source, /v-for="tier in currentTiers"/)
-  assert.match(source, /평균 매수가/)
-  assert.match(source, /<dt>수익률<\/dt>/)
+  assert.match(source, />매수가<\/th>/)
+  assert.match(source, /tier\.unrealizedProfit/)
+  assert.match(source, /class="current-tiers__table"/)
+  assert.match(
+    source,
+    /Tier[\s\S]*?보유[\s\S]*?매수가[\s\S]*?수익률[\s\S]*?손익/
+  )
+  assert.doesNotMatch(source, /current-tier-mode/)
+  assert.match(
+    source,
+    /\.current-tiers__table \{[\s\S]*?table-layout: fixed[\s\S]*?font-variant-numeric: tabular-nums/
+  )
   assert.match(
     source,
     /const totalInvestment = finiteNumber\(agentResult\.value\?\.totalInvestment\)[\s\S]*?totalProfit: finiteNumber\(agentResult\.value\?\.totalProfitLoss\)[\s\S]*?totalReturnPct: finiteNumber\(agentResult\.value\?\.totalReturnPct\)[\s\S]*?maximumDrawdownPct: finiteNumber\(agentResult\.value\?\.maximumDrawdownPct\)/
