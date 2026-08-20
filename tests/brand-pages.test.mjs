@@ -752,8 +752,13 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /id="operation-active-tiers-title"[\s\S]*?ACTIVE TIERS[\s\S]*?activeTiersAsOfDate[\s\S]*?class="operation-active-tiers__table"/
+    /id="operation-active-tiers-title"[\s\S]*?ACTIVE TIERS[\s\S]*?activeTiers\.length[\s\S]*?TIERS[\s\S]*?class="operation-active-tiers__table"/
   )
+  const activeTiersHeadingMarkup = source.slice(
+    source.indexOf('class="operation-active-tiers__heading"'),
+    source.indexOf('class="operation-active-tiers__summary"')
+  )
+  assert.doesNotMatch(activeTiersHeadingMarkup, /activeTiersAsOfDate/)
   assert.match(
     source,
     /Tier[\s\S]*?보유[\s\S]*?매수일[\s\S]*?매수가[\s\S]*?손익[\s\S]*?수익률[\s\S]*?<th class="text-right">보유<\/th>/
@@ -785,6 +790,18 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(activeTiersSummaryStyles, /background: var\(--dk-surface\)/)
   assert.doesNotMatch(activeTiersSummaryStyles, /border-left/)
+  assert.match(
+    source,
+    /\.operation-active-tiers__table \{[\s\S]*?:deep\(\.q-table th\) \{[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?font-weight: 400;/
+  )
+  assert.match(
+    source,
+    /\.operation-active-tiers__summary \{[\s\S]*?dt \{[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?dd \{[\s\S]*?font-size: var\(--dk-text-body-sm\);/
+  )
+  assert.match(
+    source,
+    /\.operation-active-tier-name \{[\s\S]*?font-weight: 400;/
+  )
   assert.match(
     source,
     /const activeTiersSummary = computed[\s\S]*?quantity \* buyPrice[\s\S]*?result\.profitLoss \+= profitLoss[\s\S]*?totals\.costBasis \/ totals\.pricedQuantity[\s\S]*?totals\.profitLoss \/ totals\.costBasis/
