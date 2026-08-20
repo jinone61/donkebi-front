@@ -126,7 +126,7 @@
                       <tr>
                         <th class="text-center">Tier</th>
                         <th class="text-center">보유</th>
-                        <th class="text-right">평균 매수가</th>
+                        <th class="text-right">매수가</th>
                         <th class="text-right">수익률</th>
                         <th class="text-right">손익</th>
                       </tr>
