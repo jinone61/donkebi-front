@@ -298,31 +298,14 @@
           <div class="content-container" v-if="hasResult">
             <q-card flat bordered class="section-card">
               <q-card-section class="section-heading">
-                <div class="row items-center justify-between q-col-gutter-md">
-                  <div>
-                    <div class="text-h6 text-grey-9">
-                      {{ backtestResult.symbol }} 백테스트
-                    </div>
-                    <div class="text-caption text-grey-6">
-                      {{ backtestResult.actualStartDate }} ~
-                      {{ backtestResult.backtestedThroughDate }}
-                    </div>
-                  </div>
-                  <q-badge
-                    color="green-6"
-                    :label="finalPortfolio.currency || 'USD'"
-                  />
+                <div class="text-h6 text-grey-9">
+                  {{ backtestResult.symbol }} 백테스트
+                </div>
+                <div class="text-caption text-grey-6">
+                  {{ backtestResult.actualStartDate }} ~
+                  {{ backtestResult.backtestedThroughDate }}
                 </div>
               </q-card-section>
-              <q-banner
-                v-if="startDateWasAdjusted"
-                dense
-                rounded
-                class="bg-blue-1 text-blue-9 q-ma-md q-mt-none"
-              >
-                요청 시작일 {{ backtestResult.requestedStartDate }}이 거래일
-                {{ backtestResult.actualStartDate }}로 조정되었습니다.
-              </q-banner>
             </q-card>
 
             <div class="metric-grid summary-grid">
@@ -923,13 +906,16 @@
         </q-tab-panel>
 
         <q-tab-panel name="plan" class="q-pa-none">
-          <div class="content-container" v-if="hasResult">
+          <div
+            class="content-container plan-content-container"
+            v-if="hasResult"
+          >
             <q-card flat bordered class="section-card">
               <q-card-section
                 class="section-heading row items-center justify-between"
               >
                 <div>
-                  <div class="text-h6 text-grey-9">다음 거래 계획</div>
+                  <div class="text-h6 text-grey-9">거래 계획 상세</div>
                   <div class="text-caption text-grey-6">
                     시뮬레이션이 생성한 조회 전용 계획입니다.
                   </div>
@@ -972,22 +958,27 @@
                         <div class="mobile-data-card__header">
                           <div class="row items-center q-gutter-xs">
                             <q-badge
-                              color="blue-grey-7"
-                              :label="props.row.tier"
+                              :color="sideColor(props.row.tradeSide)"
+                              :label="props.row.tradeSide"
                             />
-                            <span class="text-weight-bold text-grey-8">
-                              {{ props.row.orderType }} 매수
-                            </span>
+                            <span
+                              class="text-weight-bold text-grey-8"
+                              :class="{
+                                'mobile-data-card__tier--suppressed':
+                                  props.row.planType &&
+                                  props.row.planType !== 'REGULAR'
+                              }"
+                              >{{ props.row.tier }}</span
+                            >
                           </div>
-                          <q-badge color="red-7" label="매수" />
+                          <q-badge
+                            color="grey-6"
+                            :label="props.row.planType || 'REGULAR'"
+                          />
                         </div>
-                        <div class="mobile-data-card__grid">
-                          <div>
-                            <div class="data-label">배정금액</div>
-                            <div class="data-value">
-                              {{ formatMoney(props.row.allocationAmount) }}
-                            </div>
-                          </div>
+                        <div
+                          class="mobile-data-card__grid mobile-data-card__grid--three-columns"
+                        >
                           <div>
                             <div class="data-label">주문가</div>
                             <div class="data-value">
@@ -1001,7 +992,7 @@
                             </div>
                           </div>
                           <div>
-                            <div class="data-label">주문 방식</div>
+                            <div class="data-label">주문방식</div>
                             <div class="data-value">
                               {{ props.row.orderType }}
                             </div>
@@ -1051,22 +1042,24 @@
                         <div class="mobile-data-card__header">
                           <div class="row items-center q-gutter-xs">
                             <q-badge
-                              color="blue-grey-7"
-                              :label="props.row.tier"
+                              :color="sideColor(props.row.tradeSide)"
+                              :label="props.row.tradeSide"
                             />
-                            <span class="text-weight-bold text-grey-8">
-                              {{ props.row.orderType }} 매도
-                            </span>
+                            <span
+                              class="text-weight-bold text-grey-8"
+                              :class="{
+                                'mobile-data-card__tier--suppressed':
+                                  props.row.planType &&
+                                  props.row.planType !== 'REGULAR'
+                              }"
+                              >{{ props.row.tier }}</span
+                            >
                           </div>
                           <q-badge color="grey-6" :label="props.row.planType" />
                         </div>
-                        <div class="mobile-data-card__grid">
-                          <div>
-                            <div class="data-label">수량</div>
-                            <div class="data-value">
-                              {{ formatInteger(props.row.quantity) }}주
-                            </div>
-                          </div>
+                        <div
+                          class="mobile-data-card__grid mobile-data-card__grid--three-columns"
+                        >
                           <div>
                             <div class="data-label">주문가</div>
                             <div class="data-value">
@@ -1074,16 +1067,34 @@
                             </div>
                           </div>
                           <div>
+                            <div class="data-label">수량</div>
+                            <div class="data-value">
+                              {{ formatInteger(props.row.quantity) }}주
+                            </div>
+                          </div>
+                          <div>
+                            <div class="data-label">주문방식</div>
+                            <div class="data-value">
+                              {{ props.row.orderType }}
+                            </div>
+                          </div>
+                          <div>
                             <div class="data-label">매수일</div>
                             <div class="data-value">
-                              {{ props.row.buySessionDate }}
+                              {{ props.row.buySessionDate || '-' }}
+                            </div>
+                          </div>
+                          <div>
+                            <div class="data-label">매수가</div>
+                            <div class="data-value">
+                              {{ formatPrice(props.row.buyPrice) }}
                             </div>
                           </div>
                           <div>
                             <div class="data-label">보유/최대</div>
                             <div class="data-value">
-                              {{ props.row.heldSessionCount }}/{{
-                                props.row.maxHoldDays
+                              {{ formatInteger(props.row.heldSessionCount) }}/{{
+                                formatInteger(props.row.maxHoldDays)
                               }}일
                             </div>
                           </div>
@@ -1101,11 +1112,25 @@
               </q-card-section>
             </q-card>
 
-            <q-card flat bordered class="section-card">
-              <q-card-section class="section-heading">
-                <div class="text-h6 text-grey-9">주문표</div>
-                <div class="text-caption text-grey-6">
-                  실제 제출 대상 형식으로 정리한 다음 주문입니다.
+            <q-card flat bordered class="section-card order-sheet-card">
+              <q-card-section
+                class="section-heading row items-center justify-between"
+              >
+                <div>
+                  <div class="text-h6 text-grey-9">주문표</div>
+                  <div class="text-caption text-grey-6">
+                    실제 제출 대상 형식으로 정리한 다음 주문입니다.
+                  </div>
+                </div>
+                <div class="row items-center q-gutter-sm">
+                  <q-badge
+                    color="grey-7"
+                    :label="nextPlan.targetDate || backtestResult.targetDate"
+                  />
+                  <q-badge
+                    :color="modeColor(nextPlan.mode)"
+                    :label="nextPlan.mode || '-'"
+                  />
                 </div>
               </q-card-section>
               <q-separator />
@@ -1135,12 +1160,9 @@
                               props.row.tier
                             }}</span>
                           </div>
-                          <span class="text-caption text-grey-6">{{
-                            props.row.orderType
-                          }}</span>
                         </div>
                         <div
-                          class="mobile-data-card__grid mobile-data-card__grid--three"
+                          class="mobile-data-card__grid mobile-data-card__grid--three-columns"
                         >
                           <div>
                             <div class="data-label">주문가</div>
@@ -1155,9 +1177,29 @@
                             </div>
                           </div>
                           <div>
-                            <div class="data-label">배정금액</div>
+                            <div class="data-label">주문방식</div>
                             <div class="data-value">
-                              {{ formatMoney(props.row.allocationAmount) }}
+                              {{ props.row.orderType }}
+                            </div>
+                          </div>
+                          <div v-if="props.row.tradeSide === 'SELL'">
+                            <div class="data-label">매수일</div>
+                            <div class="data-value">
+                              {{ props.row.buySessionDate || '-' }}
+                            </div>
+                          </div>
+                          <div v-if="props.row.tradeSide === 'SELL'">
+                            <div class="data-label">매수가</div>
+                            <div class="data-value">
+                              {{ formatPrice(props.row.buyPrice) }}
+                            </div>
+                          </div>
+                          <div v-if="props.row.tradeSide === 'SELL'">
+                            <div class="data-label">보유/최대</div>
+                            <div class="data-value">
+                              {{ formatInteger(props.row.heldSessionCount) }}/{{
+                                formatInteger(props.row.maxHoldDays)
+                              }}일
                             </div>
                           </div>
                         </div>
@@ -1597,12 +1639,25 @@ const finalPortfolio = computed(
 )
 const finalTiers = computed(() => finalPortfolio.value.tiers || [])
 const nextPlan = computed(() => backtestResult.value?.nextPlan || {})
-const nextSellOrders = computed(() => nextPlan.value.sellOrders || [])
-const nextOrders = computed(() =>
-  (backtestResult.value?.nextOrders || []).map((order, index) => ({
+const nextSellOrders = computed(() =>
+  (nextPlan.value.sellOrders || []).map(order => ({
     ...order,
-    rowKey: `${order.tradeSide}-${order.tier}-${index}`
+    tradeSide: order.tradeSide || 'SELL'
   }))
+)
+const nextOrders = computed(() =>
+  (backtestResult.value?.nextOrders || []).map((order, index) => {
+    const matchingSellOrder =
+      order.tradeSide === 'SELL'
+        ? nextSellOrders.value.find(planOrder => planOrder.tier === order.tier)
+        : null
+
+    return {
+      ...matchingSellOrder,
+      ...order,
+      rowKey: `${order.tradeSide}-${order.tier}-${index}`
+    }
+  })
 )
 const nextBuyOrders = computed(() => {
   if (!nextPlan.value.buyOrder) return []
@@ -1615,16 +1670,13 @@ const nextBuyOrders = computed(() => {
   return [
     {
       ...nextPlan.value.buyOrder,
-      orderType: matchingOrder?.orderType || 'LOC'
+      tradeSide: matchingOrder?.tradeSide || 'BUY',
+      orderType: matchingOrder?.orderType || 'LOC',
+      planType:
+        nextPlan.value.buyOrder.planType || matchingOrder?.planType || null
     }
   ]
 })
-const startDateWasAdjusted = computed(
-  () =>
-    backtestResult.value?.requestedStartDate &&
-    backtestResult.value.requestedStartDate !==
-      backtestResult.value.actualStartDate
-)
 const resultKey = computed(
   () =>
     `${backtestResult.value?.symbol || ''}-${backtestResult.value?.actualStartDate || ''}-${backtestResult.value?.backtestedThroughDate || ''}`
@@ -2366,6 +2418,8 @@ async function runBacktest() {
     activeTab.value = 'status'
     $q.notify({
       type: 'positive',
+      color: 'green-8',
+      textColor: 'white',
       message: '백테스트가 완료되었습니다.',
       position: 'top'
     })
@@ -2598,6 +2652,15 @@ function sideColor(side) {
   max-width: 900px;
 }
 
+.plan-content-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-sheet-card {
+  order: -1;
+}
+
 .section-card {
   overflow: hidden;
   margin-bottom: 16px;
@@ -2768,6 +2831,12 @@ function sideColor(side) {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.mobile-data-card__tier--suppressed {
+  text-decoration: line-through;
+  text-decoration-color: var(--dk-muted);
+  text-decoration-thickness: 1px;
 }
 
 .mobile-data-card__grid {
@@ -3069,8 +3138,9 @@ function sideColor(side) {
     height: 300px;
   }
 
-  .mobile-data-card__grid--three > :last-child {
-    grid-column: 1 / -1;
+  .mobile-data-card__grid--three-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 8px;
   }
 
   .daily-desktop-summary {

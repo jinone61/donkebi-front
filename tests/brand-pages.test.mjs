@@ -502,6 +502,98 @@ test('editable backtest workspace combines Donkebi branding with Korean task lab
   assert.match(source, /label="입력설정"/)
   assert.match(source, /label="현황"/)
   assert.match(source, /label="주문계획"/)
+  assert.doesNotMatch(
+    source,
+    /startDateWasAdjusted|요청 시작일|finalPortfolio\.currency \|\| 'USD'/
+  )
+  assert.match(
+    source,
+    /type: 'positive',[\s\S]*?color: 'green-8',[\s\S]*?textColor: 'white',[\s\S]*?message: '백테스트가 완료되었습니다\.'/
+  )
+  assert.match(
+    source,
+    /class="content-container plan-content-container"[\s\S]*?class="section-card order-sheet-card"[\s\S]*?>주문표</
+  )
+  assert.match(
+    source,
+    /\.plan-content-container \{[\s\S]*?display: flex;[\s\S]*?flex-direction: column;[\s\S]*?\.order-sheet-card \{[\s\S]*?order: -1;/
+  )
+  const tradePlanCard = source.slice(
+    source.indexOf('>거래 계획 상세<'),
+    source.indexOf('class="section-card order-sheet-card"')
+  )
+  assert.doesNotMatch(source, />다음 거래 계획</)
+  assert.match(
+    tradePlanCard,
+    /매수 계획[\s\S]*?sideColor\(props\.row\.tradeSide\)[\s\S]*?:label="props\.row\.tradeSide"[\s\S]*?props\.row\.tier[\s\S]*?props\.row\.planType \|\| 'REGULAR'[\s\S]*?주문가[\s\S]*?props\.row\.orderPrice[\s\S]*?수량[\s\S]*?props\.row\.quantity[\s\S]*?주문방식[\s\S]*?props\.row\.orderType/
+  )
+  assert.match(
+    tradePlanCard,
+    /매도 계획[\s\S]*?sideColor\(props\.row\.tradeSide\)[\s\S]*?:label="props\.row\.tradeSide"[\s\S]*?props\.row\.tier[\s\S]*?:label="props\.row\.planType"[\s\S]*?주문가[\s\S]*?props\.row\.orderPrice[\s\S]*?수량[\s\S]*?props\.row\.quantity[\s\S]*?주문방식[\s\S]*?props\.row\.orderType[\s\S]*?매수일[\s\S]*?props\.row\.buySessionDate[\s\S]*?매수가[\s\S]*?props\.row\.buyPrice[\s\S]*?보유\/최대[\s\S]*?props\.row\.heldSessionCount[\s\S]*?props\.row\.maxHoldDays/
+  )
+  assert.equal(
+    (
+      tradePlanCard.match(
+        /'mobile-data-card__tier--suppressed':[\s\S]*?props\.row\.planType &&[\s\S]*?props\.row\.planType !== 'REGULAR'/g
+      ) || []
+    ).length,
+    2
+  )
+  assert.match(
+    source,
+    /\.mobile-data-card__tier--suppressed \{[\s\S]*?text-decoration: line-through;[\s\S]*?text-decoration-color: var\(--dk-muted\);[\s\S]*?text-decoration-thickness: 1px;/
+  )
+  assert.match(
+    source,
+    /planType:[\s\S]*?nextPlan\.value\.buyOrder\.planType \|\| matchingOrder\?\.planType \|\| null/
+  )
+  assert.match(
+    source,
+    /const nextSellOrders = computed[\s\S]*?tradeSide: order\.tradeSide \|\| 'SELL'[\s\S]*?tradeSide: matchingOrder\?\.tradeSide \|\| 'BUY'/
+  )
+  const orderSheetCard = source.slice(
+    source.indexOf('class="section-card order-sheet-card"'),
+    source.indexOf('생성된 다음 주문이 없습니다.')
+  )
+  assert.match(
+    orderSheetCard,
+    /주문가[\s\S]*?props\.row\.orderPrice[\s\S]*?수량[\s\S]*?props\.row\.quantity[\s\S]*?주문방식[\s\S]*?props\.row\.orderType/
+  )
+  assert.match(
+    orderSheetCard,
+    /props\.row\.tradeSide === 'SELL'[\s\S]*?매수일[\s\S]*?props\.row\.buySessionDate[\s\S]*?매수가[\s\S]*?formatPrice\(props\.row\.buyPrice\)[\s\S]*?보유\/최대[\s\S]*?props\.row\.heldSessionCount[\s\S]*?props\.row\.maxHoldDays/
+  )
+  assert.match(
+    orderSheetCard,
+    /class="mobile-data-card__grid mobile-data-card__grid--three-columns"/
+  )
+  assert.match(
+    source,
+    /\.mobile-data-card__grid--three-columns \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 8px;/
+  )
+  const orderSheetMobileCard = orderSheetCard.slice(
+    orderSheetCard.indexOf('<template #item="props">'),
+    orderSheetCard.indexOf('<template #body-cell-tradeSide="props">')
+  )
+  assert.doesNotMatch(
+    orderSheetMobileCard,
+    /formatMoney\(props\.row\.allocationAmount\)/
+  )
+  assert.match(
+    orderSheetCard,
+    /nextPlan\.targetDate \|\| backtestResult\.targetDate[\s\S]*?modeColor\(nextPlan\.mode\)[\s\S]*?nextPlan\.mode \|\| '-'/
+  )
+  const orderSheetHeader = orderSheetCard.slice(
+    orderSheetCard.indexOf('class="mobile-data-card__header"'),
+    orderSheetCard.indexOf(
+      'class="mobile-data-card__grid mobile-data-card__grid--three-columns"'
+    )
+  )
+  assert.doesNotMatch(orderSheetHeader, /props\.row\.orderType/)
+  assert.match(
+    source,
+    /const nextOrders = computed[\s\S]*?order\.tradeSide === 'SELL'[\s\S]*?nextSellOrders\.value\.find\(planOrder => planOrder\.tier === order\.tier\)[\s\S]*?\.\.\.matchingSellOrder,[\s\S]*?\.\.\.order/
+  )
 })
 
 test('editable backtest workspace carries the latest range tools without a duplicate header', async () => {
