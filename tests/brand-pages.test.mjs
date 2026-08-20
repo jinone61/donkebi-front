@@ -1349,10 +1349,23 @@ test('agent page covers current status charts and operation history', async () =
     source,
     /const currentTiers = computed\(\(\) => finalPortfolio\.value\.tiers \|\| \[\]\)/
   )
-  assert.match(source, /<h3 id="current-tiers-title">현재 Tier<\/h3>/)
+  assert.doesNotMatch(source, /현재 Tier/)
+  assert.match(source, /id="current-holdings-title"[\s\S]*?CURRENT HOLDINGS/)
+  assert.doesNotMatch(source, /current-holdings__summary/)
+  assert.doesNotMatch(source, /const currentHoldings = computed/)
   assert.match(source, /v-for="tier in currentTiers"/)
   assert.match(source, /평균 매수가/)
-  assert.match(source, /<dt>수익률<\/dt>/)
+  assert.match(source, /tier\.unrealizedProfit/)
+  assert.match(source, /class="current-tiers__table"/)
+  assert.match(
+    source,
+    /Tier[\s\S]*?보유[\s\S]*?평균 매수가[\s\S]*?수익률[\s\S]*?손익/
+  )
+  assert.doesNotMatch(source, /current-tier-mode/)
+  assert.match(
+    source,
+    /\.current-tiers__table \{[\s\S]*?table-layout: fixed[\s\S]*?font-variant-numeric: tabular-nums/
+  )
   assert.match(
     source,
     /const totalInvestment = finiteNumber\(agentResult\.value\?\.totalInvestment\)[\s\S]*?totalProfit: finiteNumber\(agentResult\.value\?\.totalProfitLoss\)[\s\S]*?totalReturnPct: finiteNumber\(agentResult\.value\?\.totalReturnPct\)[\s\S]*?maximumDrawdownPct: finiteNumber\(agentResult\.value\?\.maximumDrawdownPct\)/

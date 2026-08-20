@@ -106,45 +106,57 @@
 
               <section
                 class="current-tiers"
-                aria-labelledby="current-tiers-title"
+                aria-labelledby="current-holdings-title"
               >
                 <div class="current-tiers__heading">
-                  <div>
-                    <p class="section-index">CURRENT HOLDINGS</p>
-                    <h3 id="current-tiers-title">현재 Tier</h3>
-                  </div>
+                  <p id="current-holdings-title" class="section-index">
+                    CURRENT HOLDINGS
+                  </p>
                   <span>{{ currentTiers.length }} TIERS</span>
                 </div>
 
-                <div v-if="currentTiers.length" class="current-tiers__grid">
-                  <article v-for="tier in currentTiers" :key="tier.tier">
-                    <header>
-                      <strong>{{ tier.tier }}</strong>
-                      <span>{{ tier.mode || '-' }}</span>
-                    </header>
-                    <dl>
-                      <div>
-                        <dt>보유 수량</dt>
-                        <dd>{{ formatInteger(tier.quantity) }}주</dd>
-                      </div>
-                      <div>
-                        <dt>평균 매수가</dt>
-                        <dd>{{ formatPrice(tier.averageBuyPrice) }}</dd>
-                      </div>
-                      <div>
-                        <dt>평가액</dt>
-                        <dd>{{ formatMoney(tier.marketValue) }}</dd>
-                      </div>
-                      <div>
-                        <dt>수익률</dt>
-                        <dd :class="profitClass(tier.unrealizedReturnPct)">
+                <template v-if="currentTiers.length">
+                  <q-markup-table
+                    flat
+                    dense
+                    separator="horizontal"
+                    class="current-tiers__table"
+                  >
+                    <thead>
+                      <tr>
+                        <th class="text-center">Tier</th>
+                        <th class="text-center">보유</th>
+                        <th class="text-right">평균 매수가</th>
+                        <th class="text-right">수익률</th>
+                        <th class="text-right">손익</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="tier in currentTiers" :key="tier.tier">
+                        <td class="current-tier-name">{{ tier.tier }}</td>
+                        <td class="text-center">
+                          {{ formatInteger(tier.quantity) }}주
+                        </td>
+                        <td class="text-right">
+                          {{ formatPrice(tier.averageBuyPrice) }}
+                        </td>
+                        <td
+                          class="text-right"
+                          :class="profitClass(tier.unrealizedReturnPct)"
+                        >
                           {{ formatPct(tier.unrealizedReturnPct) }}
-                        </dd>
-                      </div>
-                    </dl>
-                  </article>
-                </div>
-                <p v-else class="detail-empty">현재 보유 Tier가 없습니다.</p>
+                        </td>
+                        <td
+                          class="text-right"
+                          :class="profitClass(tier.unrealizedProfit)"
+                        >
+                          {{ formatMoney(tier.unrealizedProfit) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </q-markup-table>
+                </template>
+                <p v-else class="detail-empty"> 현재 보유 내역이 없습니다. </p>
               </section>
             </section>
 
@@ -1981,17 +1993,14 @@ onMounted(fetchAgentResult)
 
 .current-tiers__heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 11px 14px;
   border-bottom: 1px solid var(--dk-line);
 
-  h3 {
-    margin: 2px 0 0;
-    font-family: var(--dk-font-serif);
-    font-size: var(--dk-text-value);
-    font-weight: 400;
+  .section-index {
+    margin: 0;
   }
 
   > span {
@@ -2001,55 +2010,60 @@ onMounted(fetchAgentResult)
   }
 }
 
-.current-tiers__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+.current-tiers__table {
+  border-radius: 0;
+  box-shadow: none;
 
-  > article {
-    min-width: 0;
-    padding: 10px 12px;
-    border-right: 1px solid var(--dk-line);
-    border-bottom: 1px solid var(--dk-line);
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-
-      strong {
-        font-size: var(--dk-text-body-sm);
-      }
-
-      span {
-        padding: 2px 6px;
-        border: 1px solid var(--dk-line-strong);
-        color: var(--dk-muted);
-        font-size: var(--dk-text-caption);
-      }
-    }
-
-    dl {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 7px 12px;
-      margin: 0;
-    }
-
-    dt {
-      color: var(--dk-muted);
-      font-size: var(--dk-text-caption);
-    }
-
-    dd {
-      margin: 2px 0 0;
-      font-size: var(--dk-text-body-sm);
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      overflow-wrap: anywhere;
-    }
+  table {
+    width: 100%;
+    table-layout: fixed;
   }
+
+  th,
+  td {
+    height: 38px;
+    padding: 6px 10px;
+    font-size: var(--dk-text-body-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+    font-weight: 500;
+  }
+
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 14%;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 16%;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 26%;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 20%;
+  }
+
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 24%;
+  }
+}
+
+.current-tier-name {
+  color: var(--dk-ink);
+  font-weight: 700;
+  text-align: center;
 }
 
 .current-tiers > .detail-empty {
@@ -2923,20 +2937,16 @@ onMounted(fetchAgentResult)
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .current-tiers__grid > article {
-    padding: 9px 8px;
-
-    dl {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 5px;
+  .current-tiers__table {
+    th,
+    td {
+      height: 34px;
+      padding: 5px 4px;
+      font-size: clamp(0.62rem, 2.5vw, var(--dk-text-caption));
     }
 
-    dt {
-      white-space: nowrap;
-    }
-
-    dd {
-      white-space: nowrap;
+    th {
+      font-size: clamp(0.58rem, 2.3vw, var(--dk-text-caption));
     }
   }
 
