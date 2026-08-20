@@ -98,10 +98,7 @@
                 <p id="operation-active-tiers-title" class="section-index">
                   ACTIVE TIERS
                 </p>
-                <span>
-                  {{ operationResult.activeTiersAsOfDate || '-' }} ·
-                  {{ activeTiers.length }} TIERS
-                </span>
+                <span>{{ activeTiers.length }} TIERS</span>
               </div>
 
               <dl
@@ -2005,10 +2002,10 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     white-space: nowrap;
   }
 
-  :deep(th) {
+  :deep(.q-table th) {
     color: var(--dk-muted);
     font-size: var(--dk-text-caption);
-    font-weight: 500;
+    font-weight: 400;
   }
 
   :deep(th:nth-child(1)),
@@ -2077,7 +2074,7 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 
 .operation-active-tier-name {
   color: var(--dk-ink);
-  font-weight: 700;
+  font-weight: 400;
   text-align: center;
 }
 
@@ -3181,11 +3178,11 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     :deep(td) {
       height: 34px;
       padding: 5px 3px;
-      font-size: clamp(0.61rem, 2.5vw, var(--dk-text-caption));
+      font-size: var(--dk-text-label);
     }
 
     :deep(th) {
-      font-size: clamp(0.57rem, 2.3vw, var(--dk-text-caption));
+      font-size: var(--dk-text-caption);
     }
   }
 
@@ -3195,11 +3192,11 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     }
 
     dt {
-      font-size: clamp(0.57rem, 2.3vw, var(--dk-text-caption));
+      font-size: var(--dk-text-caption);
     }
 
     dd {
-      font-size: clamp(0.64rem, 2.7vw, var(--dk-text-label));
+      font-size: var(--dk-text-body-sm);
     }
   }
 
