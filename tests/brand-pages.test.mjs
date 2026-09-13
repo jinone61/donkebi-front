@@ -113,26 +113,36 @@ test('installed mobile PWA provides exact navigation for every workspace', async
   )
 })
 
-test('all route pages retain their local state within one auth scope', async () => {
+test('route page caches are isolated by the active account', async () => {
   const source = await readSource('src/pages/index.vue')
 
   assert.match(
     source,
-    /const routeCacheScope = computed\(\(\) =>[\s\S]*?isAuthenticated\.value \? 'authenticated' : 'public'/
+    /const routeCacheScope = computed\(\(\) =>[\s\S]*?authStore\.activeUserId[\s\S]*?account:\$\{authStore\.activeUserId\}[\s\S]*?'public'/
   )
   assert.match(
     source,
-    /<router-view v-slot="\{ Component \}">[\s\S]*?<keep-alive :key="routeCacheScope">[\s\S]*?<component[\s\S]*?:is="Component"[\s\S]*?:key="route\.path"[\s\S]*?<\/keep-alive>/
+    /const routeCacheKey = computed\(\(\) =>[\s\S]*?route\.path[\s\S]*?routeCacheScope\.value/
+  )
+  assert.match(
+    source,
+    /<router-view v-slot="\{ Component \}">[\s\S]*?<keep-alive :key="routeCacheScope">[\s\S]*?<component[\s\S]*?:is="Component"[\s\S]*?:key="routeCacheKey"[\s\S]*?<\/keep-alive>/
   )
   assert.doesNotMatch(source, /isCachedWorkspaceRoute|CACHED_WORKSPACE_PATHS/)
 })
 
-test('profile navigation consistently becomes login before authentication', async () => {
+test('site header keeps account identity inside the profile experience', async () => {
+  const source = await readSource('src/pages/index.vue')
+
+  assert.doesNotMatch(source, /activeAccountName|site-header__account/)
+})
+
+test('profile navigation stays available while stored accounts await selection', async () => {
   const source = await readSource('src/pages/index.vue')
 
   assert.match(
     source,
-    /const profileDestination = computed\(\(\) =>[\s\S]*?isAuthenticated\.value[\s\S]*?\? '\/profile'[\s\S]*?: \{[\s\S]*?path: '\/login',[\s\S]*?redirect: '\/profile'/
+    /const hasStoredAccounts = computed\(\(\) => authStore\.hasStoredSessions\)[\s\S]*?const profileDestination = computed\(\(\) =>[\s\S]*?isAuthenticated\.value \|\| hasStoredAccounts\.value[\s\S]*?\? '\/profile'[\s\S]*?: \{[\s\S]*?path: '\/login',[\s\S]*?redirect: '\/profile'/
   )
   assert.match(
     source,
@@ -141,20 +151,98 @@ test('profile navigation consistently becomes login before authentication', asyn
   assert.doesNotMatch(source, /icon="person_outline"|account-popover/)
 })
 
-test('profile page shows the cached identity and controls the session', async () => {
+test('shared account login form authenticates without owning navigation', async () => {
+  const [form, login] = await Promise.all([
+    readSource('src/components/auth/AccountLoginForm.vue'),
+    readSource('src/pages/index/login.vue')
+  ])
+
+  assert.match(
+    form,
+    /<q-form[\s\S]*?@submit\.prevent="login"[\s\S]*?v-model\.trim="email"[\s\S]*?v-model="password"[\s\S]*?:label="submitLabel"/
+  )
+  assert.match(
+    form,
+    /api\.post\(LOGIN_URL,[\s\S]*?email: email\.value,[\s\S]*?password: password\.value[\s\S]*?authStore\.setSession\(data\)[\s\S]*?emit\('authenticated'/
+  )
+  assert.match(form, /error\.response\?\.status === 401/)
+  assert.match(
+    login,
+    /<AccountLoginForm[\s\S]*?submit-label="ENTER INTERFACE"[\s\S]*?@authenticated="finishLogin"/
+  )
+  assert.match(
+    login,
+    /router\.replace\(safeRedirect\(route\.query\.redirect\)\)/
+  )
+})
+
+test('profile page manages stored accounts and the active session', async () => {
   const source = await readSource('src/pages/index/profile.vue')
 
   assert.match(source, /<q-page class="profile-page">/)
   assert.match(source, /PROFILE|Profile/)
-  assert.match(source, /authStore\.user\?\.name/)
-  assert.match(source, /authStore\.user\?\.email/)
-  assert.match(source, /ACTIVE/)
-  assert.match(source, /getAuthExpiration\(authStore\.session\)/)
+  assert.match(
+    source,
+    /const currentAccount = computed\([\s\S]*?account\.isActive/
+  )
+  assert.match(
+    source,
+    /v-if="currentAccount"[\s\S]*?currentAccount\.name[\s\S]*?currentAccount\.email[\s\S]*?LOG OUT[\s\S]*?@click="logout"/
+  )
+  assert.match(
+    source,
+    /<q-dialog[\s\S]*?v-model="accountDialogOpen"[\s\S]*?transition-show="fade"[\s\S]*?transition-hide="fade"[\s\S]*?aria-label="계정 선택 닫기"[\s\S]*?icon="close"[\s\S]*?@click="closeAccountDialog"[\s\S]*?v-for="account in selectableAccounts"[\s\S]*?@click="switchAccount\(account\.userId\)"[\s\S]*?label="REMOVE"[\s\S]*?class="account-dialog__remove"[\s\S]*?@click\.stop="requestAccountRemoval\(account\)"/
+  )
+  assert.match(
+    source,
+    /<q-dialog[\s\S]*?v-model="removeDialogOpen"[\s\S]*?transition-show="fade"[\s\S]*?transition-hide="fade"[\s\S]*?CANCEL[\s\S]*?REMOVE[\s\S]*?@click="removeAccount"/
+  )
+  assert.match(
+    source,
+    /accountDialogOpen[\s\S]*?ADD ACCOUNT[\s\S]*?<DkExpandTransition :show="showAddAccount"[\s\S]*?<AccountLoginForm[\s\S]*?submit-label="LOGIN"/
+  )
+  assert.doesNotMatch(source, /ADD & SWITCH|<q-slide-transition>/)
   assert.match(source, /Asia\/Seoul/)
   assert.match(source, /KST/)
-  assert.match(source, /authStore\.clearSession\(\)/)
-  assert.match(source, /router\.replace\('\/'\)/)
-  assert.doesNotMatch(source, /accessToken|userId|phone/)
+  assert.match(
+    source,
+    /function logout\(\)[\s\S]*?accountDialogOpen\.value = true[\s\S]*?function closeAccountDialog\(\)[\s\S]*?accountDialogOpen\.value = false/
+  )
+  assert.match(
+    source,
+    /const selectableAccounts = computed\(\(\) =>[\s\S]*?authStore\.accountSummaries[\s\S]*?sort\(\s*\(a, b\) => Number\(b\.userId\) - Number\(a\.userId\)/
+  )
+  assert.doesNotMatch(source, /authStore\.logoutActiveSession\(\)/)
+  assert.match(
+    source,
+    /\.account-dialog__remove \{[\s\S]*?background:[\s\S]*?box-shadow:/
+  )
+  assert.doesNotMatch(source, /accessToken|phone/)
+})
+
+test('expandable cards avoid delayed height measurement transitions', async () => {
+  const [transition, profile, operation] = await Promise.all([
+    readSource('src/components/DkExpandTransition.vue'),
+    readSource('src/pages/index/profile.vue'),
+    readSource('src/pages/index/operation.vue')
+  ])
+
+  assert.match(
+    transition,
+    /<Transition name="dk-expand">[\s\S]*?v-show="show"[\s\S]*?class="dk-expand"/
+  )
+  assert.doesNotMatch(transition, /v-if=|keepMounted/)
+  assert.match(
+    transition,
+    /\.dk-expand-enter-active,[\s\S]*?\.dk-expand-leave-active[\s\S]*?transition:[\s\S]*?grid-template-rows[\s\S]*?\.dk-expand-enter-from,[\s\S]*?grid-template-rows: 0fr;/
+  )
+  assert.doesNotMatch(transition, /setTimeout|scrollHeight|offsetHeight/)
+  assert.match(profile, /<DkExpandTransition :show="showAddAccount">/)
+  assert.match(
+    operation,
+    /<DkExpandTransition[\s\S]*?:show="isOperationExpanded\(slide\.id\)"/
+  )
+  assert.doesNotMatch(`${profile}\n${operation}`, /<q-slide-transition>/)
 })
 
 test('bottom navigation only replaces the menu in installed mobile PWA', async () => {
@@ -245,15 +333,17 @@ test('public pages share a role-based typography scale', async () => {
 })
 
 test('private workspaces use one central authentication layout', async () => {
-  const [globalStyles, login, backtest, agent] = await Promise.all([
+  const [globalStyles, login, loginForm, backtest, agent] = await Promise.all([
     readSource('src/css/app.scss'),
     readSource('src/pages/index/login.vue'),
+    readSource('src/components/auth/AccountLoginForm.vue'),
     readSource('src/components/backtest/BacktestPage.vue'),
     readAgentSource()
   ])
+  const authenticationWorkspace = `${login}\n${loginForm}`
 
   assert.match(
-    login,
+    authenticationWorkspace,
     /class="auth-area"[\s\S]*?class="auth-shell dk-container"[\s\S]*?class="auth-intro dk-reveal"[\s\S]*?class="auth-intro__meta"[\s\S]*?class="auth-form dk-reveal"[\s\S]*?autocomplete="email"[\s\S]*?autocomplete="current-password"/
   )
   assert.doesNotMatch(backtest, /PAGE_PASSWORD|class="auth-area"/)
@@ -289,18 +379,15 @@ test('private workspace password controls share one field treatment', async () =
   )
 })
 
-test('router and axios enforce the central JWT session', async () => {
-  const [router, axiosBoot, login, layout, profile] = await Promise.all([
+test('router and axios isolate authentication by request account', async () => {
+  const [router, axiosBoot] = await Promise.all([
     readSource('src/router/index.js'),
-    readSource('src/boot/axios.js'),
-    readSource('src/pages/index/login.vue'),
-    readSource('src/pages/index.vue'),
-    readSource('src/pages/index/profile.vue')
+    readSource('src/boot/axios.js')
   ])
 
   assert.match(
     router,
-    /const PUBLIC_PATHS = new Set\(\['\/', '\/login'\]\)[\s\S]*?Router\.beforeEach\(\(to, from\) =>[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?path: '\/login'[\s\S]*?redirect: to\.fullPath/
+    /const PUBLIC_PATHS = new Set\(\['\/', '\/login'\]\)[\s\S]*?Router\.beforeEach\(\(to, from\) =>[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?authStore\.hasStoredSessions[\s\S]*?to\.path === '\/profile'[\s\S]*?path: '\/profile'[\s\S]*?path: '\/login'[\s\S]*?redirect: to\.fullPath/
   )
   assert.match(
     router,
@@ -308,32 +395,25 @@ test('router and axios enforce the central JWT session', async () => {
   )
   assert.match(
     router,
-    /to\.path === '\/' && isStandalonePwa\(\)[\s\S]*?path: '\/operation'[\s\S]*?path: '\/login'[\s\S]*?redirect: '\/operation'/
+    /to\.path === '\/' && isStandalonePwa\(\)[\s\S]*?path: '\/operation'[\s\S]*?path: '\/profile'[\s\S]*?path: '\/login'[\s\S]*?redirect: '\/operation'/
   )
   assert.match(
     router,
-    /const routeScrollPositions = new Map\(\)[\s\S]*?scrollBehavior: \(to, _from, savedPosition\) =>[\s\S]*?savedPosition \|\|[\s\S]*?routeScrollPositions\.get\(to\.fullPath\)[\s\S]*?left: 0, top: 0/
+    /function routeScrollKey\(route, activeUserId\)[\s\S]*?account:\$\{activeUserId\}[\s\S]*?route\.fullPath[\s\S]*?const routeScrollPositions = new Map\(\)[\s\S]*?scrollBehavior: \(to, _from, savedPosition\) =>[\s\S]*?routeScrollPositions\.get\([\s\S]*?routeScrollKey\(to, authStore\.activeUserId\)/
   )
   assert.match(
     router,
-    /Router\.beforeEach\(\(to, from\) =>[\s\S]*?!import\.meta\.env\.QUASAR_SERVER[\s\S]*?routeScrollPositions\.set\(from\.fullPath,[\s\S]*?left: window\.scrollX,[\s\S]*?top: window\.scrollY/
+    /Router\.beforeEach\(\(to, from\) =>[\s\S]*?!import\.meta\.env\.QUASAR_SERVER[\s\S]*?routeScrollPositions\.set\([\s\S]*?routeScrollKey\(from, authStore\.activeUserId\)[\s\S]*?left: window\.scrollX,[\s\S]*?top: window\.scrollY/
   )
   assert.match(
     axiosBoot,
-    /interceptors\.request\.use[\s\S]*?config\.url !== LOGIN_URL[\s\S]*?config\.headers\.Authorization = authStore\.authorizationHeader/
+    /interceptors\.request\.use[\s\S]*?config\.url === LOGIN_URL[\s\S]*?authStore\.hasValidSession\(\)[\s\S]*?config\.headers\.Authorization = authStore\.authorizationHeader[\s\S]*?config\.donkebiAuthUserId = authStore\.activeUserId[\s\S]*?config\.donkebiAuthToken = authStore\.session\.accessToken/
   )
   assert.match(
     axiosBoot,
-    /interceptors\.response\.use[\s\S]*?status === 401[\s\S]*?authStore\.clearSession\(\)[\s\S]*?path: '\/login'/
+    /interceptors\.response\.use[\s\S]*?status !== 401 \|\| error\.config\?\.url === LOGIN_URL[\s\S]*?const requestUserId = error\.config\?\.donkebiAuthUserId[\s\S]*?const requestToken = error\.config\?\.donkebiAuthToken[\s\S]*?const wasActive[\s\S]*?authStore\.invalidateSession\(requestUserId, requestToken\)[\s\S]*?!wasActive[\s\S]*?authStore\.hasStoredSessions[\s\S]*?path: '\/profile'[\s\S]*?path: '\/login'/
   )
   assert.doesNotMatch(axiosBoot, /Bearer eyJ/)
-  assert.match(
-    login,
-    /api\.post\(LOGIN_URL,[\s\S]*?email: email\.value,[\s\S]*?password: password\.value[\s\S]*?authStore\.setSession\(data\)/
-  )
-  assert.match(layout, /label: 'PROFILE',[\s\S]*?to: profileDestination\.value/)
-  assert.doesNotMatch(layout, /aria-label="사용자 메뉴"|account-popover/)
-  assert.match(profile, /LOG OUT[\s\S]*?authStore\.clearSession\(\)/)
 })
 
 test('cached route scroll positions restore without global animation', async () => {
@@ -1104,7 +1184,7 @@ test('agent workspace separates live operation from performance', async () => {
     /Private Access Only|PAGE_PASSWORD|<q-tabs|AgentPage/
   )
   assert.match(operation, /class="operation-list"/)
-  assert.match(operation, /<q-slide-transition>/)
+  assert.match(operation, /<DkExpandTransition/)
   assert.match(
     operation,
     /nextOperationHeadline\.message[\s\S]*?nextOperationHeadline\.countdown[\s\S]*?operation-heading-countdown[\s\S]*?남음/
@@ -1611,7 +1691,10 @@ test('agent operation flows with the page and starts with every job closed', asy
     /function getInitialExpandedOperationIds\(\) \{\s*return \[\]\s*\}/
   )
   assert.doesNotMatch(source, /INITIAL_EXPANDED_OPERATION_COUNT/)
-  assert.match(source, /v-show="isOperationExpanded\(slide\.id\)"/)
+  assert.match(
+    source,
+    /<DkExpandTransition[\s\S]*?:show="isOperationExpanded\(slide\.id\)"/
+  )
   assert.match(source, /@click="toggleOperation\(slide\.id\)"/)
   assert.match(
     source,

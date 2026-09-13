@@ -11,8 +11,12 @@ export default defineBoot(({ app, router, store }) => {
   const authStore = useAuthStore(store)
 
   api.interceptors.request.use(config => {
-    if (config.url !== LOGIN_URL && authStore.hasValidSession()) {
+    if (config.url === LOGIN_URL) return config
+
+    if (authStore.hasValidSession()) {
       config.headers.Authorization = authStore.authorizationHeader
+      config.donkebiAuthUserId = authStore.activeUserId
+      config.donkebiAuthToken = authStore.session.accessToken
     }
 
     return config
@@ -21,15 +25,38 @@ export default defineBoot(({ app, router, store }) => {
   api.interceptors.response.use(
     response => response,
     async error => {
-      if (error.response?.status === 401) {
-        authStore.clearSession()
+      if (error.response?.status !== 401 || error.config?.url === LOGIN_URL) {
+        return Promise.reject(error)
+      }
 
-        if (router.currentRoute.value.path !== '/login') {
+      const requestUserId = error.config?.donkebiAuthUserId
+      const requestToken = error.config?.donkebiAuthToken
+      const wasActive =
+        requestUserId &&
+        String(requestUserId) === String(authStore.activeUserId) &&
+        requestToken === authStore.session?.accessToken
+
+      const wasInvalidated =
+        requestUserId &&
+        authStore.invalidateSession(requestUserId, requestToken)
+
+      if (!wasInvalidated || !wasActive) return Promise.reject(error)
+
+      if (authStore.hasStoredSessions) {
+        if (
+          router.currentRoute.value.path !== '/profile' ||
+          router.currentRoute.value.query.session !== 'expired'
+        ) {
           await router.replace({
-            path: '/login',
-            query: { redirect: router.currentRoute.value.fullPath }
+            path: '/profile',
+            query: { session: 'expired' }
           })
         }
+      } else if (router.currentRoute.value.path !== '/login') {
+        await router.replace({
+          path: '/login',
+          query: { redirect: router.currentRoute.value.fullPath }
+        })
       }
 
       return Promise.reject(error)
