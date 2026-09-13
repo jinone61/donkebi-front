@@ -322,8 +322,8 @@
                     </div>
                   </q-card-section>
 
-                  <q-slide-transition>
-                    <div v-show="isOperationExpanded(slide.id)">
+                  <DkExpandTransition :show="isOperationExpanded(slide.id)">
+                    <div>
                       <q-separator />
 
                       <q-card-section class="operation-card__body">
@@ -1009,7 +1009,7 @@
                         </template>
                       </q-card-section>
                     </div>
-                  </q-slide-transition>
+                  </DkExpandTransition>
                 </q-card>
                 <Transition name="timeline-date">
                   <div
@@ -1043,6 +1043,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { api } from '@/boot/axios'
+import DkExpandTransition from '@/components/DkExpandTransition.vue'
 
 import {
   getLatestOperationStartedAt,

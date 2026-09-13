@@ -71,7 +71,7 @@
     >
       <router-view v-slot="{ Component }">
         <keep-alive :key="routeCacheScope">
-          <component :is="Component" :key="route.path" />
+          <component :is="Component" :key="routeCacheKey" />
         </keep-alive>
       </router-view>
     </q-page-container>
@@ -111,12 +111,14 @@ const authStore = useAuthStore()
 authStore.hydrate()
 
 const isAuthenticated = computed(() => authStore.hasValidSession())
+const hasStoredAccounts = computed(() => authStore.hasStoredSessions)
 const isLoginRoute = computed(() => route.path === '/login')
 const routeCacheScope = computed(() =>
-  isAuthenticated.value ? 'authenticated' : 'public'
+  authStore.activeUserId ? `account:${authStore.activeUserId}` : 'public'
 )
+const routeCacheKey = computed(() => `${route.path}:${routeCacheScope.value}`)
 const profileDestination = computed(() =>
-  isAuthenticated.value
+  isAuthenticated.value || hasStoredAccounts.value
     ? '/profile'
     : { path: '/login', query: { redirect: '/profile' } }
 )

@@ -21,6 +21,11 @@ function isStandalonePwa() {
   )
 }
 
+function routeScrollKey(route, activeUserId) {
+  const scope = activeUserId ? `account:${activeUserId}` : 'public'
+  return `${scope}:${route.fullPath}`
+}
+
 /*
  * If not building with SSR mode, you can
  * directly export the Router instantiation;
@@ -36,12 +41,16 @@ export default defineRouter(({ store }) => {
     : import.meta.env.QUASAR_VUE_ROUTER_MODE === 'history'
       ? createWebHistory
       : createWebHashHistory
+  const authStore = useAuthStore(store)
   const routeScrollPositions = new Map()
 
   const Router = createRouter({
     scrollBehavior: (to, _from, savedPosition) =>
       savedPosition ||
-      routeScrollPositions.get(to.fullPath) || { left: 0, top: 0 },
+      routeScrollPositions.get(routeScrollKey(to, authStore.activeUserId)) || {
+        left: 0,
+        top: 0
+      },
     routes,
 
     // Leave this as is and make changes in quasar.conf.js instead!
@@ -50,33 +59,39 @@ export default defineRouter(({ store }) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE)
   })
 
-  const authStore = useAuthStore(store)
-
   Router.beforeEach((to, from) => {
     if (!import.meta.env.QUASAR_SERVER && from.fullPath) {
-      routeScrollPositions.set(from.fullPath, {
+      routeScrollPositions.set(routeScrollKey(from, authStore.activeUserId), {
         left: window.scrollX,
         top: window.scrollY
       })
     }
 
     const isAuthenticated = authStore.hasValidSession()
+    const hasStoredAccounts = authStore.hasStoredSessions
 
     if (to.path === '/' && isStandalonePwa()) {
-      return isAuthenticated
-        ? { path: '/operation', replace: true }
-        : {
-            path: '/login',
-            query: { redirect: '/operation' },
-            replace: true
-          }
+      if (isAuthenticated) return { path: '/operation', replace: true }
+      if (hasStoredAccounts) return { path: '/profile', replace: true }
+
+      return {
+        path: '/login',
+        query: { redirect: '/operation' },
+        replace: true
+      }
     }
 
-    if (to.path === '/login' && isAuthenticated) {
-      return { path: '/operation', replace: true }
+    if (to.path === '/login') {
+      if (isAuthenticated) return { path: '/operation', replace: true }
+      if (hasStoredAccounts) return { path: '/profile', replace: true }
     }
 
+    if (to.path === '/profile' && hasStoredAccounts) return true
     if (PUBLIC_PATHS.has(to.path) || isAuthenticated) return true
+
+    if (hasStoredAccounts) {
+      return { path: '/profile', replace: true }
+    }
 
     return {
       path: '/login',

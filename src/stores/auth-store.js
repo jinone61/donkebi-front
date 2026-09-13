@@ -2,6 +2,18 @@ import { defineStore } from 'pinia'
 
 export const AUTH_STORAGE_KEY = 'donkebi.auth'
 
+function emptyAuthState() {
+  return {
+    activeUserId: null,
+    sessions: []
+  }
+}
+
+function normalizeUserId(value) {
+  if (value === null || value === undefined) return ''
+  return String(value).trim()
+}
+
 function decodeJwtPayload(accessToken) {
   if (typeof accessToken !== 'string') return null
 
@@ -39,6 +51,32 @@ function sanitizeAuthSession(session = {}) {
   }
 }
 
+function sanitizeAuthState(state, now = Date.now()) {
+  if (!state || !Array.isArray(state.sessions)) return emptyAuthState()
+
+  const sessions = []
+  const userIds = new Set()
+
+  for (const candidate of state.sessions) {
+    const session = sanitizeAuthSession(candidate)
+    const userId = normalizeUserId(session.userId)
+
+    if (!userId || userIds.has(userId) || !isAuthSessionValid(session, now)) {
+      continue
+    }
+
+    userIds.add(userId)
+    sessions.push(session)
+  }
+
+  const requestedActiveUserId = normalizeUserId(state.activeUserId)
+  const activeUserId = userIds.has(requestedActiveUserId)
+    ? requestedActiveUserId
+    : null
+
+  return { activeUserId, sessions }
+}
+
 export function getAuthExpiration(session) {
   const payload = decodeJwtPayload(session?.accessToken)
   const jwtExpiration = Number(payload?.exp) * 1_000
@@ -58,83 +96,215 @@ export function isAuthSessionValid(session, now = Date.now()) {
   return Number.isFinite(expiration) && expiration > now
 }
 
-export function writeAuthSession(session, storage = globalThis.localStorage) {
-  const sanitized = sanitizeAuthSession(session)
+export function writeAuthState(
+  state,
+  storage = globalThis.localStorage,
+  now = Date.now()
+) {
+  const sanitized = sanitizeAuthState(state, now)
+
+  if (!sanitized.sessions.length) {
+    storage?.removeItem(AUTH_STORAGE_KEY)
+    return sanitized
+  }
+
   storage?.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitized))
   return sanitized
 }
 
-export function readAuthSession(
+export function readAuthState(
   storage = globalThis.localStorage,
   now = Date.now()
 ) {
   try {
     const serialized = storage?.getItem(AUTH_STORAGE_KEY)
-    if (!serialized) return null
+    if (!serialized) return emptyAuthState()
 
-    const session = sanitizeAuthSession(JSON.parse(serialized))
-    if (isAuthSessionValid(session, now)) return session
+    const parsed = JSON.parse(serialized)
+    if (!Array.isArray(parsed?.sessions)) {
+      storage?.removeItem(AUTH_STORAGE_KEY)
+      return emptyAuthState()
+    }
+
+    return writeAuthState(parsed, storage, now)
   } catch {
-    // Invalid persisted sessions are cleared below.
+    storage?.removeItem(AUTH_STORAGE_KEY)
+    return emptyAuthState()
+  }
+}
+
+export function upsertAuthSession(state, session, now = Date.now()) {
+  const sanitizedSession = sanitizeAuthSession(session)
+  const userId = normalizeUserId(sanitizedSession.userId)
+
+  if (!userId || !isAuthSessionValid(sanitizedSession, now)) {
+    throw new Error('유효하지 않은 인증 응답입니다.')
   }
 
-  storage?.removeItem(AUTH_STORAGE_KEY)
-  return null
+  const current = sanitizeAuthState(state, now)
+  return {
+    activeUserId: userId,
+    sessions: [
+      sanitizedSession,
+      ...current.sessions.filter(
+        candidate => normalizeUserId(candidate.userId) !== userId
+      )
+    ]
+  }
+}
+
+export function activateAuthSession(state, userId, now = Date.now()) {
+  const accountId = normalizeUserId(userId)
+  const current = sanitizeAuthState(state, now)
+  const session = current.sessions.find(
+    candidate => normalizeUserId(candidate.userId) === accountId
+  )
+
+  if (!session) return current
+
+  return {
+    activeUserId: accountId,
+    sessions: [
+      session,
+      ...current.sessions.filter(candidate => candidate !== session)
+    ]
+  }
+}
+
+export function removeAuthSession(
+  state,
+  userId,
+  { activateFallback = false, expectedAccessToken, now = Date.now() } = {}
+) {
+  const accountId = normalizeUserId(userId)
+  const current = sanitizeAuthState(state, now)
+  const activeUserId = current.activeUserId
+  const currentSessions = current.sessions
+  const matchedSession = currentSessions.find(
+    session => normalizeUserId(session.userId) === accountId
+  )
+
+  if (
+    expectedAccessToken !== undefined &&
+    matchedSession?.accessToken !== expectedAccessToken
+  ) {
+    return { activeUserId, sessions: currentSessions }
+  }
+
+  const sessions = currentSessions.filter(
+    session => normalizeUserId(session.userId) !== accountId
+  )
+
+  if (activeUserId !== accountId) return { activeUserId, sessions }
+
+  return {
+    activeUserId:
+      activateFallback && sessions.length
+        ? normalizeUserId(sessions[0].userId)
+        : null,
+    sessions
+  }
 }
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    session: null,
+    activeUserId: null,
+    sessions: [],
     hydrated: false
   }),
 
   getters: {
-    user: state =>
-      state.session
+    session: state =>
+      state.sessions.find(
+        candidate => normalizeUserId(candidate.userId) === state.activeUserId
+      ) || null,
+    user() {
+      return this.session
         ? {
-            userId: state.session.userId,
-            email: state.session.email,
-            name: state.session.name
+            userId: this.session.userId,
+            email: this.session.email,
+            name: this.session.name
           }
-        : null,
-    authorizationHeader: state =>
-      state.session
-        ? `${state.session.tokenType} ${state.session.accessToken}`
+        : null
+    },
+    authorizationHeader() {
+      return this.session
+        ? `${this.session.tokenType} ${this.session.accessToken}`
         : ''
+    },
+    hasStoredSessions: state => state.sessions.length > 0,
+    accountSummaries: state =>
+      state.sessions.map(session => ({
+        userId: session.userId,
+        email: session.email,
+        name: session.name,
+        expiration: getAuthExpiration(session),
+        isActive: normalizeUserId(session.userId) === state.activeUserId
+      }))
   },
 
   actions: {
-    hydrate() {
-      if (!this.hydrated) {
-        this.session = readAuthSession()
-        this.hydrated = true
-      }
+    replaceAuthState(state) {
+      this.activeUserId = state.activeUserId
+      this.sessions = state.sessions
+      this.hydrated = true
       return this.session
     },
 
-    hasValidSession() {
-      this.hydrate()
-      if (isAuthSessionValid(this.session)) return true
+    persist(state) {
+      return this.replaceAuthState(writeAuthState(state))
+    },
 
-      this.clearSession()
-      return false
+    hydrate() {
+      if (!this.hydrated) this.replaceAuthState(readAuthState())
+      return this.session
+    },
+
+    hasValidSession(now = Date.now()) {
+      this.hydrate()
+      const next = sanitizeAuthState(this.$state, now)
+
+      if (
+        next.activeUserId !== this.activeUserId ||
+        next.sessions.length !== this.sessions.length
+      ) {
+        this.replaceAuthState(
+          writeAuthState(next, globalThis.localStorage, now)
+        )
+      }
+
+      return Boolean(this.session)
     },
 
     setSession(session) {
-      const sanitized = writeAuthSession(session)
-      if (!isAuthSessionValid(sanitized)) {
-        this.clearSession()
-        throw new Error('유효하지 않은 인증 응답입니다.')
-      }
-
-      this.session = sanitized
-      this.hydrated = true
+      this.hydrate()
+      return this.persist(upsertAuthSession(this.$state, session))
     },
 
-    clearSession() {
-      globalThis.localStorage?.removeItem(AUTH_STORAGE_KEY)
-      this.session = null
-      this.hydrated = true
+    switchSession(userId) {
+      this.hydrate()
+      const accountId = normalizeUserId(userId)
+      const next = activateAuthSession(this.$state, accountId)
+      this.persist(next)
+      return this.activeUserId === accountId
+    },
+
+    removeSession(userId, options) {
+      this.hydrate()
+      return this.persist(removeAuthSession(this.$state, userId, options))
+    },
+
+    invalidateSession(userId, expectedAccessToken) {
+      this.hydrate()
+      const session = this.sessions.find(
+        candidate =>
+          normalizeUserId(candidate.userId) === normalizeUserId(userId)
+      )
+
+      if (!session || session.accessToken !== expectedAccessToken) return false
+
+      this.removeSession(userId, { expectedAccessToken })
+      return true
     }
   }
 })
