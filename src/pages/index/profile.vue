@@ -176,7 +176,7 @@ const currentAccount = computed(() =>
 )
 const selectableAccounts = computed(() =>
   [...authStore.accountSummaries].sort(
-    (a, b) => Number(b.userId) - Number(a.userId)
+    (a, b) => Number(a.userId) - Number(b.userId)
   )
 )
 const accountDialogOpen = ref(
