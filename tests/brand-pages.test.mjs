@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
+import { inflateSync } from 'node:zlib'
 import test from 'node:test'
 
 const readSource = path =>
@@ -16,6 +17,93 @@ const readAgentSource = async () =>
   ).join('\n')
 const readAsset = path => readFile(new URL(`../${path}`, import.meta.url))
 const execFileAsync = promisify(execFile)
+
+function paethPredictor(left, above, upperLeft) {
+  const prediction = left + above - upperLeft
+  const leftDistance = Math.abs(prediction - left)
+  const aboveDistance = Math.abs(prediction - above)
+  const upperLeftDistance = Math.abs(prediction - upperLeft)
+
+  if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) {
+    return left
+  }
+  return aboveDistance <= upperLeftDistance ? above : upperLeft
+}
+
+function readPngCornerPixels(png) {
+  let offset = 8
+  let width
+  let height
+  const compressedChunks = []
+
+  while (offset < png.length) {
+    const length = png.readUInt32BE(offset)
+    const type = png.toString('ascii', offset + 4, offset + 8)
+    const data = png.subarray(offset + 8, offset + 8 + length)
+
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0)
+      height = data.readUInt32BE(4)
+      assert.equal(data[8], 8, 'PWA icons should use 8-bit channels')
+      assert.equal(data[9], 6, 'PWA icons should use RGBA pixels')
+      assert.equal(data[12], 0, 'PWA icons should not be interlaced')
+    } else if (type === 'IDAT') {
+      compressedChunks.push(data)
+    } else if (type === 'IEND') {
+      break
+    }
+
+    offset += length + 12
+  }
+
+  const bytesPerPixel = 4
+  const stride = width * bytesPerPixel
+  const raw = inflateSync(Buffer.concat(compressedChunks))
+  const rows = []
+  let rawOffset = 0
+
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[rawOffset]
+    const encoded = raw.subarray(rawOffset + 1, rawOffset + 1 + stride)
+    const row = Buffer.alloc(stride)
+    const previous = rows[y - 1]
+
+    for (let x = 0; x < stride; x += 1) {
+      const left = x >= bytesPerPixel ? row[x - bytesPerPixel] : 0
+      const above = previous?.[x] ?? 0
+      const upperLeft =
+        x >= bytesPerPixel ? (previous?.[x - bytesPerPixel] ?? 0) : 0
+      let predictor = 0
+
+      if (filter === 1) predictor = left
+      else if (filter === 2) predictor = above
+      else if (filter === 3) predictor = Math.floor((left + above) / 2)
+      else if (filter === 4) {
+        predictor = paethPredictor(left, above, upperLeft)
+      } else {
+        assert.equal(filter, 0, `unsupported PNG filter ${filter}`)
+      }
+
+      row[x] = (encoded[x] + predictor) & 0xff
+    }
+
+    rows.push(row)
+    rawOffset += stride + 1
+  }
+
+  const lastPixelOffset = (width - 1) * bytesPerPixel
+  return [
+    [...rows[0].subarray(0, bytesPerPixel)],
+    [...rows[0].subarray(lastPixelOffset, lastPixelOffset + bytesPerPixel)],
+    [...rows[height - 1].subarray(0, bytesPerPixel)],
+    [
+      ...rows[height - 1].subarray(
+        lastPixelOffset,
+        lastPixelOffset + bytesPerPixel
+      )
+    ]
+  ]
+}
 
 test('public navigation reflects the Donkebi agent story', async () => {
   const { navigationItems } = await import('../src/content/home.js')
@@ -50,25 +138,25 @@ test('package metadata describes the AI agent trading product', async () => {
 test('PWA icons use the Donkebi mark', async () => {
   const expectedHashes = {
     'apple-icon-120x120.png':
-      '9bc398128ace0e5f29bcbd370ceb004ae545871b20dbd83f235704b2924d242e',
+      '9746c09e16c562b6c1d1f67e8911b62b42f5cfa264aab8a4a2ef51da440a66ef',
     'apple-icon-152x152.png':
-      'b871eeccf1569025c439d574a8613f0df42c826a95f419c15c996e983c74959b',
+      '29b35ebdc1b281697e9fa602946ef87755fa78f4bd2ebf5b89b105517aae6a55',
     'apple-icon-167x167.png':
-      '699b0d7e5f87c65e18d7bb70417f3204306251c069a8fd33b54f4bdfb5eb2a45',
+      '60d5befe873ad412f50d165df37e2eff447dcfe3135802e9f792aac505f4bb84',
     'apple-icon-180x180.png':
-      'f72f69d76741a299e2df03e5503e390b870f41de4040e4ed439ecae0f683792b',
+      'fff4e3212a4829a23740a585075739a25e481ca0bbfe5b3a8071791b0c540699',
     'icon-128x128.png':
-      '083524d2e26738b74bb05790577ce66762883ed00a8a6c6888c131f3ece4505d',
+      '72cacb59d632c49818cc409fe5fceea75aba5de68bcea7d2f390f75e302e6439',
     'icon-192x192.png':
-      '59468d2dfaa85231f189cac175af768c881fae99d8f966e2f008d963c33eec90',
+      '9588d86878f45ee72d3eb0d6ada1a792cdf4107b8e9c7bcd1eb01947cf63061e',
     'icon-256x256.png':
-      '64e1130fb48d311e3a29a688a0733d5675a4c0296f788dd83fa144a0da8fccfd',
+      '8e405c1709d0f05ebb0b4877f48974168083787625cd86e645148e40760b8fee',
     'icon-384x384.png':
-      'eeb6bb37d3387145c646e321373c3f09079e7897e97f1ec8b2b158ac0e7a1950',
+      '8c4f45b9088d1f2d2fa20254113ac0f2d1c094cd86b7442f0421ef579d3a9c12',
     'icon-512x512.png':
-      '53428d5ca2b52e385eff548a8e1f471621074327b0fb36bf2b902c9783a3bd46',
+      '3a42a7047f4aa2eecc96b1a8b3e84fff9ed2ebf6843f85ae904f8620945e1dc7',
     'ms-icon-144x144.png':
-      'aec0889496cc3a07e918979cfe69136192634ad3a4daf1828fdc1d3434e11e85'
+      '845ecfd86d0e9cffef4896115d7f8031427622683a324d557d52c9e5262fdaff'
   }
 
   for (const [fileName, expectedHash] of Object.entries(expectedHashes)) {
@@ -79,6 +167,32 @@ test('PWA icons use the Donkebi mark', async () => {
       actualHash,
       expectedHash,
       `${fileName} should use Donkebi mark`
+    )
+  }
+})
+
+test('PWA icons keep rounded corners transparent', async () => {
+  const iconNames = [
+    'apple-icon-120x120.png',
+    'apple-icon-152x152.png',
+    'apple-icon-167x167.png',
+    'apple-icon-180x180.png',
+    'icon-128x128.png',
+    'icon-192x192.png',
+    'icon-256x256.png',
+    'icon-384x384.png',
+    'icon-512x512.png',
+    'ms-icon-144x144.png'
+  ]
+
+  for (const iconName of iconNames) {
+    const icon = await readAsset(`public/icons/${iconName}`)
+    const corners = readPngCornerPixels(icon)
+
+    assert.deepEqual(
+      corners.map(pixel => pixel[3]),
+      [0, 0, 0, 0],
+      `${iconName} should have transparent corners`
     )
   }
 })
@@ -210,7 +324,7 @@ test('profile page manages stored accounts and the active session', async () => 
   )
   assert.match(
     source,
-    /const selectableAccounts = computed\(\(\) =>[\s\S]*?authStore\.accountSummaries[\s\S]*?sort\(\s*\(a, b\) => Number\(b\.userId\) - Number\(a\.userId\)/
+    /const selectableAccounts = computed\(\(\) =>[\s\S]*?authStore\.accountSummaries[\s\S]*?sort\(\s*\(a, b\) => Number\(a\.userId\) - Number\(b\.userId\)/
   )
   assert.doesNotMatch(source, /authStore\.logoutActiveSession\(\)/)
   assert.match(
