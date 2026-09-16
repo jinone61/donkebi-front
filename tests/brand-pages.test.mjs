@@ -940,6 +940,52 @@ test('agent workspace owns its strategy result API and normalization', async () 
   assert.match(source, /day\.cash\?\.transactions/)
 })
 
+test('performance current holdings mirrors the operation active tiers view', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+
+  assert.doesNotMatch(source, /OPERATION_STATUS_URL/)
+  assert.match(
+    source,
+    /const currentTiers = computed\(\(\) => finalPortfolio\.value\.tiers \|\| \[\]\)/
+  )
+  assert.match(
+    source,
+    /id="current-holdings-title"[\s\S]*?CURRENT HOLDINGS[\s\S]*?currentTiers\.length[\s\S]*?TIERS[\s\S]*?class="operation-active-tiers__summary"[\s\S]*?class="operation-active-tiers__table"/
+  )
+  assert.match(
+    source,
+    /<dt>총 보유<\/dt>[\s\S]*?<dt>평균 매수가<\/dt>[\s\S]*?<dt>손익<\/dt>[\s\S]*?<dt>수익률<\/dt>[\s\S]*?<dt>종가<\/dt>/
+  )
+  assert.match(
+    source,
+    /Tier[\s\S]*?보유[\s\S]*?매수일[\s\S]*?매수가[\s\S]*?손익[\s\S]*?수익률[\s\S]*?<th class="text-right">보유<\/th>/
+  )
+  assert.match(
+    source,
+    /tier\.buySessionDate[\s\S]*?currentTierBuyPrice\(tier\)[\s\S]*?tier\.unrealizedProfit[\s\S]*?tier\.unrealizedReturnPct[\s\S]*?tier\.heldSessionCount[\s\S]*?tier\.maxHoldDays/
+  )
+  assert.match(
+    source,
+    /function currentTierBuyPrice\(tier\) \{[\s\S]*?tier\?\.averageBuyPrice \?\? tier\?\.buyPrice \?\? null/
+  )
+  assert.match(
+    source,
+    /const currentHoldingsClosePrice = computed\([\s\S]*?latestDay\.value\?\.closePrice \?\? null/
+  )
+  assert.match(
+    source,
+    /const currentTiersSummary = computed[\s\S]*?quantity \* buyPrice[\s\S]*?result\.profitLoss \+= profitLoss[\s\S]*?totals\.costBasis \/ totals\.pricedQuantity[\s\S]*?totals\.profitLoss \/ totals\.costBasis/
+  )
+  assert.match(
+    source,
+    /\.operation-active-tiers__table \{[\s\S]*?:deep\(\.q-table th\) \{[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?font-weight: 400;/
+  )
+  assert.match(
+    source,
+    /\.operation-active-tiers__summary \{[\s\S]*?dt \{[\s\S]*?font-size: var\(--dk-text-caption\);[\s\S]*?dd \{[\s\S]*?font-size: var\(--dk-text-body-sm\);/
+  )
+})
+
 test('agent daily history distinguishes submitted orders and executions', async () => {
   const source = await readSource('src/pages/index/performance.vue')
   const history = source.slice(
@@ -1699,20 +1745,19 @@ test('agent page covers current status charts and operation history', async () =
   )
   assert.doesNotMatch(source, /현재 Tier/)
   assert.match(source, /id="current-holdings-title"[\s\S]*?CURRENT HOLDINGS/)
-  assert.doesNotMatch(source, /current-holdings__summary/)
   assert.doesNotMatch(source, /const currentHoldings = computed/)
   assert.match(source, /v-for="tier in currentTiers"/)
   assert.match(source, />매수가<\/th>/)
   assert.match(source, /tier\.unrealizedProfit/)
-  assert.match(source, /class="current-tiers__table"/)
+  assert.match(source, /class="operation-active-tiers__table"/)
   assert.match(
     source,
-    /Tier[\s\S]*?보유[\s\S]*?매수가[\s\S]*?수익률[\s\S]*?손익/
+    /Tier[\s\S]*?보유[\s\S]*?매수일[\s\S]*?매수가[\s\S]*?손익[\s\S]*?수익률/
   )
   assert.doesNotMatch(source, /current-tier-mode/)
   assert.match(
     source,
-    /\.current-tiers__table \{[\s\S]*?table-layout: fixed[\s\S]*?font-variant-numeric: tabular-nums/
+    /\.operation-active-tiers__table \{[\s\S]*?table-layout: fixed[\s\S]*?font-variant-numeric: tabular-nums/
   )
   assert.match(
     source,
@@ -1782,7 +1827,7 @@ test('agent summary cards use the compact readable backtest treatment', async ()
   const source = await readSource('src/pages/index/performance.vue')
   const summaryStyles = source.slice(
     source.indexOf('.summary-grid {'),
-    source.indexOf('.current-tiers {')
+    source.indexOf('.operation-active-tiers {')
   )
 
   assert.match(summaryStyles, /gap: 10px;/)
