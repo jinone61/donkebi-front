@@ -105,58 +105,103 @@
               </div>
 
               <section
-                class="current-tiers"
+                class="operation-active-tiers"
                 aria-labelledby="current-holdings-title"
               >
-                <div class="current-tiers__heading">
+                <div class="operation-active-tiers__heading">
                   <p id="current-holdings-title" class="section-index">
                     CURRENT HOLDINGS
                   </p>
                   <span>{{ currentTiers.length }} TIERS</span>
                 </div>
 
-                <template v-if="currentTiers.length">
-                  <q-markup-table
-                    flat
-                    dense
-                    separator="horizontal"
-                    class="current-tiers__table"
-                  >
-                    <thead>
-                      <tr>
-                        <th class="text-center">Tier</th>
-                        <th class="text-center">보유</th>
-                        <th class="text-right">매수가</th>
-                        <th class="text-right">수익률</th>
-                        <th class="text-right">손익</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="tier in currentTiers" :key="tier.tier">
-                        <td class="current-tier-name">{{ tier.tier }}</td>
-                        <td class="text-center">
-                          {{ formatInteger(tier.quantity) }}주
-                        </td>
-                        <td class="text-right">
-                          {{ formatPrice(tier.averageBuyPrice) }}
-                        </td>
-                        <td
-                          class="text-right"
-                          :class="profitClass(tier.unrealizedReturnPct)"
-                        >
-                          {{ formatPct(tier.unrealizedReturnPct) }}
-                        </td>
-                        <td
-                          class="text-right"
-                          :class="profitClass(tier.unrealizedProfit)"
-                        >
-                          {{ formatMoney(tier.unrealizedProfit) }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </q-markup-table>
-                </template>
-                <p v-else class="detail-empty"> 현재 보유 내역이 없습니다. </p>
+                <dl
+                  v-if="currentTiers.length"
+                  class="operation-active-tiers__summary"
+                  aria-label="Current Holdings 전체 요약"
+                >
+                  <div>
+                    <dt>총 보유</dt>
+                    <dd>{{ formatInteger(currentTiersSummary.quantity) }}주</dd>
+                  </div>
+                  <div>
+                    <dt>평균 매수가</dt>
+                    <dd>{{
+                      formatPrice(currentTiersSummary.averageBuyPrice)
+                    }}</dd>
+                  </div>
+                  <div>
+                    <dt>손익</dt>
+                    <dd :class="profitClass(currentTiersSummary.profitLoss)">
+                      {{ formatMoney(currentTiersSummary.profitLoss) }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>수익률</dt>
+                    <dd :class="profitClass(currentTiersSummary.returnPct)">
+                      {{ formatPct(currentTiersSummary.returnPct) }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>종가</dt>
+                    <dd>{{ formatClosePrice(currentHoldingsClosePrice) }}</dd>
+                  </div>
+                </dl>
+
+                <q-markup-table
+                  v-if="currentTiers.length"
+                  flat
+                  dense
+                  separator="horizontal"
+                  class="operation-active-tiers__table"
+                >
+                  <thead>
+                    <tr>
+                      <th class="text-center">Tier</th>
+                      <th class="text-center">보유</th>
+                      <th class="text-center">매수일</th>
+                      <th class="text-right">매수가</th>
+                      <th class="text-right">손익</th>
+                      <th class="text-right">수익률</th>
+                      <th class="text-right">보유</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="tier in currentTiers" :key="tier.tier">
+                      <td class="operation-active-tier-name">
+                        {{ tier.tier }}
+                      </td>
+                      <td class="text-center">
+                        {{ formatInteger(tier.quantity) }}주
+                      </td>
+                      <td class="text-center">
+                        {{ tier.buySessionDate || '-' }}
+                      </td>
+                      <td class="text-right">
+                        {{ formatPrice(currentTierBuyPrice(tier)) }}
+                      </td>
+                      <td
+                        class="text-right"
+                        :class="profitClass(tier.unrealizedProfit)"
+                      >
+                        {{ formatMoney(tier.unrealizedProfit) }}
+                      </td>
+                      <td
+                        class="text-right"
+                        :class="profitClass(tier.unrealizedReturnPct)"
+                      >
+                        {{ formatPct(tier.unrealizedReturnPct) }}
+                      </td>
+                      <td class="text-right">
+                        {{ formatInteger(tier.heldSessionCount) }} /
+                        {{ formatInteger(tier.maxHoldDays) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </q-markup-table>
+                <p v-else class="operation-active-tiers__empty">
+                  현재 운용 중인 Tier가 없습니다.
+                </p>
               </section>
             </section>
 
@@ -992,7 +1037,57 @@ const finalPortfolio = computed(() => agentResult.value?.finalPortfolio || {})
 
 const currentTiers = computed(() => finalPortfolio.value.tiers || [])
 
+function currentTierBuyPrice(tier) {
+  return tier?.averageBuyPrice ?? tier?.buyPrice ?? null
+}
+
+const currentTiersSummary = computed(() => {
+  const totals = currentTiers.value.reduce(
+    (result, tier) => {
+      const quantity = finiteNumber(tier.quantity)
+      const buyPrice = finiteNumber(currentTierBuyPrice(tier))
+      const profitLoss = finiteNumber(tier.unrealizedProfit)
+
+      if (quantity !== null) result.quantity += quantity
+      if (quantity !== null && buyPrice !== null) {
+        result.costBasis += quantity * buyPrice
+        result.pricedQuantity += quantity
+      }
+      if (profitLoss !== null) {
+        result.profitLoss += profitLoss
+        result.hasProfitLoss = true
+      }
+
+      return result
+    },
+    {
+      quantity: 0,
+      pricedQuantity: 0,
+      costBasis: 0,
+      profitLoss: 0,
+      hasProfitLoss: false
+    }
+  )
+
+  return {
+    quantity: totals.quantity,
+    averageBuyPrice:
+      totals.pricedQuantity > 0
+        ? totals.costBasis / totals.pricedQuantity
+        : null,
+    profitLoss: totals.hasProfitLoss ? totals.profitLoss : null,
+    returnPct:
+      totals.costBasis > 0 && totals.hasProfitLoss
+        ? (totals.profitLoss / totals.costBasis) * 100
+        : null
+  }
+})
+
 const latestDay = computed(() => dailyRows.value.at(-1) || null)
+
+const currentHoldingsClosePrice = computed(
+  () => latestDay.value?.closePrice ?? null
+)
 
 const agentMetrics = computed(() => {
   const totalInvestment = finiteNumber(agentResult.value?.totalInvestment)
@@ -1984,91 +2079,139 @@ onMounted(fetchAgentResult)
   }
 }
 
-.current-tiers {
-  margin-top: 10px;
+.operation-active-tiers {
+  min-width: 0;
+  overflow: hidden;
+  margin: 10px 0;
   border: 1px solid var(--dk-line);
   border-radius: 2px;
   background: var(--dk-surface);
 }
 
-.current-tiers__heading {
+.operation-active-tiers__heading {
   display: flex;
+  min-width: 0;
+  padding: 10px 14px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 11px 14px;
+  gap: 12px;
   border-bottom: 1px solid var(--dk-line);
 
   .section-index {
-    margin: 0;
+    flex: 0 0 auto;
   }
 
   > span {
+    min-width: 0;
     color: var(--dk-muted);
     font-size: var(--dk-text-caption);
-    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    text-align: right;
+    white-space: nowrap;
   }
 }
 
-.current-tiers__table {
+.operation-active-tiers__table {
   border-radius: 0;
   box-shadow: none;
 
-  table {
+  :deep(table) {
     width: 100%;
     table-layout: fixed;
   }
 
-  th,
-  td {
+  :deep(th),
+  :deep(td) {
     height: 38px;
-    padding: 6px 10px;
+    padding: 6px 8px;
     font-size: var(--dk-text-body-sm);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
 
-  th {
+  :deep(.q-table th) {
     color: var(--dk-muted);
     font-size: var(--dk-text-caption);
-    font-weight: 500;
+    font-weight: 400;
   }
 
-  th:nth-child(1),
-  td:nth-child(1) {
+  :deep(th:nth-child(1)),
+  :deep(td:nth-child(1)) {
+    width: 10%;
+  }
+
+  :deep(th:nth-child(2)),
+  :deep(td:nth-child(2)) {
+    width: 10%;
+  }
+
+  :deep(th:nth-child(3)),
+  :deep(td:nth-child(3)) {
+    width: 22%;
+  }
+
+  :deep(th:nth-child(4)),
+  :deep(td:nth-child(4)) {
     width: 14%;
   }
 
-  th:nth-child(2),
-  td:nth-child(2) {
+  :deep(th:nth-child(5)),
+  :deep(td:nth-child(5)) {
+    width: 15%;
+  }
+
+  :deep(th:nth-child(6)),
+  :deep(td:nth-child(6)) {
+    width: 13%;
+  }
+
+  :deep(th:nth-child(7)),
+  :deep(td:nth-child(7)) {
     width: 16%;
-  }
-
-  th:nth-child(3),
-  td:nth-child(3) {
-    width: 26%;
-  }
-
-  th:nth-child(4),
-  td:nth-child(4) {
-    width: 20%;
-  }
-
-  th:nth-child(5),
-  td:nth-child(5) {
-    width: 24%;
   }
 }
 
-.current-tier-name {
+.operation-active-tiers__summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid var(--dk-line);
+  background: var(--dk-surface);
+
+  > div {
+    min-width: 0;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  dt {
+    color: var(--dk-muted);
+    font-size: var(--dk-text-caption);
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 3px 0 0;
+    font-size: var(--dk-text-body-sm);
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.operation-active-tier-name {
   color: var(--dk-ink);
-  font-weight: 700;
+  font-weight: 400;
   text-align: center;
 }
 
-.current-tiers > .detail-empty {
+.operation-active-tiers__empty {
   margin: 0;
-  padding: 18px 14px;
+  padding: 14px;
+  color: var(--dk-muted);
+  font-size: var(--dk-text-body-sm);
+  text-align: center;
 }
 
 .operation-list {
@@ -2937,16 +3080,34 @@ onMounted(fetchAgentResult)
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .current-tiers__table {
-    th,
-    td {
+  .operation-active-tiers__heading {
+    padding: 9px 10px;
+  }
+
+  .operation-active-tiers__table {
+    :deep(th),
+    :deep(td) {
       height: 34px;
-      padding: 5px 4px;
-      font-size: clamp(0.62rem, 2.5vw, var(--dk-text-caption));
+      padding: 5px 3px;
+      font-size: var(--dk-text-label);
     }
 
-    th {
-      font-size: clamp(0.58rem, 2.3vw, var(--dk-text-caption));
+    :deep(th) {
+      font-size: var(--dk-text-caption);
+    }
+  }
+
+  .operation-active-tiers__summary {
+    > div {
+      padding: 9px 3px;
+    }
+
+    dt {
+      font-size: var(--dk-text-caption);
+    }
+
+    dd {
+      font-size: var(--dk-text-body-sm);
     }
   }
 
