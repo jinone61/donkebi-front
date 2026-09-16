@@ -1086,7 +1086,7 @@ const currentTiersSummary = computed(() => {
 const latestDay = computed(() => dailyRows.value.at(-1) || null)
 
 const currentHoldingsClosePrice = computed(
-  () => latestDay.value?.closePrice ?? null
+  () => finalPortfolio.value.closePrice ?? null
 )
 
 const agentMetrics = computed(() => {
