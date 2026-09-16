@@ -962,7 +962,7 @@ test('performance current holdings mirrors the operation active tiers view', asy
   )
   assert.match(
     source,
-    /tier\.buySessionDate[\s\S]*?currentTierBuyPrice\(tier\)[\s\S]*?tier\.unrealizedProfit[\s\S]*?tier\.unrealizedReturnPct[\s\S]*?tier\.heldSessionCount[\s\S]*?tier\.maxHoldDays/
+    /tier\.buySessionDate[\s\S]*?currentTierBuyPrice\(tier\)[\s\S]*?tier\.unrealizedProfit[\s\S]*?tier\.unrealizedReturnPct[\s\S]*?tier\.heldSessionCount[\s\S]*?v-if="tier\.maxHoldDays != null"[\s\S]*?tier\.maxHoldDays/
   )
   assert.match(
     source,
@@ -970,7 +970,7 @@ test('performance current holdings mirrors the operation active tiers view', asy
   )
   assert.match(
     source,
-    /const currentHoldingsClosePrice = computed\([\s\S]*?latestDay\.value\?\.closePrice \?\? null/
+    /const currentHoldingsClosePrice = computed\([\s\S]*?finalPortfolio\.value\.closePrice \?\? null/
   )
   assert.match(
     source,
