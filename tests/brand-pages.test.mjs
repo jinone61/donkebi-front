@@ -208,7 +208,7 @@ test('PWA uses Donkebi colors in standalone portrait mode', async () => {
   assert.equal(manifest.start_url, '/#/operation')
 })
 
-test('installed mobile PWA provides exact navigation for every workspace', async () => {
+test('installed mobile PWA provides account-aware workspace navigation', async () => {
   const [source, quasarConfig] = await Promise.all([
     readSource('src/pages/index.vue'),
     readSource('quasar.config.js')
@@ -216,15 +216,129 @@ test('installed mobile PWA provides exact navigation for every workspace', async
 
   assert.match(
     source,
-    /const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION',[\s\S]*?to: '\/operation',[\s\S]*?icon: 'sym_o_event_list'[\s\S]*?label: 'PERFORMANCE', to: '\/performance', icon: 'speed'[\s\S]*?label: 'BACKTEST', to: '\/backtest', icon: 'query_stats'[\s\S]*?label: 'PROFILE',[\s\S]*?to: profileDestination\.value,[\s\S]*?icon: 'person_outline'[\s\S]*?\]\)/
+    /const canAccessCryptoBacktest = computed\([\s\S]*?authStore\.activeUserId === '1'/
+  )
+  assert.match(
+    source,
+    /const cryptoNavigationItem = \{[\s\S]*?label: 'CRYPTO',[\s\S]*?to: '\/crypto-backtest',[\s\S]*?icon: 'currency_bitcoin'[\s\S]*?const pwaNavigationItems = computed\(\(\) => \[[\s\S]*?label: 'OPERATION',[\s\S]*?label: 'PERFORMANCE',[\s\S]*?label: 'BACKTEST',[\s\S]*?canAccessCryptoBacktest\.value \? \[cryptoNavigationItem\] : \[\][\s\S]*?label: 'PROFILE'/
   )
   assert.match(quasarConfig, /extras:[\s\S]*?'material-symbols-outlined'/)
   assert.match(quasarConfig, /extras:[\s\S]*?'material-icons'/)
   assert.doesNotMatch(source, /label: 'HOME', to: '\/', icon: 'home'/)
   assert.match(
     source,
-    /<nav[\s\S]*?v-if="!isLoginRoute"[\s\S]*?class="pwa-bottom-navigation"[\s\S]*?v-for="item in pwaNavigationItems"[\s\S]*?:to="item\.to"[\s\S]*?exact-active-class="pwa-bottom-navigation__link--active"[\s\S]*?<q-icon[^>]*:name="item\.icon"[\s\S]*?\{\{ item\.label \}\}/
+    /<nav[\s\S]*?v-if="!isLoginRoute"[\s\S]*?class="pwa-bottom-navigation"[\s\S]*?'pwa-bottom-navigation--crypto': canAccessCryptoBacktest[\s\S]*?v-for="item in pwaNavigationItems"[\s\S]*?:to="item\.to"[\s\S]*?exact-active-class="pwa-bottom-navigation__link--active"[\s\S]*?<q-icon[^>]*:name="item\.icon"[\s\S]*?\{\{ item\.label \}\}/
   )
+})
+
+test('crypto backtest posts the Binance contract without integer-truncating quantities', async () => {
+  const [route, source] = await Promise.all([
+    readSource('src/pages/index/crypto-backtest.vue'),
+    readSource('src/components/backtest/CryptoBacktestPage.vue')
+  ])
+
+  assert.match(route, /<CryptoBacktestPage\s*\/>/)
+  assert.match(
+    route,
+    /import CryptoBacktestPage from '@\/components\/backtest\/CryptoBacktestPage\.vue'/
+  )
+  assert.match(
+    source,
+    /const BINANCE_BACKTEST_URL = '\/api\/binance\/backtest'/
+  )
+  assert.match(
+    source,
+    /api\.post\([\s\S]*?BINANCE_BACKTEST_URL,[\s\S]*?buildPayload\(\)/
+  )
+  assert.match(source, /symbol: form\.symbol\.trim\(\)\.toUpperCase\(\)/)
+  assert.match(
+    source,
+    /const SYMBOL_OPTIONS = \[[\s\S]*?'ZECUSDT'[\s\S]*?'ETHUSDT'[\s\S]*?'SOLUSDT'[\s\S]*?'XRPUSDT'[\s\S]*?'BNBUSDT'[\s\S]*?'SRPUSDT'[\s\S]*?'UNIUSDT'[\s\S]*?\]/
+  )
+  assert.match(source, /symbol: 'ZECUSDT'/)
+  assert.match(
+    source,
+    /<q-select[\s\S]*?v-model="form\.symbol"[\s\S]*?:options="SYMBOL_OPTIONS"[\s\S]*?label="Symbol"[\s\S]*?use-input[\s\S]*?new-value-mode="add-unique"/
+  )
+  assert.match(
+    source,
+    /const defaultBacktestEndAt = new Date\(\)[\s\S]*?startAt: subtractCalendarMonths\(currentUtcDate\(defaultBacktestEndAt\), 1\)[\s\S]*?endAt: currentUtcDate\(defaultBacktestEndAt\)/
+  )
+  assert.match(source, /interval: '4h'/)
+  assert.match(
+    source,
+    /v-model\.number="form\.initialQuoteBalance"[\s\S]*?v-model="form\.interval"[\s\S]*?v-model\.number="form\.commissionRatePct"/
+  )
+  assert.match(
+    source,
+    /function currentUtcDate\(now = new Date\(\)\) \{[\s\S]*?now\.toISOString\(\)\.slice\(0, 10\)/
+  )
+  assert.match(
+    source,
+    /v-model="form\.startAt"[\s\S]*?label="시작일"[\s\S]*?startDateDialog = true[\s\S]*?v-model="form\.endAt"[\s\S]*?label="종료일"[\s\S]*?endDateDialog = true/
+  )
+  assert.match(
+    source,
+    /<q-dialog v-model="startDateDialog">[\s\S]*?v-model="form\.startAt"[\s\S]*?mask="YYYY-MM-DD"[\s\S]*?<q-dialog v-model="endDateDialog">[\s\S]*?v-model="form\.endAt"[\s\S]*?mask="YYYY-MM-DD"/
+  )
+  assert.doesNotMatch(source, /type="datetime-local"/)
+  assert.match(source, /startAt: toUtcTimestamp\(form\.startAt\)/)
+  assert.match(source, /endAt: toUtcTimestamp\(form\.endAt, true\)/)
+  assert.match(
+    source,
+    /return `\$\{value\}T\$\{endOfDay \? '23:59:59' : '00:00:00'\}Z`/
+  )
+  assert.match(
+    source,
+    /initialQuoteBalance: Number\(form\.initialQuoteBalance\)/
+  )
+  assert.match(source, /mode: form\.wrsiMode/)
+  assert.match(source, /if \(form\.wrsiMode === 'BAR_COUNT'\)[\s\S]*?barCount/)
+  assert.match(source, /commission_rate_pct:/)
+  assert.match(source, /tier_buy_ratios_pct:/)
+  assert.match(source, /dailyResults: \(data\.barResults \|\| \[\]\)\.map/)
+  assert.match(source, /const totalAsset = day\.portfolio\?\.totalAsset/)
+  assert.match(source, /const closingCash = day\.cash\?\.closingCash/)
+  assert.match(source, /executions/)
+  assert.doesNotMatch(source, /parseInt\s*\(/)
+  assert.match(
+    source,
+    /const response = error\.response\?\.data[\s\S]*?response\?\.guide/
+  )
+  assert.match(
+    source,
+    /<q-range[\s\S]*?v-model="draftChartRange"[\s\S]*?@pan="handleChartRangePan"[\s\S]*?@change="commitChartRange"/
+  )
+  assert.match(
+    source,
+    /label="시작 -1봉"[\s\S]*?label="시작 \+1봉"[\s\S]*?label="종료 -1봉"[\s\S]*?label="종료 \+1봉"/
+  )
+  assert.match(
+    source,
+    /ref="priceChartComponent"[\s\S]*?ref="performanceChartComponent"[\s\S]*?function syncChartTooltips/
+  )
+  assert.match(
+    source,
+    /function formatPriceChartDateLabel\(value\) \{[\s\S]*?slice\(0, 10\)/
+  )
+  assert.match(
+    source,
+    /const priceChartOptions = computed[\s\S]*?title\(items\) \{[\s\S]*?formatSessionLabel\([\s\S]*?getDailyExecutionTooltipDate\(items\[0\]\)[\s\S]*?callback\(value\) \{[\s\S]*?formatPriceChartDateLabel\(this\.getLabelForValue\(value\)\)/
+  )
+  assert.match(
+    source,
+    /function buildDailyExecutionTooltipLines[\s\S]*?order\.tradeSide === execution\.tradeSide[\s\S]*?order\.tier === execution\.tier[\s\S]*?execution\.tradeSide === 'SELL' \? matchingOrder\?\.orderType : null[\s\S]*?executionLabel/
+  )
+  assert.match(
+    source,
+    /label: '보유 수량',[\s\S]*?hidden: true,[\s\S]*?data: rows\.map\(day => toNumber\(day\.totalQuantity\)\)/
+  )
+  assert.match(source, /class="daily-history"[\s\S]*?group="daily-results"/)
+  assert.match(source, /class="daily-mobile-summary"/)
+
+  const axiosBoot = await readSource('src/boot/axios.js')
+  assert.doesNotMatch(axiosBoot, /QCLI_BINANCE_API_BASE_URL|localhost|:8080/)
+  assert.match(axiosBoot, /export \{ api, axios \}/)
 })
 
 test('route page caches are isolated by the active account', async () => {
@@ -365,7 +479,7 @@ test('bottom navigation only replaces the menu in installed mobile PWA', async (
   assert.match(source, /\.pwa-bottom-navigation \{\s*display: none;/)
   assert.match(
     source,
-    /@media \(max-width: 767px\) and \(display-mode: standalone\) \{[\s\S]*?\.site-header__inner \{[\s\S]*?min-height: 56px;[\s\S]*?\.site-page-container \{[\s\S]*?padding-bottom: calc\(52px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\.menu-button,[\s\S]*?\.mobile-menu-layer \{\s*display: none;[\s\S]*?\.pwa-bottom-navigation \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?padding-bottom: env\(safe-area-inset-bottom\);[\s\S]*?&__link \{[\s\S]*?min-height: 52px;/
+    /@media \(max-width: 767px\) and \(display-mode: standalone\) \{[\s\S]*?\.site-header__inner \{[\s\S]*?min-height: 56px;[\s\S]*?\.site-page-container \{[\s\S]*?padding-bottom: calc\(52px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\.menu-button,[\s\S]*?\.mobile-menu-layer \{\s*display: none;[\s\S]*?\.pwa-bottom-navigation \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?&--crypto \{\s*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\);[\s\S]*?padding-bottom: env\(safe-area-inset-bottom\);[\s\S]*?&__link \{[\s\S]*?min-height: 52px;/
   )
 })
 

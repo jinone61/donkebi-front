@@ -79,6 +79,9 @@
     <nav
       v-if="!isLoginRoute"
       class="pwa-bottom-navigation"
+      :class="{
+        'pwa-bottom-navigation--crypto': canAccessCryptoBacktest
+      }"
       aria-label="앱 메뉴"
     >
       <router-link
@@ -113,6 +116,7 @@ authStore.hydrate()
 const isAuthenticated = computed(() => authStore.hasValidSession())
 const hasStoredAccounts = computed(() => authStore.hasStoredSessions)
 const isLoginRoute = computed(() => route.path === '/login')
+const canAccessCryptoBacktest = computed(() => authStore.activeUserId === '1')
 const routeCacheScope = computed(() =>
   authStore.activeUserId ? `account:${authStore.activeUserId}` : 'public'
 )
@@ -122,8 +126,14 @@ const profileDestination = computed(() =>
     ? '/profile'
     : { path: '/login', query: { redirect: '/profile' } }
 )
+const cryptoNavigationItem = {
+  label: 'CRYPTO',
+  to: '/crypto-backtest',
+  icon: 'currency_bitcoin'
+}
 const navigationItems = computed(() => [
   ...primaryNavigationItems,
+  ...(canAccessCryptoBacktest.value ? [cryptoNavigationItem] : []),
   { label: 'PROFILE', to: profileDestination.value }
 ])
 const pwaNavigationItems = computed(() => [
@@ -134,6 +144,7 @@ const pwaNavigationItems = computed(() => [
   },
   { label: 'PERFORMANCE', to: '/performance', icon: 'speed' },
   { label: 'BACKTEST', to: '/backtest', icon: 'query_stats' },
+  ...(canAccessCryptoBacktest.value ? [cryptoNavigationItem] : []),
   {
     label: 'PROFILE',
     to: profileDestination.value,
@@ -412,6 +423,11 @@ async function scrollTo(selector) {
     z-index: 2000;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    &--crypto {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
     padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid var(--dk-line);
     background: var(--dk-paper);
