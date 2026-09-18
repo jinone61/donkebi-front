@@ -319,7 +319,15 @@ test('crypto backtest posts the Binance contract without integer-truncating quan
   )
   assert.match(
     source,
-    /function formatPriceChartDateLabel\(value\) \{[\s\S]*?slice\(0, 10\)/
+    /import \{ formatSeoulDate, formatSeoulDateTime \} from '@\/utils\/date-time'/
+  )
+  assert.match(
+    source,
+    /function formatSessionLabel\(value\) \{[\s\S]*?return formatSeoulDateTime\(value\)/
+  )
+  assert.match(
+    source,
+    /function formatPriceChartDateLabel\(value\) \{[\s\S]*?return formatSeoulDate\(value\)/
   )
   assert.match(
     source,
@@ -333,11 +341,12 @@ test('crypto backtest posts the Binance contract without integer-truncating quan
     source,
     /label: '보유 수량',[\s\S]*?hidden: true,[\s\S]*?data: rows\.map\(day => toNumber\(day\.totalQuantity\)\)/
   )
+  assert.match(source, /caption: formatSessionLabel\(ath\.sessionDate\)/)
   assert.match(source, /class="daily-history"[\s\S]*?group="daily-results"/)
   assert.match(source, /class="daily-mobile-summary"/)
 
   const axiosBoot = await readSource('src/boot/axios.js')
-  assert.doesNotMatch(axiosBoot, /QCLI_BINANCE_API_BASE_URL|localhost|:8080/)
+  assert.doesNotMatch(axiosBoot, /QCLI_BINANCE_API_BASE_URL|:8080/)
   assert.match(axiosBoot, /export \{ api, axios \}/)
 })
 
