@@ -193,8 +193,10 @@
                         {{ formatPct(tier.unrealizedReturnPct) }}
                       </td>
                       <td class="text-right">
-                        {{ formatInteger(tier.heldSessionCount) }} /
-                        {{ formatInteger(tier.maxHoldDays) }}
+                        {{ formatInteger(tier.heldSessionCount) }}
+                        <template v-if="tier.maxHoldDays != null">
+                          / {{ formatInteger(tier.maxHoldDays) }}
+                        </template>
                       </td>
                     </tr>
                   </tbody>
