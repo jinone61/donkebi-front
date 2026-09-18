@@ -1333,6 +1333,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { api } from '@/boot/axios'
+import { formatSeoulDate, formatSeoulDateTime } from '@/utils/date-time'
 import { useQuasar } from 'quasar'
 import {
   CategoryScale,
@@ -1449,24 +1450,21 @@ function calculateCashRatioPct(closingCash, totalAsset) {
 }
 
 function formatMonthTickLabel(currentLabel, previousLabel) {
-  const current = String(currentLabel || '')
-  if (!current) return undefined
+  const currentDate = formatSeoulDate(currentLabel)
+  if (currentDate === '-') return undefined
 
-  const previous = String(previousLabel || '')
-  const currentDate = current.slice(0, 10)
-  const previousDate = previous.slice(0, 10)
+  const previousDate = formatSeoulDate(previousLabel)
   if (currentDate !== previousDate) {
-    return current.slice(0, 7) !== previous.slice(0, 7)
-      ? current.slice(0, 7)
-      : current.slice(5, 10)
+    return currentDate.slice(0, 7) !== previousDate.slice(0, 7)
+      ? currentDate.slice(0, 7)
+      : currentDate.slice(5, 10)
   }
 
-  return current.slice(11, 16) || currentDate
+  return formatSeoulDateTime(currentLabel).slice(11, 16) || currentDate
 }
 
 function formatPriceChartDateLabel(value) {
-  const date = String(value || '').slice(0, 10)
-  return date || undefined
+  return formatSeoulDate(value)
 }
 
 function subtractCalendarMonths(dateString, months) {
@@ -1969,12 +1967,12 @@ const summaryCards = computed(() => {
     {
       label: '최고',
       value: formatWholeMoney(ath.totalAsset),
-      caption: ath.sessionDate || '-'
+      caption: formatSessionLabel(ath.sessionDate)
     },
     {
       label: '원금',
       value: formatWholeMoney(initialCash),
-      caption: initialDate || '-'
+      caption: formatSessionLabel(initialDate)
     },
     {
       label: '투자기간',
@@ -2776,10 +2774,7 @@ function formatQuantity(value) {
 }
 
 function formatSessionLabel(value) {
-  if (!value) return '-'
-  return String(value)
-    .replace('T', ' ')
-    .replace(/:00(?:\.\d+)?Z$/, 'Z')
+  return formatSeoulDateTime(value)
 }
 
 function formatErrorDetails(details) {
