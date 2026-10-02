@@ -341,13 +341,42 @@
 
               <q-card flat bordered class="section-card">
                 <q-card-section class="section-heading">
-                  <div class="text-h6 text-grey-9">포트폴리오 성과</div>
+                  <div class="performance-chart-heading">
+                    <div class="text-h6 text-grey-9">포트폴리오 성과</div>
+                    <q-btn-toggle
+                      v-model="capitalChartMode"
+                      :options="[
+                        { label: '최종 원금 기준', value: 'total' },
+                        { label: '일별 원금 기준', value: 'actual' }
+                      ]"
+                      toggle-color="grey-3"
+                      toggle-text-color="green-8"
+                      color="transparent"
+                      text-color="grey-7"
+                      no-caps
+                      unelevated
+                      class="capital-mode-toggle"
+                      aria-label="자산 그래프 원금 기준"
+                      @update:model-value="clearChartHover"
+                    />
+                  </div>
                   <div class="text-caption text-grey-6">
-                    총자산과 drawdown 추이
+                    {{
+                      capitalChartMode === 'total'
+                        ? '추가 납입금을 처음부터 현금으로 보유한 기준 · 손익 금액은 동일'
+                        : '총자산과 drawdown 추이 · 입출금일은 보라색 삼각형으로 표시'
+                    }}
                   </div>
                 </q-card-section>
                 <q-separator />
                 <q-card-section>
+                  <p
+                    v-if="capitalChartMode === 'total'"
+                    class="text-caption text-grey-6 q-mb-sm"
+                  >
+                    차트의 자산·원금·ATH·DD를 환산합니다. 상단 요약은 실제 계좌
+                    기준입니다.
+                  </p>
                   <div v-if="dailyRows.length" class="chart-container">
                     <Chart
                       ref="performanceChartComponent"
@@ -669,6 +698,10 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { api } from '@/boot/axios'
+import {
+  buildCashFlowRows,
+  rebaseCashFlowRows
+} from '@/utils/performance-cash-flow'
 
 import { useQuasar } from 'quasar'
 
@@ -676,6 +709,7 @@ import {
   CategoryScale,
   Chart as ChartJS,
   Filler,
+  Interaction,
   Legend,
   LinearScale,
   LineController,
@@ -723,6 +757,15 @@ const agentChartRangeGuidePlugin = {
     })
     ctx.restore()
   },
+  beforeEvent(chart, args) {
+    const isAgentChart = [
+      priceChartComponent.value,
+      performanceChartComponent.value
+    ].some(component => getChartInstance(component) === chart)
+    // A reactive guide update must not revive hover after the pointer left.
+    if (isAgentChart && args.replay && !agentChartHoverGuideVisible)
+      return false
+  },
   afterEvent(chart, args) {
     const isAgentChart = [
       priceChartComponent.value,
@@ -730,11 +773,13 @@ const agentChartRangeGuidePlugin = {
     ].some(component => getChartInstance(component) === chart)
     const eventType = args.event?.type
     const isPointerOutsidePlot =
-      !args.inChartArea &&
+      !isPointerInsideChartArea(args.event, chart.chartArea) &&
       ['mousemove', 'touchmove', 'click'].includes(eventType)
     const hasSynchronizedHover =
       chartHoverDate.value !== null ||
-      synchronizedAgentChartTooltipDate !== null
+      synchronizedAgentChartTooltipDate !== null ||
+      chart.getActiveElements().length > 0 ||
+      chart.tooltip?.getActiveElements().length > 0
 
     if (
       !isAgentChart ||
@@ -793,6 +838,8 @@ const priceChartComponent = ref(null)
 
 const performanceChartComponent = ref(null)
 
+const capitalChartMode = ref('total')
+
 function finiteNumber(value) {
   if (value === null || value === undefined || value === '') return null
   const number = Number(value)
@@ -847,6 +894,17 @@ function getChartTooltipActiveElements(chart, sessionDate) {
   })
 }
 
+function getAgentSessionInteraction(chart, event) {
+  if (!isPointerInsideChartArea(event, chart.chartArea)) return []
+  const index = Math.round(chart.scales.x.getValueForPixel(event.x))
+  const sessionDate = chart.data.labels[index]
+  if (!sessionDate) return []
+  return getChartTooltipActiveElements(chart, sessionDate).map(active => ({
+    ...active,
+    element: chart.getDatasetMeta(active.datasetIndex).data[active.index]
+  }))
+}
+
 function deactivateOtherChartInteractions(sourceChart, chartComponents = []) {
   chartComponents.forEach(component => {
     const chart = getChartInstance(component)
@@ -897,19 +955,26 @@ function syncChartTooltips(sessionDate, chartComponents = []) {
   }
 }
 
+function isPointerInsideChartArea(event, chartArea) {
+  return (
+    Number.isFinite(event?.x) &&
+    Number.isFinite(event?.y) &&
+    event.x > chartArea.left &&
+    event.x < chartArea.right &&
+    event.y > chartArea.top &&
+    event.y < chartArea.bottom
+  )
+}
+
 function updateChartHover(event, _elements, chart) {
-  const { chartArea } = chart
-  const isInsideChartArea =
-    !isChartRangeDragging.value &&
-    event.x !== null &&
-    event.y !== null &&
-    event.x >= chartArea.left &&
-    event.x <= chartArea.right &&
-    event.y >= chartArea.top &&
-    event.y <= chartArea.bottom
-  const rawIndex = isInsideChartArea
-    ? chart.scales.x.getValueForPixel(event.x)
-    : null
+  if (
+    isChartRangeDragging.value ||
+    !isPointerInsideChartArea(event, chart.chartArea)
+  ) {
+    clearChartHover()
+    return
+  }
+  const rawIndex = chart.scales.x.getValueForPixel(event.x)
   const index = Math.round(Number(rawIndex))
   const nextDate =
     Number.isInteger(index) && index >= 0 && index < chart.data.labels.length
@@ -1033,7 +1098,12 @@ async function fetchAgentResult() {
   }
 }
 
-const dailyRows = computed(() => agentResult.value?.dailyRows || [])
+const dailyRows = computed(() =>
+  buildCashFlowRows(
+    agentResult.value?.dailyRows || [],
+    agentResult.value?.startingCapital
+  )
+)
 
 const finalPortfolio = computed(() => agentResult.value?.finalPortfolio || {})
 
@@ -1167,8 +1237,30 @@ const visibleChartRows = computed(() =>
   )
 )
 
+const capitalChartRows = computed(() =>
+  capitalChartMode.value === 'total'
+    ? rebaseCashFlowRows(dailyRows.value)
+    : dailyRows.value
+)
+
+const visibleCapitalChartRows = computed(() =>
+  capitalChartRows.value.slice(
+    previewChartRange.value.min,
+    previewChartRange.value.max + 1
+  )
+)
+
+const capitalChartAth = computed(() => {
+  if (capitalChartMode.value === 'actual') return agentResult.value?.allTimeHigh
+  return capitalChartRows.value.reduce((ath, day) => {
+    const asset = finiteNumber(day.totalAsset)
+    if (asset === null || (ath && ath.totalAsset >= asset)) return ath
+    return { sessionDate: day.sessionDate, totalAsset: asset }
+  }, null)
+})
+
 const performanceDrawdownMin = computed(() => {
-  const drawdowns = visibleChartRows.value
+  const drawdowns = visibleCapitalChartRows.value
     .map(day => finiteNumber(day.drawdownPct))
     .filter(value => value !== null)
   return Math.min(-40, ...drawdowns)
@@ -1309,9 +1401,8 @@ const priceChartData = computed(() => {
 })
 
 const performanceChartData = computed(() => {
-  const rows = visibleChartRows.value
-  const totalInvestment = finiteNumber(agentResult.value?.totalInvestment)
-  const ath = agentResult.value?.allTimeHigh
+  const rows = visibleCapitalChartRows.value
+  const ath = capitalChartAth.value
   const athPoint =
     ath && isDateWithinRows(ath.sessionDate, rows)
       ? [
@@ -1340,13 +1431,32 @@ const performanceChartData = computed(() => {
       },
       {
         type: 'line',
-        label: '초기자산',
-        data: rows.map(() => totalInvestment),
+        label: '납입원금',
+        data: rows.map(day => day.netPrincipal),
+        stepped: 'before',
         yAxisID: 'asset',
         borderColor: '#9e9e9e',
         borderDash: [6, 5],
         borderWidth: 1,
         pointRadius: 0
+      },
+      {
+        type: 'scatter',
+        label: '입출금',
+        data: rows
+          .filter(day => day.externalCashFlow !== 0)
+          .map(day => ({
+            x: day.sessionDate,
+            y: finiteNumber(day.totalAsset),
+            externalCashFlow: day.externalCashFlow
+          })),
+        yAxisID: 'asset',
+        backgroundColor: '#8e24aa',
+        borderColor: '#8e24aa',
+        pointStyle: 'triangle',
+        pointRadius: 6,
+        pointHoverRadius: 6,
+        order: -1
       },
       {
         type: 'scatter',
@@ -1463,7 +1573,7 @@ const performanceChartOptions = computed(() => {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
+    interaction: { mode: 'agentSessionDate', intersect: false },
     onHover: updateChartHover,
     plugins: {
       agentChartRangeGuide: {
@@ -1477,6 +1587,7 @@ const performanceChartOptions = computed(() => {
         align: 'center',
         fullSize: false,
         labels: {
+          sort: (left, right) => left.datasetIndex - right.datasetIndex,
           usePointStyle: true,
           boxWidth: 8,
           boxHeight: 6,
@@ -1487,7 +1598,32 @@ const performanceChartOptions = computed(() => {
       tooltip: {
         animations: false,
         callbacks: {
+          afterBody(items) {
+            const date =
+              items.find(item => item.dataset.type !== 'scatter')?.label ||
+              items[0]?.raw?.x ||
+              items[0]?.label
+            const day = visibleChartRows.value.find(
+              row => row.sessionDate === date
+            )
+            if (!day) return []
+            return [
+              ...(day.externalCashFlow &&
+              !items.some(item => item.dataset.label === '입출금')
+                ? [
+                    `${day.externalCashFlow > 0 ? '추가입금' : '출금'} ${formatMoney(Math.abs(day.externalCashFlow), 2)}`
+                  ]
+                : []),
+              ...(capitalChartMode.value === 'total'
+                ? [`실제 자산 ${formatMoney(day.totalAsset, 2)}`]
+                : [])
+            ]
+          },
           label(context) {
+            if (context.dataset.label === '입출금') {
+              const flow = context.raw.externalCashFlow
+              return `${flow > 0 ? '추가입금' : '출금'} ${formatMoney(Math.abs(flow), 2)}`
+            }
             if (context.dataset.yAxisID === 'drawdown') {
               return `Drawdown ${formatPct(context.parsed.y, false)}`
             }
@@ -1688,6 +1824,8 @@ function shortTypeLabel(value) {
   const label = String(value || '').trim()
   return label ? label.charAt(0).toUpperCase() : '-'
 }
+
+Interaction.modes.agentSessionDate = getAgentSessionInteraction
 
 ChartJS.register(
   CategoryScale,
@@ -2778,6 +2916,35 @@ onMounted(fetchAgentResult)
 
   :deep(.q-btn) {
     width: 100%;
+  }
+}
+
+.performance-chart-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 4px;
+}
+
+.capital-mode-toggle {
+  display: inline-flex;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--dk-line);
+  border-radius: 8px;
+  box-shadow: none;
+
+  :deep(.q-btn) {
+    min-height: 24px;
+    padding: 1px 8px;
+    border-radius: 0;
+    font-size: 11px;
+    box-shadow: none;
+  }
+
+  :deep(.q-btn + .q-btn) {
+    border-left: 1px solid var(--dk-line);
   }
 }
 
