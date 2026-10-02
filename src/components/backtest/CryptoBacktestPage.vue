@@ -1636,7 +1636,7 @@ const SYMBOL_OPTIONS = [
   'SOLUSDT',
   'XRPUSDT',
   'BNBUSDT',
-  'SRPUSDT',
+  'BTCUSDT',
   'UNIUSDT'
 ]
 const INTERVAL_OPTIONS = [

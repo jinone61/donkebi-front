@@ -1906,7 +1906,7 @@ test('agent page covers current status charts and operation history', async () =
   assert.doesNotMatch(source, /reportedTotalProfit|reportedTotalReturnPct/)
   assert.match(
     source,
-    /const performanceChartData[\s\S]*?agentResult\.value\?\.totalInvestment[\s\S]*?label: '초기자산'[\s\S]*?rows\.map\(\(\) => totalInvestment\)/
+    /const dailyRows[\s\S]*?startingCapital[\s\S]*?const performanceChartData[\s\S]*?label: '납입원금'[\s\S]*?day\.netPrincipal/
   )
   assert.match(source, /일별 운영 내역/)
   assert.match(source, /class="daily-header desktop-only"/)
@@ -2139,4 +2139,123 @@ test('private agent samples and brainstorm artifacts stay outside Git', async ()
     'src/pages/index/operation_result.json',
     '.superpowers/brainstorm/layout.html'
   ])
+})
+
+test('performance marks external cash flows without adding more charts', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  assert.equal((source.match(/class="chart-container"/g) || []).length, 2)
+  assert.match(
+    source,
+    /label: '입출금'[\s\S]*?externalCashFlow: day\.externalCashFlow/
+  )
+  assert.match(source, /context\.raw\.externalCashFlow/)
+  assert.match(
+    source,
+    /sort: \(left, right\) => left\.datasetIndex - right\.datasetIndex/
+  )
+  assert.match(source, /추가입금/)
+  assert.doesNotMatch(
+    source,
+    /assetChartComponent|performanceChartMode|unrepresentedFlow/
+  )
+})
+
+test('performance offers total-capital mode without adding a chart or a legend entry', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  assert.match(source, /const capitalChartMode = ref\('total'\)/)
+  assert.match(source, /label: '최종 원금 기준', value: 'total'/)
+  assert.match(source, /label: '일별 원금 기준', value: 'actual'/)
+  assert.match(source, /\.capital-mode-toggle \{[\s\S]*?border-radius: 8px;/)
+  assert.match(source, /rebaseCashFlowRows\(dailyRows\.value\)/)
+  assert.match(source, /const rows = visibleCapitalChartRows\.value/)
+  assert.match(source, /const ath = capitalChartAth\.value/)
+  assert.equal((source.match(/class="chart-container"/g) || []).length, 2)
+  assert.doesNotMatch(source, /label: '총원금',/)
+})
+
+test('agent hover outside the plot never synchronizes to the first date', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  const start = source.indexOf('function isPointerInsideChartArea(')
+  const end = source.indexOf('\nfunction clearChartHover(', start)
+  const calls = []
+  const hover = new Function(
+    'isChartRangeDragging',
+    'clearChartHover',
+    'chartHoverDate',
+    'priceChartComponent',
+    'performanceChartComponent',
+    'deactivateOtherChartInteractions',
+    'syncChartTooltips',
+    'agentChartHoverGuideVisible',
+    'synchronizedAgentChartTooltipDate',
+    `${source.slice(start, end)}; return updateChartHover`
+  )(
+    { value: false },
+    () => calls.push('clear'),
+    { value: null },
+    { value: null },
+    { value: null },
+    () => {},
+    date => calls.push(date),
+    false,
+    null
+  )
+  const chart = {
+    chartArea: { left: 50, right: 250, top: 20, bottom: 200 },
+    scales: { x: { getValueForPixel: () => 0 } },
+    data: { labels: ['2026-08-06'] }
+  }
+  for (const event of [
+    { x: 270, y: 100 },
+    { x: 250.25, y: 100 },
+    { x: 250, y: 100 },
+    { x: 49, y: 100 },
+    { x: 100, y: 19 },
+    { x: 100, y: 201 },
+    { x: null, y: 100 },
+    { y: 100 }
+  ])
+    hover(event, [], chart)
+  assert.deepEqual(calls, Array(8).fill('clear'))
+  hover({ x: 100, y: 100 }, [], chart)
+  assert.equal(calls.at(-1), '2026-08-06')
+  assert.match(
+    source,
+    /args\.replay && !agentChartHoverGuideVisible\)\s+return false/
+  )
+})
+
+test('performance hover selects sparse deposit and ATH points by date instead of array index', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  const start = source.indexOf('function getChartTooltipActiveElements(')
+  const end = source.indexOf('\nfunction getAgentSessionInteraction(', start)
+  const select = new Function(
+    `${source.slice(start, end)}; return getChartTooltipActiveElements`
+  )()
+  const chart = {
+    data: {
+      labels: ['2026-09-30', '2026-10-01'],
+      datasets: [
+        { type: 'line', data: [7593.09, 28650.96] },
+        { type: 'scatter', data: [{ x: '2026-10-01', y: 28650.96 }] },
+        { type: 'scatter', data: [{ x: '2026-10-01', y: 28650.96 }] }
+      ]
+    },
+    isDatasetVisible: () => true,
+    getDatasetMeta: () => ({ data: [{}, {}] })
+  }
+  assert.deepEqual(select(chart, '2026-09-30'), [{ datasetIndex: 0, index: 0 }])
+  assert.deepEqual(select(chart, '2026-10-01'), [
+    { datasetIndex: 0, index: 1 },
+    { datasetIndex: 1, index: 0 },
+    { datasetIndex: 2, index: 0 }
+  ])
+  assert.match(
+    source,
+    /Interaction\.modes\.agentSessionDate = getAgentSessionInteraction/
+  )
+  assert.match(
+    source,
+    /interaction: \{ mode: 'agentSessionDate', intersect: false \}/
+  )
 })
