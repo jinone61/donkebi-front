@@ -739,24 +739,24 @@
                                     >
                                     <tbody>
                                       <tr
-                                        v-for="order in slide.job.details
-                                          .orders"
+                                        v-for="order in strategyPlanOrders(
+                                          slide.job.details
+                                        )"
                                         :key="order.orderId"
+                                        :class="{
+                                          'operation-plan--deferred':
+                                            isDeferredPlan(order)
+                                        }"
                                       >
                                         <td class="text-left"
                                           ><span
                                             class="operation-side"
-                                            :class="[
-                                              sideClass(order.tradeSide),
-                                              {
-                                                'operation-side--deferred':
-                                                  String(
-                                                    order.planType || ''
-                                                  ).toUpperCase() === 'DEFERRED'
-                                              }
-                                            ]"
-                                            >{{
-                                              sideLabel(order.tradeSide)
+                                            :class="sideClass(order.tradeSide)"
+                                            >{{ sideLabel(order.tradeSide)
+                                            }}{{
+                                              isDeferredPlan(order)
+                                                ? ' 보류'
+                                                : ''
                                             }}</span
                                           ></td
                                         ><td class="text-left">{{
@@ -800,24 +800,25 @@
                                     class="operation-mobile-rows operation-mobile-rows--three-columns"
                                   >
                                     <article
-                                      v-for="order in slide.job.details.orders"
+                                      v-for="order in strategyPlanOrders(
+                                        slide.job.details
+                                      )"
                                       :key="`mobile-${order.orderId}`"
+                                      :class="{
+                                        'operation-plan--deferred':
+                                          isDeferredPlan(order)
+                                      }"
                                     >
                                       <div class="operation-mobile-row__head">
                                         <strong
                                           ><span
                                             class="operation-side"
-                                            :class="[
-                                              sideClass(order.tradeSide),
-                                              {
-                                                'operation-side--deferred':
-                                                  String(
-                                                    order.planType || ''
-                                                  ).toUpperCase() === 'DEFERRED'
-                                              }
-                                            ]"
-                                            >{{
-                                              sideLabel(order.tradeSide)
+                                            :class="sideClass(order.tradeSide)"
+                                            >{{ sideLabel(order.tradeSide)
+                                            }}{{
+                                              isDeferredPlan(order)
+                                                ? ' 보류'
+                                                : ''
                                             }}</span
                                           ></strong
                                         >
@@ -1295,6 +1296,18 @@ const operationUpdatedAt = ref(null)
 
 const expandedOperationIds = ref([])
 const planOrderTabs = ref({})
+
+function isDeferredPlan(order) {
+  return String(order.planType || '').toUpperCase() === 'DEFERRED'
+}
+
+function strategyPlanOrders(details = {}) {
+  return (details.orders || []).toSorted(
+    (left, right) =>
+      Number(String(left.planType || '').toUpperCase() === 'DEFERRED') -
+      Number(String(right.planType || '').toUpperCase() === 'DEFERRED')
+  )
+}
 
 function brokerPlanOrders(details = {}) {
   return getOrderDetails(details).brokerOrders.map((order, index) => ({
@@ -3819,7 +3832,11 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
 .order-plan-heading :deep(.q-btn + .q-btn) {
   border-left: 1px solid #c7c7c0;
 }
-.operation-side--deferred {
-  text-decoration: line-through;
+.operation-plan--deferred,
+.operation-plan--deferred td,
+.operation-plan--deferred dt,
+.operation-plan--deferred dd,
+.operation-plan--deferred .operation-side {
+  color: #99968f;
 }
 </style>

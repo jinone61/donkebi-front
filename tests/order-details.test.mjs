@@ -6,6 +6,36 @@ import * as Vue from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { getStrategyExecutions } from '../src/utils/order-details.js'
 
+test('Operation plan rows put deferred plans last without mutating API orders', async () => {
+  const source = await readFile(
+    new URL('../src/pages/index/operation.vue', import.meta.url),
+    'utf8'
+  )
+  const helper = source.match(
+    /function strategyPlanOrders\(details = \{\}\) \{[\s\S]*?\n\}/
+  )?.[0]
+  assert.ok(helper)
+  const strategyPlanOrders = new Function(
+    `${helper}; return strategyPlanOrders`
+  )()
+  const orders = [
+    { orderId: 1, planType: 'DEFERRED' },
+    { orderId: 2, planType: 'REGULAR' },
+    { orderId: 3, planType: 'deferred' },
+    { orderId: 4, planType: 'REGULAR' }
+  ]
+  assert.deepEqual(
+    strategyPlanOrders({ orders }).map(order => order.orderId),
+    [2, 4, 1, 3]
+  )
+  assert.deepEqual(
+    orders.map(order => order.orderId),
+    [1, 2, 3, 4]
+  )
+  assert.deepEqual(strategyPlanOrders(), [])
+  assert.doesNotMatch(source, /operation-side--deferred/)
+})
+
 test('strategy execution rows place deferred plans last while preserving each group order', () => {
   const strategyOrders = [
     { strategyOrderId: 1, planType: 'DEFERRED' },
