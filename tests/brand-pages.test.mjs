@@ -1053,7 +1053,8 @@ test('agent workspace owns its strategy result API and normalization', async () 
     source,
     /api\.get\(\s*AGENT_RESULT_URL,\s*\{\s*params:\s*\{\s*strategyId:\s*STRATEGY_ID\s*\}\s*\}\s*\)/
   )
-  assert.match(source, /day\.plan\?\.orders/)
+  assert.match(source, /getOrderDetails\(day\.plan \|\| \{\}\)/)
+  assert.match(source, /orderDetails\.brokerOrders\.map\(normalizeOrder\)/)
   assert.match(
     source,
     /submittedOrderCount: orders\.filter\(order => order\.submission\)\.length/
@@ -1491,11 +1492,11 @@ test('agent operation avoids nested and mobile horizontal scrolling', async () =
   )
   assert.equal(
     (source.match(/class="operation-desktop-table"/g) || []).length,
-    3
+    4
   )
   assert.equal(
     (source.match(/class="operation-mobile-rows(?: [^"]+)?"/g) || []).length,
-    3
+    4
   )
   assert.match(
     source,
@@ -2258,4 +2259,15 @@ test('performance hover selects sparse deposit and ATH points by date instead of
     source,
     /interaction: \{ mode: 'agentSessionDate', intersect: false \}/
   )
+})
+test('performance daily details separate strategy plans and broker executions', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  assert.match(source, /dailyOrderTabs\[day.sessionDate\]/)
+  assert.match(source, /v-for="\(order, index\) in day.strategyOrders"/)
+  assert.match(
+    source,
+    /strategyOrders: getStrategyExecutions\(day.plan \|\| \{\}\)/
+  )
+  assert.match(source, /\?\s*' 보류'\s*:\s*''/)
+  assert.doesNotMatch(source, /operation-side--deferred/)
 })

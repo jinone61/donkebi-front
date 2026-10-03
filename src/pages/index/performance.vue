@@ -551,72 +551,192 @@
                       </div>
 
                       <div class="detail-section">
-                        <div class="detail-title">주문 및 체결</div>
-                        <div v-if="day.orders.length" class="table-scroll">
-                          <q-markup-table flat bordered dense>
-                            <thead>
-                              <tr>
-                                <th class="text-left">구분</th
-                                ><th class="text-left">티어</th
-                                ><th class="text-left">유형</th
-                                ><th class="text-left daily-submission-status"
-                                  >제출 상태</th
-                                ><th class="text-left">Broker ID</th>
-                                <th class="text-right">주문가</th>
-                                <th class="text-right">체결가</th
-                                ><th class="text-right">수량</th
-                                ><th class="text-right">체결</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr
-                                v-for="(order, index) in day.orders"
-                                :key="`${day.sessionDate}-${order.tier}-${index}`"
-                              >
-                                <td>
-                                  <span
-                                    class="operation-side"
-                                    :class="sideClass(order.tradeSide)"
-                                    >{{ sideLabel(order.tradeSide) }}</span
-                                  >
-                                </td>
-                                <td>{{ order.tier }}</td>
-                                <td>
-                                  {{ shortTypeLabel(order.orderType) }}·
-                                  {{ shortTypeLabel(order.planType) }}
-                                </td>
-                                <td class="daily-submission-status">
-                                  {{ order.submission?.status || '미제출' }}
-                                  <small v-if="order.submission?.mode">{{
-                                    order.submission.mode
-                                  }}</small>
-                                </td>
-                                <td>
-                                  {{ order.submission?.brokerOrderId || '-' }}
-                                  <small
-                                    v-if="order.submission?.brokerErrorMessage"
-                                    class="text-negative"
-                                  >
-                                    {{ order.submission.brokerErrorMessage }}
-                                  </small>
-                                </td>
-                                <td class="text-right">{{
-                                  formatPrice(order.orderPrice)
-                                }}</td>
-                                <td class="text-right">{{
-                                  formatPrice(order.executionPrice)
-                                }}</td>
-                                <td class="text-right">{{
-                                  formatInteger(order.quantity)
-                                }}</td>
-                                <td class="text-right">{{
-                                  formatInteger(order.executedQuantity)
-                                }}</td>
-                              </tr>
-                            </tbody>
-                          </q-markup-table>
+                        <div class="daily-order-heading">
+                          <div class="detail-title">주문 및 체결</div>
+                          <q-btn-toggle
+                            :model-value="
+                              dailyOrderTabs[day.sessionDate] || 'strategy'
+                            "
+                            @update:model-value="
+                              value => (dailyOrderTabs[day.sessionDate] = value)
+                            "
+                            :options="[
+                              { label: '전략 계획', value: 'strategy' },
+                              { label: 'Broker 주문', value: 'broker' }
+                            ]"
+                            aria-label="일별 주문 보기"
+                            dense
+                            no-caps
+                            unelevated
+                            color="grey-3"
+                            text-color="grey-8"
+                            toggle-color="grey-9"
+                            toggle-text-color="white"
+                          />
                         </div>
-                        <div v-else class="detail-note">주문 없음</div>
+                        <template
+                          v-if="
+                            (dailyOrderTabs[day.sessionDate] || 'strategy') ===
+                            'strategy'
+                          "
+                        >
+                          <div
+                            v-if="day.strategyOrders.length"
+                            class="table-scroll"
+                          >
+                            <q-markup-table flat bordered dense>
+                              <thead
+                                ><tr>
+                                  <th class="text-left">구분</th>
+                                  <th class="text-left">티어</th>
+                                  <th class="text-left">유형</th>
+                                  <th class="text-left daily-submission-status"
+                                    >제출 상태</th
+                                  >
+                                  <th class="text-left">Broker ID</th>
+                                  <th class="text-right">주문가</th>
+                                  <th class="text-right">체결가</th>
+                                  <th class="text-right">수량</th>
+                                  <th class="text-right">체결</th>
+                                </tr></thead
+                              >
+                              <tbody>
+                                <tr
+                                  v-for="(order, index) in day.strategyOrders"
+                                  :key="`${day.sessionDate}-strategy-${index}`"
+                                  :class="{
+                                    'strategy-order--unsubmitted':
+                                      !order.submissionStatus &&
+                                      !order.transferredQuantity
+                                  }"
+                                >
+                                  <td
+                                    ><span
+                                      class="operation-side"
+                                      :class="sideClass(order.tradeSide)"
+                                      >{{ sideLabel(order.tradeSide)
+                                      }}{{
+                                        String(
+                                          order.planType || ''
+                                        ).toUpperCase() === 'DEFERRED'
+                                          ? ' 보류'
+                                          : ''
+                                      }}</span
+                                    ></td
+                                  >
+                                  <td>{{ order.tier || '-' }}</td>
+                                  <td
+                                    >{{ shortTypeLabel(order.orderType) }}·
+                                    {{ shortTypeLabel(order.planType) }}</td
+                                  >
+                                  <td class="daily-submission-status"
+                                    >{{ order.submissionStatus || '미제출'
+                                    }}<small v-if="order.submissionMode">{{
+                                      order.submissionMode
+                                    }}</small></td
+                                  >
+                                  <td>{{ order.brokerOrderIds || '-' }}</td>
+                                  <td class="text-right">{{
+                                    formatPrice(order.orderPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatPrice(order.executionPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatInteger(order.quantity)
+                                  }}</td>
+                                  <td class="text-right"
+                                    >{{ formatInteger(order.executedQuantity) }}
+                                    <small
+                                      v-if="order.transferredQuantity"
+                                      class="strategy-execution-breakdown"
+                                      >체결
+                                      {{
+                                        formatInteger(
+                                          order.brokerExecutedQuantity
+                                        )
+                                      }}
+                                      + 상계
+                                      {{
+                                        formatInteger(order.transferredQuantity)
+                                      }}</small
+                                    >
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </q-markup-table>
+                          </div>
+                          <div v-else class="detail-note">계획 없음</div>
+                        </template>
+                        <template v-else>
+                          <div v-if="day.orders.length" class="table-scroll">
+                            <q-markup-table flat bordered dense>
+                              <thead>
+                                <tr>
+                                  <th class="text-left">구분</th
+                                  ><th class="text-left">티어</th
+                                  ><th class="text-left">유형</th
+                                  ><th class="text-left daily-submission-status"
+                                    >제출 상태</th
+                                  ><th class="text-left">Broker ID</th>
+                                  <th class="text-right">주문가</th>
+                                  <th class="text-right">체결가</th
+                                  ><th class="text-right">수량</th
+                                  ><th class="text-right">체결</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr
+                                  v-for="(order, index) in day.orders"
+                                  :key="`${day.sessionDate}-${order.tier}-${index}`"
+                                >
+                                  <td>
+                                    <span
+                                      class="operation-side"
+                                      :class="sideClass(order.tradeSide)"
+                                      >{{ sideLabel(order.tradeSide) }}</span
+                                    >
+                                  </td>
+                                  <td>{{ order.tier }}</td>
+                                  <td>
+                                    {{ shortTypeLabel(order.orderType) }}·
+                                    {{ shortTypeLabel(order.planType) }}
+                                  </td>
+                                  <td class="daily-submission-status">
+                                    {{ order.submission?.status || '미제출' }}
+                                    <small v-if="order.submission?.mode">{{
+                                      order.submission.mode
+                                    }}</small>
+                                  </td>
+                                  <td>
+                                    {{ order.submission?.brokerOrderId || '-' }}
+                                    <small
+                                      v-if="
+                                        order.submission?.brokerErrorMessage
+                                      "
+                                      class="text-negative"
+                                    >
+                                      {{ order.submission.brokerErrorMessage }}
+                                    </small>
+                                  </td>
+                                  <td class="text-right">{{
+                                    formatPrice(order.orderPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatPrice(order.executionPrice)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatInteger(order.quantity)
+                                  }}</td>
+                                  <td class="text-right">{{
+                                    formatInteger(order.executedQuantity)
+                                  }}</td>
+                                </tr>
+                              </tbody>
+                            </q-markup-table>
+                          </div>
+                          <div v-else class="detail-note">주문 없음</div>
+                        </template>
                       </div>
 
                       <div class="detail-section">
@@ -698,6 +818,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { api } from '@/boot/axios'
+import { getOrderDetails, getStrategyExecutions } from '@/utils/order-details'
 import {
   buildCashFlowRows,
   rebaseCashFlowRows
@@ -812,6 +933,7 @@ const chartPresets = [
 
 const $q = useQuasar()
 
+const dailyOrderTabs = ref({})
 const agentResult = ref(null)
 
 const isPerformanceLoading = ref(false)
@@ -1037,7 +1159,8 @@ function normalizeStrategyResult(result = {}) {
     pendingPlan: result.pendingPlan || null,
     dailyRows: (result.dailyResults || [])
       .map(day => {
-        const orders = (day.plan?.orders || []).map(normalizeOrder)
+        const orderDetails = getOrderDetails(day.plan || {})
+        const orders = orderDetails.brokerOrders.map(normalizeOrder)
         const submissionMode = [
           ...new Set(
             orders.map(order => order.submission?.mode).filter(Boolean)
@@ -1054,6 +1177,7 @@ function normalizeStrategyResult(result = {}) {
           closingCash,
           cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
           orders,
+          strategyOrders: getStrategyExecutions(day.plan || {}),
           submissionMode: submissionMode || day.plan?.completionSource || '-',
           submittedOrderCount: orders.filter(order => order.submission).length,
           executions: orders.flatMap(order =>
@@ -3062,6 +3186,47 @@ onMounted(fetchAgentResult)
 
 .detail-section + .detail-section {
   margin-top: 16px;
+}
+
+.daily-order-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.daily-order-heading .detail-title {
+  margin: 0;
+}
+.daily-order-heading :deep(.q-btn-group) {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  border: 1px solid #c7c7c0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.daily-order-heading :deep(.q-btn) {
+  min-height: 18px;
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 0 7px;
+}
+.daily-order-heading :deep(.q-btn__content) {
+  min-height: 0;
+}
+.daily-order-heading :deep(.q-btn + .q-btn) {
+  border-left: 1px solid #c7c7c0;
+}
+.strategy-execution-breakdown {
+  display: block;
+  color: var(--dk-muted);
+  font-size: var(--dk-text-caption);
+}
+
+.strategy-order--unsubmitted,
+.strategy-order--unsubmitted td,
+.strategy-order--unsubmitted .operation-side {
+  color: #99968f;
 }
 
 .detail-title {

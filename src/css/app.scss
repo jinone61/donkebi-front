@@ -1,12 +1,3 @@
-@font-face {
-  font-family: 'Pretendard';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url('@fontsource/pretendard/files/pretendard-latin-400-normal.woff2')
-    format('woff2');
-}
-
 :root {
   --dk-paper: #f4f1ea;
   --dk-surface: #fbfaf7;
@@ -16,8 +7,7 @@
   --dk-line-strong: rgba(23, 23, 23, 0.58);
   --dk-positive: #a64b40;
   --dk-negative: #456b82;
-  --dk-font-sans:
-    'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --dk-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --dk-font-serif: 'Noto Serif KR', Georgia, serif;
   --dk-text-caption: 0.6875rem;
   --dk-text-label: 0.75rem;

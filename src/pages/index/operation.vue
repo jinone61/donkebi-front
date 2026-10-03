@@ -683,136 +683,106 @@
                               >
                             </div>
                             <div class="operation-detail-block">
-                              <h4>주문 계획</h4>
-                              <div
-                                v-if="slide.job.details?.orders?.length"
-                                class="operation-table-scroll"
-                              >
-                                <q-markup-table
-                                  flat
+                              <div class="order-plan-heading">
+                                <h4>주문 계획</h4>
+                                <q-btn-toggle
+                                  :model-value="
+                                    planOrderTabs[slide.id] || 'strategy'
+                                  "
+                                  @update:model-value="
+                                    value => (planOrderTabs[slide.id] = value)
+                                  "
+                                  :options="[
+                                    { label: '전략 계획', value: 'strategy' },
+                                    { label: 'Broker 주문', value: 'broker' }
+                                  ]"
+                                  aria-label="주문 계획 보기"
                                   dense
-                                  separator="horizontal"
-                                  class="operation-desktop-table"
-                                >
-                                  <thead
-                                    ><tr
-                                      ><th class="text-left">구분</th
-                                      ><th class="text-left">티어</th
-                                      ><th class="text-left">주문 유형</th
-                                      ><th class="text-left">상태</th
-                                      ><th class="text-right">주문가</th
-                                      ><th class="text-right">매수가</th
-                                      ><th class="text-right">수량</th
-                                      ><th class="text-right">배정 금액</th
-                                      ><th class="text-right">보유 기간</th></tr
-                                    ></thead
-                                  >
-                                  <tbody>
-                                    <tr
-                                      v-for="order in slide.job.details.orders"
-                                      :key="order.orderId"
-                                    >
-                                      <td class="text-left"
-                                        ><span
-                                          class="operation-side"
-                                          :class="sideClass(order.tradeSide)"
-                                          >{{
-                                            sideLabel(order.tradeSide)
-                                          }}</span
-                                        ></td
-                                      ><td class="text-left">{{
-                                        order.tier || '-'
-                                      }}</td
-                                      ><td class="text-left">{{
-                                        order.orderType || '-'
-                                      }}</td
-                                      ><td class="text-left">{{
-                                        order.planType || '-'
-                                      }}</td
-                                      ><td class="text-right">{{
-                                        formatPrice(order.orderPrice, 2)
-                                      }}</td
-                                      ><td class="text-right">{{
-                                        order.tradeSide === 'BUY'
-                                          ? '-'
-                                          : formatPrice(order.buyPrice, 2)
-                                      }}</td
-                                      ><td class="text-right">{{
-                                        formatInteger(order.quantity)
-                                      }}</td
-                                      ><td class="text-right">{{
-                                        formatMoney(order.allocationAmount)
-                                      }}</td
-                                      ><td class="text-right"
-                                        >{{
-                                          formatInteger(order.heldSessionCount)
-                                        }}
-                                        /
-                                        {{
-                                          formatInteger(order.maxHoldDays)
-                                        }}</td
-                                      >
-                                    </tr>
-                                  </tbody>
-                                </q-markup-table>
+                                  no-caps
+                                  unelevated
+                                  color="grey-3"
+                                  text-color="grey-8"
+                                  toggle-color="grey-9"
+                                  toggle-text-color="white"
+                                />
+                              </div>
+                              <template
+                                v-if="
+                                  (planOrderTabs[slide.id] || 'strategy') ===
+                                  'strategy'
+                                "
+                              >
                                 <div
-                                  class="operation-mobile-rows operation-mobile-rows--three-columns"
+                                  v-if="slide.job.details?.orders?.length"
+                                  class="operation-table-scroll"
                                 >
-                                  <article
-                                    v-for="order in slide.job.details.orders"
-                                    :key="`mobile-${order.orderId}`"
+                                  <q-markup-table
+                                    flat
+                                    dense
+                                    separator="horizontal"
+                                    class="operation-desktop-table"
                                   >
-                                    <div class="operation-mobile-row__head">
-                                      <strong
-                                        ><span
-                                          class="operation-side"
-                                          :class="sideClass(order.tradeSide)"
-                                          >{{
-                                            sideLabel(order.tradeSide)
-                                          }}</span
-                                        ></strong
+                                    <thead
+                                      ><tr
+                                        ><th class="text-left">구분</th
+                                        ><th class="text-left">티어</th
+                                        ><th class="text-left">주문 유형</th
+                                        ><th class="text-left">상태</th
+                                        ><th class="text-right">주문가</th
+                                        ><th class="text-right">매수가</th
+                                        ><th class="text-right">수량</th
+                                        ><th class="text-right">배정 금액</th
+                                        ><th class="text-right"
+                                          >보유 기간</th
+                                        ></tr
+                                      ></thead
+                                    >
+                                    <tbody>
+                                      <tr
+                                        v-for="order in slide.job.details
+                                          .orders"
+                                        :key="order.orderId"
                                       >
-                                    </div>
-                                    <dl>
-                                      <div
-                                        ><dt>Tier</dt
-                                        ><dd>{{ order.tier || '-' }}</dd></div
-                                      >
-                                      <div
-                                        ><dt>수량</dt
-                                        ><dd
-                                          >{{
-                                            formatInteger(order.quantity)
-                                          }}주</dd
-                                        ></div
-                                      >
-                                      <div
-                                        ><dt>주문 유형</dt
-                                        ><dd
-                                          >{{ shortTypeLabel(order.orderType) }}
-                                          ·
-                                          {{
-                                            shortTypeLabel(order.planType)
-                                          }}</dd
-                                        ></div
-                                      >
-                                      <div
-                                        ><dt>주문가</dt
-                                        ><dd>{{
+                                        <td class="text-left"
+                                          ><span
+                                            class="operation-side"
+                                            :class="[
+                                              sideClass(order.tradeSide),
+                                              {
+                                                'operation-side--deferred':
+                                                  String(
+                                                    order.planType || ''
+                                                  ).toUpperCase() === 'DEFERRED'
+                                              }
+                                            ]"
+                                            >{{
+                                              sideLabel(order.tradeSide)
+                                            }}</span
+                                          ></td
+                                        ><td class="text-left">{{
+                                          order.tier || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          order.orderType || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          order.planType || '-'
+                                        }}</td
+                                        ><td class="text-right">{{
                                           formatPrice(order.orderPrice, 2)
-                                        }}</dd></div
-                                      >
-                                      <div
-                                        ><dt>매수가</dt
-                                        ><dd>{{
+                                        }}</td
+                                        ><td class="text-right">{{
                                           order.tradeSide === 'BUY'
                                             ? '-'
                                             : formatPrice(order.buyPrice, 2)
-                                        }}</dd></div
-                                      >
-                                      <div
-                                        ><dt>보유 기간</dt
-                                        ><dd
+                                        }}</td
+                                        ><td class="text-right">{{
+                                          formatInteger(order.quantity)
+                                        }}</td
+                                        ><td class="text-right">{{
+                                          formatMoney(order.allocationAmount)
+                                        }}</td
+                                        ><td class="text-right"
                                           >{{
                                             formatInteger(
                                               order.heldSessionCount
@@ -821,16 +791,253 @@
                                           /
                                           {{
                                             formatInteger(order.maxHoldDays)
-                                          }}</dd
-                                        ></div
-                                      >
-                                    </dl>
-                                  </article>
+                                          }}</td
+                                        >
+                                      </tr>
+                                    </tbody>
+                                  </q-markup-table>
+                                  <div
+                                    class="operation-mobile-rows operation-mobile-rows--three-columns"
+                                  >
+                                    <article
+                                      v-for="order in slide.job.details.orders"
+                                      :key="`mobile-${order.orderId}`"
+                                    >
+                                      <div class="operation-mobile-row__head">
+                                        <strong
+                                          ><span
+                                            class="operation-side"
+                                            :class="[
+                                              sideClass(order.tradeSide),
+                                              {
+                                                'operation-side--deferred':
+                                                  String(
+                                                    order.planType || ''
+                                                  ).toUpperCase() === 'DEFERRED'
+                                              }
+                                            ]"
+                                            >{{
+                                              sideLabel(order.tradeSide)
+                                            }}</span
+                                          ></strong
+                                        >
+                                      </div>
+                                      <dl>
+                                        <div
+                                          ><dt>Tier</dt
+                                          ><dd>{{ order.tier || '-' }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>수량</dt
+                                          ><dd
+                                            >{{
+                                              formatInteger(order.quantity)
+                                            }}주</dd
+                                          ></div
+                                        >
+                                        <div
+                                          ><dt>주문 유형</dt
+                                          ><dd
+                                            >{{
+                                              shortTypeLabel(order.orderType)
+                                            }}
+                                            ·
+                                            {{
+                                              shortTypeLabel(order.planType)
+                                            }}</dd
+                                          ></div
+                                        >
+                                        <div
+                                          ><dt>주문가</dt
+                                          ><dd>{{
+                                            formatPrice(order.orderPrice, 2)
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>매수가</dt
+                                          ><dd>{{
+                                            order.tradeSide === 'BUY'
+                                              ? '-'
+                                              : formatPrice(order.buyPrice, 2)
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>보유 기간</dt
+                                          ><dd
+                                            >{{
+                                              formatInteger(
+                                                order.heldSessionCount
+                                              )
+                                            }}
+                                            /
+                                            {{
+                                              formatInteger(order.maxHoldDays)
+                                            }}</dd
+                                          ></div
+                                        >
+                                      </dl>
+                                    </article>
+                                  </div>
                                 </div>
-                              </div>
-                              <p v-else class="detail-empty"
-                                >생성된 주문 없음</p
-                              >
+                                <p v-else class="detail-empty"
+                                  >생성된 주문 없음</p
+                                >
+                              </template>
+                              <template v-else>
+                                <div
+                                  v-if="
+                                    brokerPlanOrders(slide.job.details).length
+                                  "
+                                  class="operation-table-scroll"
+                                >
+                                  <q-markup-table
+                                    flat
+                                    dense
+                                    separator="horizontal"
+                                    class="operation-desktop-table"
+                                  >
+                                    <thead
+                                      ><tr
+                                        ><th class="text-left">구분</th
+                                        ><th class="text-left">티어</th
+                                        ><th class="text-left">주문 유형</th
+                                        ><th class="text-left">제출 방식</th
+                                        ><th class="text-left">상태</th
+                                        ><th class="text-right">주문가</th
+                                        ><th class="text-right">수량</th
+                                        ><th class="text-right"
+                                          >Broker ID</th
+                                        ></tr
+                                      ></thead
+                                    >
+                                    <tbody>
+                                      <tr
+                                        v-for="submission in brokerPlanOrders(
+                                          slide.job.details
+                                        )"
+                                        :key="submission.submissionId"
+                                      >
+                                        <td class="text-left"
+                                          ><span
+                                            class="operation-side"
+                                            :class="
+                                              sideClass(submission.tradeSide)
+                                            "
+                                            >{{
+                                              sideLabel(submission.tradeSide)
+                                            }}</span
+                                          ></td
+                                        ><td class="text-left">{{
+                                          submission.tier || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          submission.orderType || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          submission.submissionMode || '-'
+                                        }}</td
+                                        ><td class="text-left">{{
+                                          submission.status || '-'
+                                        }}</td
+                                        ><td class="text-right">{{
+                                          formatPrice(submission.orderPrice, 2)
+                                        }}</td
+                                        ><td class="text-right">{{
+                                          formatInteger(submission.quantity)
+                                        }}</td
+                                        ><td class="text-right"
+                                          >{{ submission.brokerOrderId || '-'
+                                          }}<small
+                                            v-if="submission.brokerErrorMessage"
+                                            class="text-negative"
+                                            >{{
+                                              submission.brokerErrorMessage
+                                            }}</small
+                                          ></td
+                                        >
+                                      </tr>
+                                    </tbody>
+                                  </q-markup-table>
+                                  <div
+                                    class="operation-mobile-rows operation-mobile-rows--three-columns"
+                                  >
+                                    <article
+                                      v-for="submission in brokerPlanOrders(
+                                        slide.job.details
+                                      )"
+                                      :key="`mobile-${submission.submissionId}`"
+                                    >
+                                      <div class="operation-mobile-row__head">
+                                        <strong
+                                          ><span
+                                            class="operation-side"
+                                            :class="
+                                              sideClass(submission.tradeSide)
+                                            "
+                                            >{{
+                                              sideLabel(submission.tradeSide)
+                                            }}</span
+                                          ></strong
+                                        >
+                                      </div>
+                                      <dl>
+                                        <div
+                                          ><dt>Tier</dt
+                                          ><dd>{{
+                                            submission.tier || '-'
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>수량</dt
+                                          ><dd
+                                            >{{
+                                              formatInteger(
+                                                submission.quantity
+                                              )
+                                            }}주</dd
+                                          ></div
+                                        >
+                                        <div
+                                          ><dt>주문 유형</dt
+                                          ><dd>{{
+                                            shortTypeLabel(submission.orderType)
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>주문가</dt
+                                          ><dd>{{
+                                            formatPrice(
+                                              submission.orderPrice,
+                                              2
+                                            )
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>상태</dt
+                                          ><dd>{{
+                                            submission.status || '-'
+                                          }}</dd></div
+                                        >
+                                        <div
+                                          ><dt>Broker ID</dt
+                                          ><dd>{{
+                                            submission.brokerOrderId || '-'
+                                          }}</dd></div
+                                        >
+                                      </dl>
+                                      <p
+                                        v-if="submission.brokerErrorMessage"
+                                        class="operation-mobile-row__error"
+                                      >
+                                        {{ submission.brokerErrorMessage }}
+                                      </p>
+                                    </article>
+                                  </div>
+                                </div>
+                                <p v-else class="detail-empty"
+                                  >Broker 주문 없음</p
+                                >
+                              </template>
                             </div>
                           </template>
 
@@ -1044,6 +1251,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { api } from '@/boot/axios'
 import DkExpandTransition from '@/components/DkExpandTransition.vue'
+import { getOrderDetails } from '@/utils/order-details'
 
 import {
   getLatestOperationStartedAt,
@@ -1086,6 +1294,17 @@ const operationLoadError = ref('')
 const operationUpdatedAt = ref(null)
 
 const expandedOperationIds = ref([])
+const planOrderTabs = ref({})
+
+function brokerPlanOrders(details = {}) {
+  return getOrderDetails(details).brokerOrders.map((order, index) => ({
+    ...order,
+    ...order.submission,
+    submissionId: order.id ?? order.submission?.brokerOrderId ?? index,
+    submissionMode: order.submission?.mode,
+    planOrderId: order.strategyOrderId ?? order.planOrderId
+  }))
+}
 
 const operationTimeZone = ref('KST')
 
@@ -1167,7 +1386,12 @@ function getPreviousOperationTime(jobs, targetDate, jobType) {
 }
 
 function normalizeOperationResult(result = {}) {
-  const jobs = Array.isArray(result.jobs) ? result.jobs : []
+  const jobs = (Array.isArray(result.jobs) ? result.jobs : []).map(job => ({
+    ...job,
+    details: job.details
+      ? { ...job.details, orders: getOrderDetails(job.details).strategyOrders }
+      : job.details
+  }))
   const activeTiers = Array.isArray(result.activeTiers)
     ? result.activeTiers
     : []
@@ -3564,5 +3788,38 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     animation: none;
     clip-path: circle(45% at 50% 50%);
   }
+}
+
+.order-plan-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.order-plan-heading h4 {
+  margin: 0;
+}
+.order-plan-heading :deep(.q-btn-group) {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  border: 1px solid #c7c7c0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.order-plan-heading :deep(.q-btn) {
+  min-height: 18px;
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 0 7px;
+}
+.order-plan-heading :deep(.q-btn__content) {
+  min-height: 0;
+}
+.order-plan-heading :deep(.q-btn + .q-btn) {
+  border-left: 1px solid #c7c7c0;
+}
+.operation-side--deferred {
+  text-decoration: line-through;
 }
 </style>
