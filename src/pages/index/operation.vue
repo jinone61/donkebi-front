@@ -1298,14 +1298,15 @@ const expandedOperationIds = ref([])
 const planOrderTabs = ref({})
 
 function isDeferredPlan(order) {
-  return String(order.planType || '').toUpperCase() === 'DEFERRED'
+  return ['DEFERRED', 'MOC_SUPPRESSED'].includes(
+    String(order.planType || '').toUpperCase()
+  )
 }
 
 function strategyPlanOrders(details = {}) {
   return (details.orders || []).toSorted(
     (left, right) =>
-      Number(String(left.planType || '').toUpperCase() === 'DEFERRED') -
-      Number(String(right.planType || '').toUpperCase() === 'DEFERRED')
+      Number(isDeferredPlan(left)) - Number(isDeferredPlan(right))
   )
 }
 
