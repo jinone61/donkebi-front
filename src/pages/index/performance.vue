@@ -363,20 +363,13 @@
                   <div class="text-caption text-grey-6">
                     {{
                       capitalChartMode === 'total'
-                        ? '추가 납입금을 처음부터 현금으로 보유한 기준 · 손익 금액은 동일'
-                        : '총자산과 drawdown 추이 · 입출금일은 보라색 삼각형으로 표시'
+                        ? '추가 납입금을 처음부터 현금으로 보유한 기준(자산·원금·ATH·DD를 환산)'
+                        : '실제 납입금과 현금 흐름을 반영한 기준'
                     }}
                   </div>
                 </q-card-section>
                 <q-separator />
                 <q-card-section>
-                  <p
-                    v-if="capitalChartMode === 'total'"
-                    class="text-caption text-grey-6 q-mb-sm"
-                  >
-                    차트의 자산·원금·ATH·DD를 환산합니다. 상단 요약은 실제 계좌
-                    기준입니다.
-                  </p>
                   <div v-if="dailyRows.length" class="chart-container">
                     <Chart
                       ref="performanceChartComponent"
