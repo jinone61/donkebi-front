@@ -2271,3 +2271,29 @@ test('performance daily details separate strategy plans and broker executions', 
   assert.match(source, /\?\s*' 보류'\s*:\s*''/)
   assert.doesNotMatch(source, /operation-side--deferred/)
 })
+
+test('operation marks MOC-suppressed sells as deferred and sorts them after active plans', async () => {
+  const source = await readSource('src/pages/index/operation.vue')
+  const start = source.indexOf('function isDeferredPlan(')
+  const end = source.indexOf('\nfunction brokerPlanOrders(', start)
+  const { isDeferredPlan, strategyPlanOrders } = new Function(
+    `${source.slice(start, end)}; return { isDeferredPlan, strategyPlanOrders }`
+  )()
+  assert.equal(isDeferredPlan({ planType: 'MOC_SUPPRESSED' }), true)
+  assert.equal(isDeferredPlan({ planType: 'moc_suppressed' }), true)
+  assert.equal(isDeferredPlan({ planType: 'DEFERRED' }), true)
+  assert.equal(isDeferredPlan({ planType: 'REGULAR' }), false)
+  assert.equal(isDeferredPlan({}), false)
+  const orders = [
+    { orderId: 1, planType: 'MOC_SUPPRESSED' },
+    { orderId: 2, planType: 'REGULAR' },
+    { orderId: 3, planType: 'DEFERRED' },
+    { orderId: 4, planType: 'REGULAR' }
+  ]
+  assert.deepEqual(
+    strategyPlanOrders({ orders }).map(order => order.orderId),
+    [2, 4, 1, 3]
+  )
+  assert.equal(orders[0].orderId, 1)
+  assert.deepEqual(strategyPlanOrders(), [])
+})

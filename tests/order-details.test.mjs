@@ -15,22 +15,27 @@ test('Operation plan rows put deferred plans last without mutating API orders', 
     /function strategyPlanOrders\(details = \{\}\) \{[\s\S]*?\n\}/
   )?.[0]
   assert.ok(helper)
+  const deferredHelper = source.match(
+    /function isDeferredPlan\(order\) \{[\s\S]*?\n\}/
+  )?.[0]
+  assert.ok(deferredHelper)
   const strategyPlanOrders = new Function(
-    `${helper}; return strategyPlanOrders`
+    `${deferredHelper}; ${helper}; return strategyPlanOrders`
   )()
   const orders = [
     { orderId: 1, planType: 'DEFERRED' },
     { orderId: 2, planType: 'REGULAR' },
     { orderId: 3, planType: 'deferred' },
-    { orderId: 4, planType: 'REGULAR' }
+    { orderId: 4, planType: 'REGULAR' },
+    { orderId: 5, planType: 'MOC_SUPPRESSED' }
   ]
   assert.deepEqual(
     strategyPlanOrders({ orders }).map(order => order.orderId),
-    [2, 4, 1, 3]
+    [2, 4, 1, 3, 5]
   )
   assert.deepEqual(
     orders.map(order => order.orderId),
-    [1, 2, 3, 4]
+    [1, 2, 3, 4, 5]
   )
   assert.deepEqual(strategyPlanOrders(), [])
   assert.doesNotMatch(source, /operation-side--deferred/)
