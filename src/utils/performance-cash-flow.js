@@ -28,7 +28,14 @@ export function rebaseCashFlowRows(rows) {
   let peak = finalPrincipal > 0 ? finalPrincipal : null
   return rows.map(row => {
     const actualTotalAsset = finiteNumber(row.totalAsset)
+    const actualClosingCash = finiteNumber(row.closingCash)
     const principal = finiteNumber(row.netPrincipal)
+    const closingCash =
+      actualClosingCash !== null &&
+      principal !== null &&
+      finalPrincipal !== null
+        ? actualClosingCash + finalPrincipal - principal
+        : null
     const totalAsset =
       actualTotalAsset !== null && principal !== null && finalPrincipal !== null
         ? actualTotalAsset + finalPrincipal - principal
@@ -39,6 +46,8 @@ export function rebaseCashFlowRows(rows) {
     return {
       ...row,
       actualTotalAsset,
+      actualClosingCash,
+      closingCash,
       totalAsset,
       netPrincipal: finalPrincipal,
       drawdownPct

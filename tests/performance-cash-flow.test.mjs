@@ -137,3 +137,22 @@ test('rebasing applies signed withdrawals and does not invent missing valuations
   )
   assert.deepEqual(rebaseCashFlowRows([]), [])
 })
+test('rebased cash includes later contributions and preserves holdings and actual cash', () => {
+  const original = [
+    { totalAsset: 1200, closingCash: 200, netPrincipal: 1000 },
+    { totalAsset: 3300, closingCash: 0, netPrincipal: 3000 },
+    { totalAsset: 3300, closingCash: null, netPrincipal: 3000 }
+  ]
+  const rows = rebaseCashFlowRows(original)
+  assert.equal(rows[0].closingCash, 2200)
+  assert.equal(rows[0].actualClosingCash, 200)
+  assert.equal(rows[0].totalAsset - rows[0].closingCash, 1000)
+  assert.equal(rows[1].closingCash, 0)
+  assert.equal(rows[2].closingCash, null)
+  assert.equal(original[0].closingCash, 200)
+  assert.equal(
+    rebaseCashFlowRows([{ closingCash: 10, netPrincipal: null }])[0]
+      .closingCash,
+    null
+  )
+})

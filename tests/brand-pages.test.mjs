@@ -2382,3 +2382,35 @@ test('operation marks MOC-suppressed sells as deferred and sorts them after acti
   assert.equal(orders[0].orderId, 1)
   assert.deepEqual(strategyPlanOrders(), [])
 })
+test('portfolio chart shows actual closing cash including zero and missing values', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  const start = source.indexOf('const performanceChartData = computed(')
+  const end = source.indexOf('\nconst priceChartOptions', start)
+  const createChart = new Function(
+    'computed',
+    'visibleCapitalChartRows',
+    'capitalChartAth',
+    'finiteNumber',
+    'AGENT_ACCENT',
+    'AGENT_ACCENT_FILL',
+    `${source.slice(start, end)}; return performanceChartData`
+  )
+  const chart = createChart(
+    fn => fn(),
+    {
+      value: [
+        { sessionDate: '2026-10-01', totalAsset: 100, closingCash: 25 },
+        { sessionDate: '2026-10-02', totalAsset: 100, closingCash: 0 },
+        { sessionDate: '2026-10-03', totalAsset: 100, closingCash: null }
+      ]
+    },
+    { value: null },
+    value => (value == null ? null : Number(value)),
+    '#000',
+    '#000'
+  )
+  const cash = chart.datasets.find(dataset => dataset.label === '남은 현금')
+  assert.ok(cash)
+  assert.equal(cash.yAxisID, 'asset')
+  assert.deepEqual(cash.data, [25, 0, null])
+})
