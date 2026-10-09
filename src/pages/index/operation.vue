@@ -98,6 +98,7 @@
                 <p id="operation-active-tiers-title" class="section-index">
                   ACTIVE TIERS
                 </p>
+
                 <span>{{ activeTiers.length }} TIERS</span>
               </div>
 
@@ -114,6 +115,7 @@
                   <dt>평균 매수가</dt>
                   <dd>{{ formatPrice(activeTiersSummary.averageBuyPrice) }}</dd>
                 </div>
+
                 <div>
                   <dt>손익</dt>
                   <dd :class="profitClass(activeTiersSummary.profitLoss)">
@@ -162,8 +164,9 @@
                       {{ tier.buySessionDate || '-' }}
                     </td>
                     <td class="text-right">
-                      {{ formatPrice(tier.buyPrice) }}
+                      {{ formatPrice(activeTierBuyPrice(tier)) }}
                     </td>
+
                     <td
                       class="text-right"
                       :class="profitClass(activeTierProfitLoss(tier))"
@@ -1253,6 +1256,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '@/boot/axios'
 import DkExpandTransition from '@/components/DkExpandTransition.vue'
 import { getOrderDetails } from '@/utils/order-details'
+import { valueTier, summarizeTierHoldings } from '@/utils/tier-holdings'
 
 import {
   getLatestOperationStartedAt,
@@ -1652,64 +1656,21 @@ const activeTiersClosePrice = computed(() => {
   return candidates[0]?.closePrice ?? null
 })
 
-function activeTierReturnPct(tier) {
-  const buyPrice = finiteNumber(tier?.buyPrice)
-  const closePrice = activeTiersClosePrice.value
-  if (buyPrice === null || buyPrice === 0 || closePrice === null) return null
+function activeTierBuyPrice(tier) {
+  return valueTier(tier, activeTiersClosePrice.value).averageBuyPrice
+}
 
-  return ((closePrice - buyPrice) / buyPrice) * 100
+function activeTierReturnPct(tier) {
+  return valueTier(tier, activeTiersClosePrice.value).returnPct
 }
 
 function activeTierProfitLoss(tier) {
-  const buyPrice = finiteNumber(tier?.buyPrice)
-  const quantity = finiteNumber(tier?.quantity)
-  const closePrice = activeTiersClosePrice.value
-  if (buyPrice === null || quantity === null || closePrice === null) return null
-
-  return (closePrice - buyPrice) * quantity
+  return valueTier(tier, activeTiersClosePrice.value).profitLoss
 }
 
-const activeTiersSummary = computed(() => {
-  const totals = activeTiers.value.reduce(
-    (result, tier) => {
-      const quantity = finiteNumber(tier.quantity)
-      const buyPrice = finiteNumber(tier.buyPrice)
-      const profitLoss = activeTierProfitLoss(tier)
-
-      if (quantity !== null) result.quantity += quantity
-      if (quantity !== null && buyPrice !== null) {
-        result.costBasis += quantity * buyPrice
-        result.pricedQuantity += quantity
-      }
-      if (profitLoss !== null) {
-        result.profitLoss += profitLoss
-        result.hasProfitLoss = true
-      }
-
-      return result
-    },
-    {
-      quantity: 0,
-      pricedQuantity: 0,
-      costBasis: 0,
-      profitLoss: 0,
-      hasProfitLoss: false
-    }
-  )
-
-  return {
-    quantity: totals.quantity,
-    averageBuyPrice:
-      totals.pricedQuantity > 0
-        ? totals.costBasis / totals.pricedQuantity
-        : null,
-    profitLoss: totals.hasProfitLoss ? totals.profitLoss : null,
-    returnPct:
-      totals.costBasis > 0 && totals.hasProfitLoss
-        ? (totals.profitLoss / totals.costBasis) * 100
-        : null
-  }
-})
+const activeTiersSummary = computed(() =>
+  summarizeTierHoldings(activeTiers.value, activeTiersClosePrice.value)
+)
 
 const operationSlides = computed(() => {
   const slides = operationResult.value?.slides || []
@@ -1858,8 +1819,7 @@ function formatPrice(value, minimumFractionDigits = 0) {
 
   return `$${new Intl.NumberFormat('ko-KR', {
     minimumFractionDigits,
-    maximumFractionDigits: 2,
-    roundingMode: 'trunc'
+    maximumFractionDigits: 2
   }).format(number)}`
 }
 
@@ -3409,6 +3369,8 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
   }
 
   .operation-active-tiers__heading {
+    flex-wrap: wrap;
+    gap: 6px;
     padding: 9px 10px;
   }
 
@@ -3429,11 +3391,9 @@ watch(operationSlides, scheduleOperationAutoRefresh, { immediate: true })
     > div {
       padding: 9px 3px;
     }
-
     dt {
       font-size: var(--dk-text-caption);
     }
-
     dd {
       font-size: var(--dk-text-body-sm);
     }

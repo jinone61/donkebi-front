@@ -112,32 +112,63 @@
                   <p id="current-holdings-title" class="section-index">
                     CURRENT HOLDINGS
                   </p>
+                  <q-btn-toggle
+                    v-model="holdingsBasis"
+                    class="holdings-basis-toggle"
+                    :options="[
+                      { label: '전략계획', value: 'strategy' },
+                      { label: 'Broker 주문', value: 'broker' }
+                    ]"
+                    aria-label="보유 현황 계산 기준"
+                    dense
+                    no-caps
+                    unelevated
+                    color="grey-3"
+                    text-color="grey-8"
+                    toggle-color="grey-9"
+                    toggle-text-color="white"
+                  />
                   <span>{{ currentTiers.length }} TIERS</span>
                 </div>
 
                 <dl
                   v-if="currentTiers.length"
                   class="operation-active-tiers__summary"
+                  :class="{
+                    'operation-active-tiers__summary--broker':
+                      holdingsBasis === 'broker'
+                  }"
                   aria-label="Current Holdings 전체 요약"
                 >
                   <div>
                     <dt>총 보유</dt>
                     <dd>{{ formatInteger(currentTiersSummary.quantity) }}주</dd>
                   </div>
+                  <div v-if="holdingsBasis === 'broker'">
+                    <dt>계좌 평단가</dt>
+                    <dd>{{ formatPrice(accountMovingAverage) }}</dd>
+                  </div>
                   <div>
-                    <dt>평균 매수가</dt>
+                    <dt>{{
+                      holdingsBasis === 'broker' ? '티어 평단가' : '평균 매수가'
+                    }}</dt>
                     <dd>{{
                       formatPrice(currentTiersSummary.averageBuyPrice)
                     }}</dd>
                   </div>
+
                   <div>
-                    <dt>손익</dt>
+                    <dt>{{
+                      holdingsBasis === 'broker' ? '티어 손익' : '손익'
+                    }}</dt>
                     <dd :class="profitClass(currentTiersSummary.profitLoss)">
                       {{ formatMoney(currentTiersSummary.profitLoss) }}
                     </dd>
                   </div>
                   <div>
-                    <dt>수익률</dt>
+                    <dt>{{
+                      holdingsBasis === 'broker' ? '티어 수익률' : '수익률'
+                    }}</dt>
                     <dd :class="profitClass(currentTiersSummary.returnPct)">
                       {{ formatPct(currentTiersSummary.returnPct) }}
                     </dd>
@@ -154,6 +185,10 @@
                   dense
                   separator="horizontal"
                   class="operation-active-tiers__table"
+                  :class="{
+                    'operation-active-tiers__table--broker':
+                      holdingsBasis === 'broker'
+                  }"
                 >
                   <thead>
                     <tr>
@@ -161,6 +196,9 @@
                       <th class="text-center">보유</th>
                       <th class="text-center">매수일</th>
                       <th class="text-right">매수가</th>
+                      <th v-if="holdingsBasis === 'broker'" class="text-right"
+                        >매수금</th
+                      >
                       <th class="text-right">손익</th>
                       <th class="text-right">수익률</th>
                       <th class="text-right">보유</th>
@@ -180,17 +218,20 @@
                       <td class="text-right">
                         {{ formatPrice(currentTierBuyPrice(tier)) }}
                       </td>
-                      <td
-                        class="text-right"
-                        :class="profitClass(tier.unrealizedProfit)"
-                      >
-                        {{ formatMoney(tier.unrealizedProfit) }}
+                      <td v-if="holdingsBasis === 'broker'" class="text-right">
+                        {{ formatMoney(tier.costBasis) }}
                       </td>
                       <td
                         class="text-right"
-                        :class="profitClass(tier.unrealizedReturnPct)"
+                        :class="profitClass(currentTierProfitLoss(tier))"
                       >
-                        {{ formatPct(tier.unrealizedReturnPct) }}
+                        {{ formatMoney(currentTierProfitLoss(tier)) }}
+                      </td>
+                      <td
+                        class="text-right"
+                        :class="profitClass(currentTierReturnPct(tier))"
+                      >
+                        {{ formatPct(currentTierReturnPct(tier)) }}
                       </td>
                       <td class="text-right">
                         {{ formatInteger(tier.heldSessionCount) }}
@@ -812,6 +853,8 @@ import { computed, onMounted, ref } from 'vue'
 
 import { api } from '@/boot/axios'
 import { getOrderDetails, getStrategyExecutions } from '@/utils/order-details'
+import { valueTier, summarizeTierHoldings } from '@/utils/tier-holdings'
+import { calculateAccountMovingAverage } from '@/utils/account-moving-average'
 import {
   buildCashFlowRows,
   rebaseCashFlowRows
@@ -1235,51 +1278,38 @@ const finalPortfolio = computed(() => agentResult.value?.finalPortfolio || {})
 
 const currentTiers = computed(() => finalPortfolio.value.tiers || [])
 
+const holdingsBasis = ref('strategy')
+
 function currentTierBuyPrice(tier) {
-  return tier?.averageBuyPrice ?? tier?.buyPrice ?? null
+  return valueTier(tier, currentHoldingsClosePrice.value, holdingsBasis.value)
+    .averageBuyPrice
 }
 
-const currentTiersSummary = computed(() => {
-  const totals = currentTiers.value.reduce(
-    (result, tier) => {
-      const quantity = finiteNumber(tier.quantity)
-      const buyPrice = finiteNumber(currentTierBuyPrice(tier))
-      const profitLoss = finiteNumber(tier.unrealizedProfit)
+function currentTierProfitLoss(tier) {
+  return valueTier(tier, currentHoldingsClosePrice.value, holdingsBasis.value)
+    .profitLoss
+}
 
-      if (quantity !== null) result.quantity += quantity
-      if (quantity !== null && buyPrice !== null) {
-        result.costBasis += quantity * buyPrice
-        result.pricedQuantity += quantity
-      }
-      if (profitLoss !== null) {
-        result.profitLoss += profitLoss
-        result.hasProfitLoss = true
-      }
+function currentTierReturnPct(tier) {
+  return valueTier(tier, currentHoldingsClosePrice.value, holdingsBasis.value)
+    .returnPct
+}
 
-      return result
-    },
-    {
-      quantity: 0,
-      pricedQuantity: 0,
-      costBasis: 0,
-      profitLoss: 0,
-      hasProfitLoss: false
-    }
+const currentTiersSummary = computed(() =>
+  summarizeTierHoldings(
+    currentTiers.value,
+    currentHoldingsClosePrice.value,
+    holdingsBasis.value
   )
+)
 
-  return {
-    quantity: totals.quantity,
-    averageBuyPrice:
-      totals.pricedQuantity > 0
-        ? totals.costBasis / totals.pricedQuantity
-        : null,
-    profitLoss: totals.hasProfitLoss ? totals.profitLoss : null,
-    returnPct:
-      totals.costBasis > 0 && totals.hasProfitLoss
-        ? (totals.profitLoss / totals.costBasis) * 100
-        : null
-  }
-})
+const accountMovingAverage = computed(() =>
+  calculateAccountMovingAverage(
+    agentResult.value?.dailyResults || [],
+    currentTiersSummary.value.quantity,
+    finalPortfolio.value.date
+  )
+)
 
 const latestDay = computed(() => dailyRows.value.at(-1) || null)
 
@@ -2386,6 +2416,29 @@ onMounted(fetchAgentResult)
   }
 }
 
+.holdings-basis-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  flex: 0 0 auto;
+  margin-right: auto;
+  border: 1px solid #c7c7c0;
+  border-radius: 16px;
+  overflow: hidden;
+
+  :deep(.q-btn) {
+    min-height: 18px;
+    font-size: 10px;
+    line-height: 1.2;
+    padding: 0 7px;
+  }
+  :deep(.q-btn__content) {
+    min-height: 0;
+  }
+  :deep(.q-btn + .q-btn) {
+    border-left: 1px solid #c7c7c0;
+  }
+}
+
 .operation-active-tiers__table {
   border-radius: 0;
   box-shadow: none;
@@ -2446,6 +2499,41 @@ onMounted(fetchAgentResult)
   }
 }
 
+.operation-active-tiers__table--broker {
+  :deep(th:nth-child(1)),
+  :deep(td:nth-child(1)) {
+    width: 8%;
+  }
+  :deep(th:nth-child(2)),
+  :deep(td:nth-child(2)) {
+    width: 8%;
+  }
+  :deep(th:nth-child(3)),
+  :deep(td:nth-child(3)) {
+    width: 20%;
+  }
+  :deep(th:nth-child(4)),
+  :deep(td:nth-child(4)) {
+    width: 13%;
+  }
+  :deep(th:nth-child(5)),
+  :deep(td:nth-child(5)) {
+    width: 14%;
+  }
+  :deep(th:nth-child(6)),
+  :deep(td:nth-child(6)) {
+    width: 12%;
+  }
+  :deep(th:nth-child(7)),
+  :deep(td:nth-child(7)) {
+    width: 12%;
+  }
+  :deep(th:nth-child(8)),
+  :deep(td:nth-child(8)) {
+    width: 13%;
+  }
+}
+
 .operation-active-tiers__summary {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -2472,6 +2560,10 @@ onMounted(fetchAgentResult)
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+}
+
+.operation-active-tiers__summary--broker {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .operation-active-tier-name {
@@ -3425,6 +3517,8 @@ onMounted(fetchAgentResult)
   }
 
   .operation-active-tiers__heading {
+    flex-wrap: wrap;
+    gap: 6px;
     padding: 9px 10px;
   }
 
@@ -3445,13 +3539,23 @@ onMounted(fetchAgentResult)
     > div {
       padding: 9px 3px;
     }
-
     dt {
       font-size: var(--dk-text-caption);
     }
-
     dd {
       font-size: var(--dk-text-body-sm);
+    }
+  }
+
+  .operation-active-tiers__summary--broker {
+    > div {
+      padding: 9px 1px;
+    }
+    dt {
+      font-size: clamp(8px, 2.2vw, 10px);
+    }
+    dd {
+      font-size: clamp(10px, 2.8vw, 12px);
     }
   }
 
