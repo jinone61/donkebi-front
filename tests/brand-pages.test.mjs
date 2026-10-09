@@ -1,3 +1,4 @@
+import { valueTier, summarizeTierHoldings } from '../src/utils/tier-holdings.js'
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -1078,7 +1079,7 @@ test('performance current holdings mirrors the operation active tiers view', asy
   )
   assert.match(
     source,
-    /<dt>총 보유<\/dt>[\s\S]*?<dt>평균 매수가<\/dt>[\s\S]*?<dt>손익<\/dt>[\s\S]*?<dt>수익률<\/dt>[\s\S]*?<dt>종가<\/dt>/
+    /<dt>총 보유<\/dt>[\s\S]*?<dt>계좌 평단가<\/dt>[\s\S]*?holdingsBasis === 'broker' \? '티어 평단가' : '평균 매수가'[\s\S]*?holdingsBasis === 'broker' \? '티어 손익' : '손익'[\s\S]*?holdingsBasis === 'broker' \? '티어 수익률' : '수익률'[\s\S]*?<dt>종가<\/dt>/
   )
   assert.match(
     source,
@@ -1086,11 +1087,11 @@ test('performance current holdings mirrors the operation active tiers view', asy
   )
   assert.match(
     source,
-    /tier\.buySessionDate[\s\S]*?currentTierBuyPrice\(tier\)[\s\S]*?tier\.unrealizedProfit[\s\S]*?tier\.unrealizedReturnPct[\s\S]*?tier\.heldSessionCount[\s\S]*?v-if="tier\.maxHoldDays != null"[\s\S]*?tier\.maxHoldDays/
+    /tier\.buySessionDate[\s\S]*?currentTierBuyPrice\(tier\)[\s\S]*?currentTierProfitLoss\(tier\)[\s\S]*?currentTierReturnPct\(tier\)[\s\S]*?tier\.heldSessionCount[\s\S]*?v-if="tier\.maxHoldDays != null"[\s\S]*?tier\.maxHoldDays/
   )
   assert.match(
     source,
-    /function currentTierBuyPrice\(tier\) \{[\s\S]*?tier\?\.averageBuyPrice \?\? tier\?\.buyPrice \?\? null/
+    /function currentTierBuyPrice\(tier\) \{[\s\S]*?valueTier\([\s\S]*?tier,[\s\S]*?currentHoldingsClosePrice\.value,[\s\S]*?holdingsBasis\.value[\s\S]*?\)\s*\.averageBuyPrice/
   )
   assert.match(
     source,
@@ -1098,7 +1099,7 @@ test('performance current holdings mirrors the operation active tiers view', asy
   )
   assert.match(
     source,
-    /const currentTiersSummary = computed[\s\S]*?quantity \* buyPrice[\s\S]*?result\.profitLoss \+= profitLoss[\s\S]*?totals\.costBasis \/ totals\.pricedQuantity[\s\S]*?totals\.profitLoss \/ totals\.costBasis/
+    /const currentTiersSummary = computed[\s\S]*?summarizeTierHoldings\([\s\S]*?currentTiers\.value,[\s\S]*?currentHoldingsClosePrice\.value/
   )
   assert.match(
     source,
@@ -1221,7 +1222,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /tier\.buySessionDate[\s\S]*?tier\.buyPrice[\s\S]*?activeTierProfitLoss\(tier\)[\s\S]*?activeTierReturnPct\(tier\)[\s\S]*?tier\.heldSessionCount[\s\S]*?tier\.maxHoldDays/
+    /tier\.buySessionDate[\s\S]*?activeTierBuyPrice\(tier\)[\s\S]*?activeTierProfitLoss\(tier\)[\s\S]*?activeTierReturnPct\(tier\)[\s\S]*?tier\.heldSessionCount[\s\S]*?tier\.maxHoldDays/
   )
   assert.match(
     source,
@@ -1229,7 +1230,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /function activeTierReturnPct\(tier\)[\s\S]*?\(closePrice - buyPrice\) \/ buyPrice[\s\S]*?function activeTierProfitLoss\(tier\)[\s\S]*?\(closePrice - buyPrice\) \* quantity/
+    /function activeTierReturnPct\(tier\)[\s\S]*?valueTier\(tier, activeTiersClosePrice\.value\)\s*\.returnPct[\s\S]*?function activeTierProfitLoss\(tier\)[\s\S]*?valueTier\(tier, activeTiersClosePrice\.value\)\s*\.profitLoss/
   )
   assert.match(
     source,
@@ -1260,7 +1261,7 @@ test('agent operation follows the status API in descending id order', async () =
   )
   assert.match(
     source,
-    /const activeTiersSummary = computed[\s\S]*?quantity \* buyPrice[\s\S]*?result\.profitLoss \+= profitLoss[\s\S]*?totals\.costBasis \/ totals\.pricedQuantity[\s\S]*?totals\.profitLoss \/ totals\.costBasis/
+    /const activeTiersSummary = computed[\s\S]*?summarizeTierHoldings\([\s\S]*?activeTiers\.value,[\s\S]*?activeTiersClosePrice\.value/
   )
   assert.match(source, /isMissing: !job/)
   assert.match(
@@ -1353,10 +1354,20 @@ test('agent operation follows the status API in descending id order', async () =
     source,
     /`mobile-\$\{order\.orderId\}`[\s\S]*?주문가[\s\S]*?formatPrice\(order\.orderPrice, 2\)[\s\S]*?매수가[\s\S]*?order\.tradeSide === 'BUY'[\s\S]*?\? '-'[\s\S]*?formatPrice\(order\.buyPrice, 2\)[\s\S]*?보유 기간[\s\S]*?order\.heldSessionCount/
   )
-  assert.match(
+  for (const pageSource of [
     source,
-    /function formatPrice\(value, minimumFractionDigits = 0\)[\s\S]*?minimumFractionDigits,[\s\S]*?maximumFractionDigits: 2,[\s\S]*?roundingMode: 'trunc'/
-  )
+    await readSource('src/pages/index/performance.vue')
+  ]) {
+    const priceFormatter = pageSource.match(
+      /function formatPrice\(value, minimumFractionDigits = 0\) \{[\s\S]*?\n\}/
+    )[0]
+    const formatPrice = new Function(
+      'finiteNumber',
+      `${priceFormatter}; return formatPrice`
+    )(value => (value == null ? null : Number(value)))
+    assert.equal(formatPrice(155.5185), '$155.52')
+    assert.equal(formatPrice(142.52, 2), '$142.52')
+  }
   assert.match(
     source,
     /주문 대상일[\s\S]*?<span>주문<\/span[\s\S]*?totalSubmissionCount\(\s*slide\.job\.details\s*\)[\s\S]*?<span>Broker<\/span[\s\S]*?summarizeSubmissionValues[\s\S]*?'submissionMode'/
@@ -1872,7 +1883,7 @@ test('agent page covers current status charts and operation history', async () =
   assert.doesNotMatch(source, /const currentHoldings = computed/)
   assert.match(source, /v-for="tier in currentTiers"/)
   assert.match(source, />매수가<\/th>/)
-  assert.match(source, /tier\.unrealizedProfit/)
+  assert.match(source, /currentTierProfitLoss\(tier\)/)
   assert.match(source, /class="operation-active-tiers__table"/)
   assert.match(
     source,
@@ -2413,4 +2424,186 @@ test('portfolio chart shows actual closing cash including zero and missing value
   assert.ok(cash)
   assert.equal(cash.yAxisID, 'asset')
   assert.deepEqual(cash.data, [25, 0, null])
+})
+test('both holdings pages value tiers and totals at one closing price using tier purchase prices', async () => {
+  const tiers = [
+    {
+      quantity: 10,
+      costBasis: 1500,
+      buyPrice: 180,
+      averageBuyPrice: 180,
+      unrealizedProfit: -400,
+      unrealizedReturnPct: -22.22
+    },
+    {
+      quantity: 20,
+      costBasis: 3000,
+      buyPrice: 160,
+      averageBuyPrice: 160,
+      unrealizedProfit: -400,
+      unrealizedReturnPct: -12.5
+    }
+  ]
+  for (const [page, prefix, rows, close] of [
+    ['operation', 'activeTier', 'activeTiers', 'activeTiersClosePrice'],
+    ['performance', 'currentTier', 'currentTiers', 'currentHoldingsClosePrice']
+  ]) {
+    const source = await readSource(`src/pages/index/${page}.vue`)
+    for (const basis of page === 'operation'
+      ? ['strategy']
+      : ['strategy', 'broker']) {
+      const broker = basis === 'broker'
+      const name = `${rows}Summary`
+      const start = source.indexOf(`const ${name} = computed`)
+      const block = source.slice(start, source.indexOf('\n)', start) + 2)
+      const summary = new Function(
+        'computed',
+        rows,
+        close,
+        'summarizeTierHoldings',
+        'holdingsBasis',
+        `${block}; return ${name}`
+      )(fn => fn(), { value: tiers }, { value: 140 }, summarizeTierHoldings, {
+        value: basis
+      })
+      assert.equal(summary.quantity, 30)
+      assert.equal(summary.averageBuyPrice, broker ? 150 : 5000 / 30)
+      assert.equal(summary.accountAverageBuyPrice, 150)
+      assert.equal(summary.profitLoss, broker ? -300 : -800)
+      assert.ok(
+        Math.abs(
+          summary.returnPct - (broker ? -300 / 4500 : -800 / 5000) * 100
+        ) < 1e-10
+      )
+      for (const [suffix, expected] of [
+        ['BuyPrice', broker ? 150 : 180],
+        ['ProfitLoss', broker ? -100 : -400],
+        ['ReturnPct', (broker ? -100 / 1500 : -400 / 1800) * 100]
+      ]) {
+        const helperName = `${prefix}${suffix}`
+        const helperStart = source.indexOf(`function ${helperName}(tier)`)
+        const helper = source.slice(
+          helperStart,
+          source.indexOf('\n}', helperStart) + 2
+        )
+        const value = new Function(
+          'valueTier',
+          close,
+          'tier',
+          'holdingsBasis',
+          `${helper}; return ${helperName}(tier)`
+        )(valueTier, { value: 140 }, tiers[0], { value: basis })
+        assert.equal(value, expected)
+      }
+    }
+  }
+})
+
+test('broker holdings display API cost basis as purchase amount only in broker mode', async () => {
+  for (const page of ['performance']) {
+    const source = await readSource(`src/pages/index/${page}.vue`)
+    const table = source.slice(
+      source.indexOf('class="operation-active-tiers__table"'),
+      source.indexOf('</q-markup-table>')
+    )
+    assert.match(
+      table,
+      /<th\s+v-if="holdingsBasis === 'broker'"\s+class="text-right"\s*>\s*매수금\s*<\/th\s*>/
+    )
+    assert.match(
+      table,
+      /<td\s+v-if="holdingsBasis === 'broker'"\s+class="text-right"\s*>\s*\{\{ formatMoney\(tier\.costBasis\) \}\}\s*<\/td>/
+    )
+  }
+})
+
+test('holdings broker summary displays a separate moving average from complete execution history', async () => {
+  const { calculateAccountMovingAverage } =
+    await import('../src/utils/account-moving-average.js')
+  const history = {
+    dailyResults: [
+      {
+        sessionDate: '2026-01-01',
+        portfolio: { totalQuantity: 2 },
+        plan: {
+          brokerOrders: [
+            { execution: { tradeSide: 'BUY', quantity: 1, price: 100 } },
+            { execution: { tradeSide: 'BUY', quantity: 1, price: 200 } }
+          ]
+        }
+      },
+      {
+        sessionDate: '2026-01-02',
+        portfolio: { totalQuantity: 1 },
+        plan: {
+          brokerOrders: [
+            { execution: { tradeSide: 'SELL', quantity: 1, price: 160 } }
+          ]
+        }
+      }
+    ]
+  }
+  for (const [page, historyName, summaryName, dateName, dateValue] of [
+    [
+      'performance',
+      'agentResult',
+      'currentTiersSummary',
+      'finalPortfolio',
+      { date: '2026-01-02' }
+    ]
+  ]) {
+    const source = await readSource(`src/pages/index/${page}.vue`)
+    assert.match(
+      source,
+      /<div v-if="holdingsBasis === 'broker'">\s*<dt>계좌 평단가<\/dt>\s*<dd>\{\{ formatPrice\(accountMovingAverage\) \}\}<\/dd>/
+    )
+    const start = source.indexOf('const accountMovingAverage = computed')
+    const block = source.slice(start, source.indexOf('\n)', start) + 2)
+    const evaluate = new Function(
+      'computed',
+      'calculateAccountMovingAverage',
+      historyName,
+      summaryName,
+      dateName,
+      `${block}; return accountMovingAverage`
+    )
+    assert.equal(
+      evaluate(
+        fn => fn(),
+        calculateAccountMovingAverage,
+        { value: history },
+        { value: { quantity: 1, averageBuyPrice: 200 } },
+        { value: dateValue }
+      ),
+      150
+    )
+    assert.equal(
+      evaluate(
+        fn => fn(),
+        calculateAccountMovingAverage,
+        { value: null },
+        { value: { quantity: 1 } },
+        { value: dateValue }
+      ),
+      null
+    )
+  }
+})
+
+test('operation only requests its status API and does not derive an average from incomplete history', async () => {
+  const source = await readSource('src/pages/index/operation.vue')
+  assert.equal((source.match(/api\.get\(/g) || []).length, 1)
+  assert.match(source, /await api\.get\(OPERATION_STATUS_URL/)
+  assert.doesNotMatch(
+    source,
+    /strategies\/results|operationHistory|accountMovingAverage|이평 매수가/
+  )
+})
+
+test('operation holdings stay on the strategy basis without broker controls', async () => {
+  const source = await readSource('src/pages/index/operation.vue')
+  assert.doesNotMatch(
+    source,
+    /holdingsBasis|holdings-basis-toggle|operation-active-tiers__table--broker/
+  )
 })
