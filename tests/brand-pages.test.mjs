@@ -2266,10 +2266,95 @@ test('performance daily details separate strategy plans and broker executions', 
   assert.match(source, /v-for="\(order, index\) in day.strategyOrders"/)
   assert.match(
     source,
-    /strategyOrders: getStrategyExecutions\(day.plan \|\| \{\}\)/
+    /const strategyOrders = getStrategyExecutions\(day.plan \|\| \{\}\)/
   )
   assert.match(source, /\?\s*' 보류'\s*:\s*''/)
   assert.doesNotMatch(source, /operation-side--deferred/)
+})
+
+test('performance chart executions represent strategy outcomes including applied transfers', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  const normalize = source.match(
+    /function normalizeStrategyResult\(result = \{\}\) \{[\s\S]*?\n\}/
+  )[0]
+  const { getOrderDetails, getStrategyExecutions } =
+    await import('../src/utils/order-details.js')
+  const normalizeStrategyResult = new Function(
+    'getOrderDetails',
+    'getStrategyExecutions',
+    'normalizeOrder',
+    'calculateCashRatioPct',
+    `${normalize}; return normalizeStrategyResult`
+  )(
+    getOrderDetails,
+    getStrategyExecutions,
+    order => order,
+    () => null
+  )
+  const result = normalizeStrategyResult({
+    dailyResults: [
+      {
+        sessionDate: '2026-10-02',
+        plan: {
+          strategyOrders: [
+            { strategyOrderId: 1, tradeSide: 'BUY', tier: 'T3', quantity: 39 },
+            { strategyOrderId: 2, tradeSide: 'SELL', tier: 'T2', quantity: 7 },
+            {
+              strategyOrderId: 3,
+              tradeSide: 'SELL',
+              tier: 'T1',
+              quantity: 3,
+              planType: 'DEFERRED'
+            }
+          ],
+          brokerOrders: [
+            {
+              strategyOrderId: 1,
+              execution: {
+                tradeSide: 'BUY',
+                tier: 'T3',
+                quantity: 12,
+                price: 160
+              }
+            },
+            {
+              strategyOrderId: 1,
+              execution: {
+                tradeSide: 'BUY',
+                tier: 'T3',
+                quantity: 20,
+                price: 160
+              }
+            }
+          ],
+          tierTransfers: [
+            {
+              fromTier: 'T2',
+              toTier: 'T3',
+              quantity: 7,
+              appliedSessionDate: '2026-10-02',
+              appliedPrice: 160
+            }
+          ]
+        }
+      }
+    ]
+  })
+  assert.deepEqual(
+    result.dailyRows[0].strategyExecutions.map(
+      ({ tradeSide, tier, quantity, price }) => ({
+        tradeSide,
+        tier,
+        quantity,
+        price
+      })
+    ),
+    [
+      { tradeSide: 'BUY', tier: 'T3', quantity: 39, price: 160 },
+      { tradeSide: 'SELL', tier: 'T2', quantity: 7, price: 160 }
+    ]
+  )
+  assert.equal(result.dailyRows[0].orders.length, 2)
 })
 
 test('operation marks MOC-suppressed sells as deferred and sorts them after active plans', async () => {
@@ -2296,4 +2381,36 @@ test('operation marks MOC-suppressed sells as deferred and sorts them after acti
   )
   assert.equal(orders[0].orderId, 1)
   assert.deepEqual(strategyPlanOrders(), [])
+})
+test('portfolio chart shows actual closing cash including zero and missing values', async () => {
+  const source = await readSource('src/pages/index/performance.vue')
+  const start = source.indexOf('const performanceChartData = computed(')
+  const end = source.indexOf('\nconst priceChartOptions', start)
+  const createChart = new Function(
+    'computed',
+    'visibleCapitalChartRows',
+    'capitalChartAth',
+    'finiteNumber',
+    'AGENT_ACCENT',
+    'AGENT_ACCENT_FILL',
+    `${source.slice(start, end)}; return performanceChartData`
+  )
+  const chart = createChart(
+    fn => fn(),
+    {
+      value: [
+        { sessionDate: '2026-10-01', totalAsset: 100, closingCash: 25 },
+        { sessionDate: '2026-10-02', totalAsset: 100, closingCash: 0 },
+        { sessionDate: '2026-10-03', totalAsset: 100, closingCash: null }
+      ]
+    },
+    { value: null },
+    value => (value == null ? null : Number(value)),
+    '#000',
+    '#000'
+  )
+  const cash = chart.datasets.find(dataset => dataset.label === '남은 현금')
+  assert.ok(cash)
+  assert.equal(cash.yAxisID, 'asset')
+  assert.deepEqual(cash.data, [25, 0, null])
 })

@@ -363,7 +363,7 @@
                   <div class="text-caption text-grey-6">
                     {{
                       capitalChartMode === 'total'
-                        ? '추가 납입금을 처음부터 현금으로 보유한 기준(자산·원금·ATH·DD를 환산)'
+                        ? '추가 납입금을 처음부터 현금으로 보유한 기준(자산·현금·원금·ATH·DD를 환산)'
                         : '실제 납입금과 현금 흐름을 반영한 기준'
                     }}
                   </div>
@@ -1154,6 +1154,7 @@ function normalizeStrategyResult(result = {}) {
       .map(day => {
         const orderDetails = getOrderDetails(day.plan || {})
         const orders = orderDetails.brokerOrders.map(normalizeOrder)
+        const strategyOrders = getStrategyExecutions(day.plan || {})
         const submissionMode = [
           ...new Set(
             orders.map(order => order.submission?.mode).filter(Boolean)
@@ -1170,7 +1171,15 @@ function normalizeStrategyResult(result = {}) {
           closingCash,
           cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
           orders,
-          strategyOrders: getStrategyExecutions(day.plan || {}),
+          strategyOrders,
+          strategyExecutions: strategyOrders
+            .filter(order => order.executedQuantity > 0)
+            .map(order => ({
+              tradeSide: order.tradeSide,
+              tier: order.tier,
+              price: order.executionPrice,
+              quantity: order.executedQuantity
+            })),
           submissionMode: submissionMode || day.plan?.completionSource || '-',
           submittedOrderCount: orders.filter(order => order.submission).length,
           executions: orders.flatMap(order =>
@@ -1463,7 +1472,8 @@ const priceChartData = computed(() => {
   const buyExecutions = []
   const sellExecutions = []
   rows.forEach(day => {
-    day.executions.forEach(execution => {
+    day.strategyExecutions.forEach(execution => {
+      if (finiteNumber(execution.price) === null) return
       const point = {
         x: day.sessionDate,
         y: finiteNumber(execution.price),
@@ -1556,6 +1566,18 @@ const performanceChartData = computed(() => {
         borderDash: [6, 5],
         borderWidth: 1,
         pointRadius: 0
+      },
+      {
+        type: 'line',
+        label: '남은 현금',
+        data: rows.map(day => finiteNumber(day.closingCash)),
+        yAxisID: 'asset',
+        borderColor: '#b17a45',
+        backgroundColor: 'rgba(177, 122, 69, 0.12)',
+        borderWidth: 1.5,
+        pointRadius: rows.length > 50 ? 0 : 2,
+        pointHoverRadius: 5,
+        tension: 0
       },
       {
         type: 'scatter',
@@ -1724,17 +1746,12 @@ const performanceChartOptions = computed(() => {
               row => row.sessionDate === date
             )
             if (!day) return []
-            return [
-              ...(day.externalCashFlow &&
+            return day.externalCashFlow &&
               !items.some(item => item.dataset.label === '입출금')
-                ? [
-                    `${day.externalCashFlow > 0 ? '추가입금' : '출금'} ${formatMoney(Math.abs(day.externalCashFlow), 2)}`
-                  ]
-                : []),
-              ...(capitalChartMode.value === 'total'
-                ? [`실제 자산 ${formatMoney(day.totalAsset, 2)}`]
-                : [])
-            ]
+              ? [
+                  `${day.externalCashFlow > 0 ? '추가입금' : '출금'} ${formatMoney(Math.abs(day.externalCashFlow), 2)}`
+                ]
+              : []
           },
           label(context) {
             if (context.dataset.label === '입출금') {
@@ -1846,7 +1863,7 @@ function buildDailyExecutionTooltipLines(rows = [], sessionDate) {
 
   return [
     `종가 ${formatClosePrice(day.closePrice)}`,
-    ...(day.executions || []).map(
+    ...(day.strategyExecutions || []).map(
       execution =>
         `${execution.tradeSide} ${execution.tier} · ${formatPrice(execution.price)} · ${formatInteger(execution.quantity)}주`
     )
