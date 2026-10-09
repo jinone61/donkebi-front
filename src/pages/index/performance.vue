@@ -1154,6 +1154,7 @@ function normalizeStrategyResult(result = {}) {
       .map(day => {
         const orderDetails = getOrderDetails(day.plan || {})
         const orders = orderDetails.brokerOrders.map(normalizeOrder)
+        const strategyOrders = getStrategyExecutions(day.plan || {})
         const submissionMode = [
           ...new Set(
             orders.map(order => order.submission?.mode).filter(Boolean)
@@ -1170,7 +1171,15 @@ function normalizeStrategyResult(result = {}) {
           closingCash,
           cashRatioPct: calculateCashRatioPct(closingCash, totalAsset),
           orders,
-          strategyOrders: getStrategyExecutions(day.plan || {}),
+          strategyOrders,
+          strategyExecutions: strategyOrders
+            .filter(order => order.executedQuantity > 0)
+            .map(order => ({
+              tradeSide: order.tradeSide,
+              tier: order.tier,
+              price: order.executionPrice,
+              quantity: order.executedQuantity
+            })),
           submissionMode: submissionMode || day.plan?.completionSource || '-',
           submittedOrderCount: orders.filter(order => order.submission).length,
           executions: orders.flatMap(order =>
@@ -1463,7 +1472,8 @@ const priceChartData = computed(() => {
   const buyExecutions = []
   const sellExecutions = []
   rows.forEach(day => {
-    day.executions.forEach(execution => {
+    day.strategyExecutions.forEach(execution => {
+      if (finiteNumber(execution.price) === null) return
       const point = {
         x: day.sessionDate,
         y: finiteNumber(execution.price),
@@ -1846,7 +1856,7 @@ function buildDailyExecutionTooltipLines(rows = [], sessionDate) {
 
   return [
     `종가 ${formatClosePrice(day.closePrice)}`,
-    ...(day.executions || []).map(
+    ...(day.strategyExecutions || []).map(
       execution =>
         `${execution.tradeSide} ${execution.tier} · ${formatPrice(execution.price)} · ${formatInteger(execution.quantity)}주`
     )
